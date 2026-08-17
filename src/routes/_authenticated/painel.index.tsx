@@ -5,6 +5,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Stamp, FileText, ShieldCheck, Clock, ExternalLink } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import guardiaoVideo from "@/assets/guardiao.mp4.asset.json";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/StatusBadge";
 import {
