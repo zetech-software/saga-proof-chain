@@ -38,14 +38,13 @@ export function PortalLayout({
     <div className="min-h-screen">
       <header className="sticky top-0 z-20 border-b border-border/60 bg-background/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <Link to="/painel" className="flex flex-col leading-tight">
-            <span className="font-display text-lg tracking-wide text-gold">
-              Saga Mitologia Cósmica
-            </span>
-            <span className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground">
+          <Link to="/painel" className="flex items-center gap-3">
+            <SagaLogo className="h-10 sm:h-12" />
+            <span className="hidden text-[11px] uppercase tracking-[0.3em] text-muted-foreground sm:inline">
               Portal de Registros
             </span>
           </Link>
+
           <div className="flex items-center gap-3">
             {email && (
               <span className="hidden text-xs text-muted-foreground sm:inline">{email}</span>
