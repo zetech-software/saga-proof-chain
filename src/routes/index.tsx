@@ -3,6 +3,8 @@ import { FileText, ShieldCheck, Stamp } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { PoweredBy } from "@/components/PoweredBy";
+import { SagaLogo } from "@/components/SagaLogo";
+
 import { PRAZO_TEXTO } from "@/lib/portal";
 
 export const Route = createFileRoute("/")({
@@ -47,12 +49,14 @@ function Home() {
     <div className="starfield flex min-h-screen flex-col">
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center px-6 py-20">
         <p className="text-xs uppercase tracking-[0.4em] text-primary">Acesso exclusivo</p>
-        <h1 className="mt-4 font-display text-4xl leading-tight text-gold sm:text-6xl">
-          Saga Mitologia Cósmica
-          <span className="block font-serif text-2xl text-foreground sm:text-3xl">
+        <SagaLogo className="mt-6 h-28 sm:h-40" />
+        <h1 className="mt-4 font-display text-3xl leading-tight text-gold sm:text-4xl">
+          <span className="sr-only">Saga Mitologia Cósmica — </span>
+          <span className="font-serif text-2xl text-foreground sm:text-3xl">
             Portal de Registros
           </span>
         </h1>
+
         <p className="mt-6 max-w-2xl text-base text-muted-foreground">
           Acompanhe marcas, documentos e certificados de registro em blockchain da saga, em tempo
           real, com consulta direta às fontes oficiais.

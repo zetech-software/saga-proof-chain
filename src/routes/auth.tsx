@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Sparkles } from "lucide-react";
+import { SagaLogo } from "@/components/SagaLogo";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -68,12 +68,12 @@ function AuthPage() {
     <div className="starfield flex min-h-screen flex-col items-center justify-center px-4 py-12">
       <div className="w-full max-w-md rounded-2xl border border-border/70 bg-card/80 p-8 shadow-[var(--shadow-cosmic)] backdrop-blur">
         <div className="mb-8 text-center">
-          <Sparkles className="mx-auto h-7 w-7 text-primary" />
-          <h1 className="mt-3 font-display text-2xl text-gold">Saga Mitologia Cósmica</h1>
-          <p className="mt-1 text-xs uppercase tracking-[0.3em] text-muted-foreground">
+          <SagaLogo className="mx-auto h-20" />
+          <p className="mt-3 text-xs uppercase tracking-[0.3em] text-muted-foreground">
             Portal de Registros
           </p>
         </div>
+
 
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
