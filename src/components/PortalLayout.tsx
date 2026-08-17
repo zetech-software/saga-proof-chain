@@ -21,7 +21,7 @@ export function PortalLayout({
 }: {
   children: ReactNode;
   isAdmin: boolean;
-  email?: string | null;
+  email?: string | null | undefined;
 }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
