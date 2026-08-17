@@ -14,7 +14,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Portal exclusivo da Saga Mitologia Cósmica para registro de marcas, documentos e certificados em blockchain, por Zé Registra.",
+          "Torre exclusiva da Saga Mitologia Cósmica para registro de marcas, documentos e certificados em blockchain, por Zé Registra.",
       },
       { property: "og:title", content: "Torre de Registros — Saga Mitologia Cósmica" },
       {

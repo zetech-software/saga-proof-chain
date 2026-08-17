@@ -13,13 +13,13 @@ import { PoweredBy } from "@/components/PoweredBy";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Acesso ao Portal — Saga Mitologia Cósmica" },
+      { title: "Acesso à Torre — Saga Mitologia Cósmica" },
       {
         name: "description",
         content:
           "Área de acesso restrito ao torre de registros da Saga Mitologia Cósmica, por Zé Registra.",
       },
-      { property: "og:title", content: "Acesso ao Portal — Saga Mitologia Cósmica" },
+      { property: "og:title", content: "Acesso à Torre — Saga Mitologia Cósmica" },
       {
         property: "og:description",
         content: "Entre com seu usuário para acompanhar marcas, documentos e certificados.",
