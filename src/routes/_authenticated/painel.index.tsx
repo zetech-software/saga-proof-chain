@@ -98,7 +98,7 @@ function Overview() {
     <div className="space-y-8">
       <div className="relative overflow-hidden rounded-2xl border border-border/60">
         <video
-          className="h-48 w-full object-cover mix-blend-screen sm:h-72"
+          className="aspect-video w-full object-contain mix-blend-screen"
           src={guardiaoVideo.url}
           autoPlay
           loop
@@ -107,8 +107,9 @@ function Overview() {
           disablePictureInPicture
           aria-hidden="true"
         />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-background to-transparent" />
       </div>
+
 
       <div>
         <h1 className="font-display text-3xl text-gold">Visão geral</h1>
