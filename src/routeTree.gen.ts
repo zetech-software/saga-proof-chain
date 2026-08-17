@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedPainelIndexRouteImport } from './routes/_authenticated/painel.index'
+import { Route as AuthenticatedPainelCertificadosRouteImport } from './routes/_authenticated/painel.certificados'
 import { Route as AuthenticatedPainelDocumentosRouteImport } from './routes/_authenticated/painel.documentos'
 import { Route as AuthenticatedPainelMarcasRouteImport } from './routes/_authenticated/painel.marcas'
 
@@ -42,6 +43,12 @@ const AuthenticatedPainelIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedPainelRoute,
   } as any)
+const AuthenticatedPainelCertificadosRoute =
+  AuthenticatedPainelCertificadosRouteImport.update({
+    id: '/certificados',
+    path: '/certificados',
+    getParentRoute: () => AuthenticatedPainelRoute,
+  } as any)
 const AuthenticatedPainelDocumentosRoute =
   AuthenticatedPainelDocumentosRouteImport.update({
     id: '/documentos',
@@ -59,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/painel': typeof AuthenticatedPainelRouteWithChildren
+  '/painel/certificados': typeof AuthenticatedPainelCertificadosRoute
   '/painel/documentos': typeof AuthenticatedPainelDocumentosRoute
   '/painel/marcas': typeof AuthenticatedPainelMarcasRoute
   '/painel/': typeof AuthenticatedPainelIndexRoute
@@ -66,6 +74,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/painel/certificados': typeof AuthenticatedPainelCertificadosRoute
   '/painel/documentos': typeof AuthenticatedPainelDocumentosRoute
   '/painel/marcas': typeof AuthenticatedPainelMarcasRoute
   '/painel': typeof AuthenticatedPainelIndexRoute
@@ -76,6 +85,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRouteWithChildren
+  '/_authenticated/painel/certificados': typeof AuthenticatedPainelCertificadosRoute
   '/_authenticated/painel/documentos': typeof AuthenticatedPainelDocumentosRoute
   '/_authenticated/painel/marcas': typeof AuthenticatedPainelMarcasRoute
   '/_authenticated/painel/': typeof AuthenticatedPainelIndexRoute
@@ -86,17 +96,25 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/painel'
+    | '/painel/certificados'
     | '/painel/documentos'
     | '/painel/marcas'
     | '/painel/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/painel/documentos' | '/painel/marcas' | '/painel'
+  to:
+    | '/'
+    | '/auth'
+    | '/painel/certificados'
+    | '/painel/documentos'
+    | '/painel/marcas'
+    | '/painel'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/painel'
+    | '/_authenticated/painel/certificados'
     | '/_authenticated/painel/documentos'
     | '/_authenticated/painel/marcas'
     | '/_authenticated/painel/'
@@ -145,6 +163,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelIndexRouteImport
       parentRoute: typeof AuthenticatedPainelRoute
     }
+    '/_authenticated/painel/certificados': {
+      id: '/_authenticated/painel/certificados'
+      path: '/certificados'
+      fullPath: '/painel/certificados'
+      preLoaderRoute: typeof AuthenticatedPainelCertificadosRouteImport
+      parentRoute: typeof AuthenticatedPainelRoute
+    }
     '/_authenticated/painel/documentos': {
       id: '/_authenticated/painel/documentos'
       path: '/documentos'
@@ -163,12 +188,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedPainelRouteChildren {
+  AuthenticatedPainelCertificadosRoute: typeof AuthenticatedPainelCertificadosRoute
   AuthenticatedPainelDocumentosRoute: typeof AuthenticatedPainelDocumentosRoute
   AuthenticatedPainelMarcasRoute: typeof AuthenticatedPainelMarcasRoute
   AuthenticatedPainelIndexRoute: typeof AuthenticatedPainelIndexRoute
 }
 
 const AuthenticatedPainelRouteChildren: AuthenticatedPainelRouteChildren = {
+  AuthenticatedPainelCertificadosRoute: AuthenticatedPainelCertificadosRoute,
   AuthenticatedPainelDocumentosRoute: AuthenticatedPainelDocumentosRoute,
   AuthenticatedPainelMarcasRoute: AuthenticatedPainelMarcasRoute,
   AuthenticatedPainelIndexRoute: AuthenticatedPainelIndexRoute,
