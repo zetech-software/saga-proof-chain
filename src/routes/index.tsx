@@ -3,6 +3,8 @@ import { FileText, ShieldCheck, Stamp } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { PoweredBy } from "@/components/PoweredBy";
+import { SagaLogo } from "@/components/SagaLogo";
+
 import { PRAZO_TEXTO } from "@/lib/portal";
 
 export const Route = createFileRoute("/")({
