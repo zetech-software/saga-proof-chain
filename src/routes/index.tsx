@@ -1,24 +1,86 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { FileText, ShieldCheck, Stamp } from "lucide-react";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
+import { Button } from "@/components/ui/button";
+import { PoweredBy } from "@/components/PoweredBy";
+import { PRAZO_TEXTO } from "@/lib/portal";
+
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () => ({
+    meta: [
+      { title: "Portal de Registros — Saga Mitologia Cósmica" },
+      {
+        name: "description",
+        content:
+          "Portal exclusivo da Saga Mitologia Cósmica para registro de marcas, documentos e certificados em blockchain, por Zé Registra.",
+      },
+      { property: "og:title", content: "Portal de Registros — Saga Mitologia Cósmica" },
+      {
+        property: "og:description",
+        content: "Marcas, documentos e certificados blockchain em um só lugar, em tempo real.",
+      },
+    ],
+  }),
+  component: Home,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+const features = [
+  {
+    icon: Stamp,
+    title: "Registro de marcas",
+    text: "Submeta as marcas da saga e acompanhe cada etapa do pedido de registro.",
+  },
+  {
+    icon: FileText,
+    title: "Documentos",
+    text: `Envie documentos para registro em blockchain. Prazo médio de ${PRAZO_TEXTO}.`,
+  },
+  {
+    icon: ShieldCheck,
+    title: "Certificados",
+    text: "Certificados atualizados em tempo real, com hash e verificação pública.",
+  },
+];
+
+function Home() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="starfield flex min-h-screen flex-col">
+      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center px-6 py-20">
+        <p className="text-xs uppercase tracking-[0.4em] text-primary">Acesso exclusivo</p>
+        <h1 className="mt-4 font-display text-4xl leading-tight text-gold sm:text-6xl">
+          Saga Mitologia Cósmica
+          <span className="block font-serif text-2xl text-foreground sm:text-3xl">
+            Portal de Registros
+          </span>
+        </h1>
+        <p className="mt-6 max-w-2xl text-base text-muted-foreground">
+          Acompanhe marcas, documentos e certificados de registro em blockchain da saga, em tempo
+          real, com consulta direta às fontes oficiais.
+        </p>
+
+        <div className="mt-8">
+          <Button asChild size="lg">
+            <Link to="/auth">Entrar no portal</Link>
+          </Button>
+        </div>
+
+        <div className="mt-16 grid gap-5 sm:grid-cols-3">
+          {features.map((f) => (
+            <div
+              key={f.title}
+              className="rounded-2xl border border-border/70 bg-card/60 p-6 backdrop-blur"
+            >
+              <f.icon className="h-5 w-5 text-primary" />
+              <h2 className="mt-4 font-serif text-lg">{f.title}</h2>
+              <p className="mt-2 text-sm text-muted-foreground">{f.text}</p>
+            </div>
+          ))}
+        </div>
+      </main>
+
+      <footer className="border-t border-border/60 py-8">
+        <PoweredBy />
+      </footer>
     </div>
   );
 }
