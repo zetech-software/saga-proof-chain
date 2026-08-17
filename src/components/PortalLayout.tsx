@@ -5,6 +5,8 @@ import type { ReactNode } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { PoweredBy } from "@/components/PoweredBy";
+import { SagaLogo } from "@/components/SagaLogo";
+
 import { Button } from "@/components/ui/button";
 
 const navItems = [
