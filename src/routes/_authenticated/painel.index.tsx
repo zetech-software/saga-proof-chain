@@ -5,6 +5,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Stamp, FileText, ShieldCheck, Clock, ExternalLink } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import guardiaoVideo from "@/assets/guardiao.mp4.asset.json";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/StatusBadge";
 import {
@@ -94,12 +96,27 @@ function Overview() {
 
   return (
     <div className="space-y-8">
+      <div className="relative overflow-hidden rounded-2xl border border-border/60">
+        <video
+          className="h-48 w-full object-cover mix-blend-screen sm:h-72"
+          src={guardiaoVideo.url}
+          autoPlay
+          loop
+          muted
+          playsInline
+          disablePictureInPicture
+          aria-hidden="true"
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+      </div>
+
       <div>
         <h1 className="font-display text-3xl text-gold">Visão geral</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Acompanhamento em tempo real dos registros da Saga Mitologia Cósmica.
         </p>
       </div>
+
 
       <div className="grid gap-4 sm:grid-cols-3">
         {cards.map((c) => (
