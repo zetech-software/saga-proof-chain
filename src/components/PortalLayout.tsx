@@ -43,7 +43,7 @@ export function PortalLayout({
           <Link to="/painel" className="flex items-center gap-3">
             <SagaLogo className="h-10 sm:h-12" />
             <span className="hidden text-[11px] uppercase tracking-[0.3em] text-muted-foreground sm:inline">
-              Portal de Registros
+              Torre de Registros
             </span>
           </Link>
 
