@@ -18,9 +18,9 @@ import {
 } from "@/components/ui/select";
 import { usePortalSession } from "@/hooks/usePortalSession";
 import {
-  DOCUMENT_STATUS,
+  DOCUMENT_STATUSES,
   DOCUMENT_STATUS_LABEL,
-  TRADEMARK_STATUS,
+  TRADEMARK_STATUSES,
   TRADEMARK_STATUS_LABEL,
 } from "@/lib/portal";
 
@@ -272,7 +272,7 @@ function AdminPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {DOCUMENT_STATUS.map((s) => (
+                    {DOCUMENT_STATUSES.map((s) => (
                       <SelectItem key={s} value={s}>
                         {DOCUMENT_STATUS_LABEL[s]}
                       </SelectItem>
@@ -314,7 +314,7 @@ function AdminPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {TRADEMARK_STATUS.map((s) => (
+                    {TRADEMARK_STATUSES.map((s) => (
                       <SelectItem key={s} value={s}>
                         {TRADEMARK_STATUS_LABEL[s]}
                       </SelectItem>
