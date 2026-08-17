@@ -99,7 +99,7 @@ function AuthPage() {
             />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Entrando..." : "Entrar no portal"}
+            {loading ? "Entrando..." : "Entrar na torre"}
           </Button>
         </form>
 

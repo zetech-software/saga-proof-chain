@@ -64,7 +64,7 @@ function Home() {
 
         <div className="mt-8">
           <Button asChild size="lg">
-            <Link to="/auth">Entrar no portal</Link>
+            <Link to="/auth">Entrar na torre</Link>
           </Button>
         </div>
 
