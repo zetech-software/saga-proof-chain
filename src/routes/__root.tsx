@@ -79,7 +79,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Portal de Registros — Saga Mitologia Cósmica" },
+      { title: "Torre de Registros — Saga Mitologia Cósmica" },
       {
         name: "description",
         content:

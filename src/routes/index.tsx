@@ -10,13 +10,13 @@ import { PRAZO_TEXTO } from "@/lib/portal";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Portal de Registros — Saga Mitologia Cósmica" },
+      { title: "Torre de Registros — Saga Mitologia Cósmica" },
       {
         name: "description",
         content:
-          "Portal exclusivo da Saga Mitologia Cósmica para registro de marcas, documentos e certificados em blockchain, por Zé Registra.",
+          "Torre exclusiva da Saga Mitologia Cósmica para registro de marcas, documentos e certificados em blockchain, por Zé Registra.",
       },
-      { property: "og:title", content: "Portal de Registros — Saga Mitologia Cósmica" },
+      { property: "og:title", content: "Torre de Registros — Saga Mitologia Cósmica" },
       {
         property: "og:description",
         content: "Marcas, documentos e certificados blockchain em um só lugar, em tempo real.",
@@ -53,7 +53,7 @@ function Home() {
         <h1 className="mt-4 font-display text-3xl leading-tight text-gold sm:text-4xl">
           <span className="sr-only">Saga Mitologia Cósmica — </span>
           <span className="font-serif text-2xl text-foreground sm:text-3xl">
-            Portal de Registros
+            Torre de Registros
           </span>
         </h1>
 
@@ -64,7 +64,7 @@ function Home() {
 
         <div className="mt-8">
           <Button asChild size="lg">
-            <Link to="/auth">Entrar no portal</Link>
+            <Link to="/auth">Entrar na torre</Link>
           </Button>
         </div>
 
