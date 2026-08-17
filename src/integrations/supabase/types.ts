@@ -14,16 +14,236 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      certificates: {
+        Row: {
+          created_at: string
+          document_id: string | null
+          file_name: string | null
+          id: string
+          issued_at: string
+          network: string | null
+          notes: string | null
+          storage_path: string | null
+          title: string
+          trademark_id: string | null
+          tx_hash: string | null
+          updated_at: string
+          verification_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_id?: string | null
+          file_name?: string | null
+          id?: string
+          issued_at?: string
+          network?: string | null
+          notes?: string | null
+          storage_path?: string | null
+          title: string
+          trademark_id?: string | null
+          tx_hash?: string | null
+          updated_at?: string
+          verification_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_id?: string | null
+          file_name?: string | null
+          id?: string
+          issued_at?: string
+          network?: string | null
+          notes?: string | null
+          storage_path?: string | null
+          title?: string
+          trademark_id?: string | null
+          tx_hash?: string | null
+          updated_at?: string
+          verification_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificates_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificates_trademark_id_fkey"
+            columns: ["trademark_id"]
+            isOneToOne: false
+            referencedRelation: "trademarks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          estimated_completion: string | null
+          file_name: string
+          file_size: number | null
+          id: string
+          mime_type: string | null
+          status: string
+          storage_path: string
+          submitted_at: string
+          title: string
+          trademark_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          estimated_completion?: string | null
+          file_name: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          status?: string
+          storage_path: string
+          submitted_at?: string
+          title: string
+          trademark_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          estimated_completion?: string | null
+          file_name?: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          status?: string
+          storage_path?: string
+          submitted_at?: string
+          title?: string
+          trademark_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_trademark_id_fkey"
+            columns: ["trademark_id"]
+            isOneToOne: false
+            referencedRelation: "trademarks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      trademarks: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          created_by: string | null
+          holder: string | null
+          id: string
+          name: string
+          nice_class: string | null
+          notes: string | null
+          protocol_number: string | null
+          segment: string | null
+          status: string
+          submitted_at: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          created_by?: string | null
+          holder?: string | null
+          id?: string
+          name: string
+          nice_class?: string | null
+          notes?: string | null
+          protocol_number?: string | null
+          segment?: string | null
+          status?: string
+          submitted_at?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          created_by?: string | null
+          holder?: string | null
+          id?: string
+          name?: string
+          nice_class?: string | null
+          notes?: string | null
+          protocol_number?: string | null
+          segment?: string | null
+          status?: string
+          submitted_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "cliente"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +370,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "cliente"],
+    },
   },
 } as const
