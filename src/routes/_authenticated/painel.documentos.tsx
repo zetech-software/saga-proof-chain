@@ -81,11 +81,11 @@ function DocumentosPage() {
       const { error } = await supabase.from("documents").insert({
         title: title.trim(),
         description: description.trim() || null,
-        file_path: path,
+        storage_path: path,
         file_name: file.name,
         file_size: file.size,
         mime_type: file.type || null,
-        uploaded_by: userId,
+        created_by: userId,
       });
       if (error) throw error;
     },
@@ -214,7 +214,7 @@ function DocumentosPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => download(d.file_path, d.file_name)}
+                    onClick={() => download(d.storage_path, d.file_name)}
                   >
                     <Download className="mr-2 h-4 w-4" />
                     Baixar arquivo
