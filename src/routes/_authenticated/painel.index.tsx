@@ -19,6 +19,8 @@ import {
   formatDateTime,
 } from "@/lib/portal";
 
+import { RouteErrorState } from "@/components/RouteErrorState";
+
 export const Route = createFileRoute("/_authenticated/painel/")({
   head: () => ({
     meta: [
@@ -27,10 +29,14 @@ export const Route = createFileRoute("/_authenticated/painel/")({
         name: "description",
         content: "Resumo de marcas, documentos na esteira e certificados em blockchain.",
       },
-      { property: "og:title", content: "Visão geral — Torre de Registros | Saga Mitologia Cósmica" },
+      {
+        property: "og:title",
+        content: "Visão geral — Torre de Registros | Saga Mitologia Cósmica",
+      },
       { property: "og:description", content: "Acompanhe seus registros em tempo real." },
     ],
   }),
+  errorComponent: RouteErrorState,
   component: Overview,
 });
 
@@ -114,14 +120,12 @@ function Overview() {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-background to-transparent" />
       </div>
 
-
       <div>
         <h1 className="font-display text-3xl text-gold">Visão geral</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Acompanhamento em tempo real dos registros da Saga Mitologia Cósmica.
         </p>
       </div>
-
 
       <div className="grid gap-4 sm:grid-cols-3">
         {cards.map((c) => (

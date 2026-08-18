@@ -25,7 +25,16 @@ import {
   TRADEMARK_STATUSES,
   TRADEMARK_STATUS_LABEL,
   formatDateTime,
+  formatBytes,
 } from "@/lib/portal";
+import {
+  ACCEPT_ATTRIBUTE,
+  UPLOAD_HELP_TEXT,
+  describeUploadError,
+  validateUploadFile,
+} from "@/lib/uploads";
+
+import { RouteErrorState } from "@/components/RouteErrorState";
 
 export const Route = createFileRoute("/_authenticated/painel/admin")({
   head: () => ({
@@ -35,10 +44,14 @@ export const Route = createFileRoute("/_authenticated/painel/admin")({
         name: "description",
         content: "Painel interno Zé Registra para atualizar status e emitir certificados.",
       },
-      { property: "og:title", content: "Administração — Torre de Registros | Saga Mitologia Cósmica" },
+      {
+        property: "og:title",
+        content: "Administração — Torre de Registros | Saga Mitologia Cósmica",
+      },
       { property: "og:description", content: "Gestão interna dos registros." },
     ],
   }),
+  errorComponent: RouteErrorState,
   component: AdminPage,
 });
 
@@ -56,6 +69,25 @@ function AdminPage() {
     notes: "",
   });
   const [certFile, setCertFile] = useState<File | null>(null);
+
+  function pickFile(
+    selected: File | null,
+    setter: (f: File | null) => void,
+    ref: { current: HTMLInputElement | null },
+  ) {
+    if (!selected) {
+      setter(null);
+      return;
+    }
+    const result = validateUploadFile(selected);
+    if (!result.ok) {
+      toast.error(result.message);
+      setter(null);
+      if (ref.current) ref.current.value = "";
+      return;
+    }
+    setter(selected);
+  }
 
   const newDocFileRef = useRef<HTMLInputElement>(null);
   const [newDoc, setNewDoc] = useState({ title: "", description: "" });
@@ -84,25 +116,26 @@ function AdminPage() {
   const createDoc = useMutation({
     mutationFn: async () => {
       if (newDoc.title.trim().length < 2) throw new Error("Informe o título do documento");
-      if (!newDocFile) throw new Error("Selecione um arquivo");
-      if (newDocFile.size > 50 * 1024 * 1024) throw new Error("Arquivo maior que 50 MB");
+      const checked = validateUploadFile(newDocFile);
+      if (!checked.ok) throw new Error(checked.message);
 
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
       if (!userId) throw new Error("Sessão expirada");
 
-      const safeName = newDocFile.name.replace(/[^\w.\-]/g, "_");
-      const path = `${userId}/${Date.now()}-${safeName}`;
-      const { error: upErr } = await supabase.storage.from("documentos").upload(path, newDocFile);
+      const path = `${userId}/${checked.storageName}`;
+      const { error: upErr } = await supabase.storage
+        .from("documentos")
+        .upload(path, checked.file, { contentType: checked.contentType, upsert: false });
       if (upErr) throw upErr;
 
       const { error } = await supabase.from("documents").insert({
         title: newDoc.title.trim(),
         description: newDoc.description.trim() || null,
         storage_path: path,
-        file_name: newDocFile.name,
-        file_size: newDocFile.size,
-        mime_type: newDocFile.type || null,
+        file_name: checked.displayName,
+        file_size: checked.file.size,
+        mime_type: checked.contentType,
         created_by: userId,
       });
       if (error) throw error;
@@ -115,8 +148,7 @@ function AdminPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-data"] });
       queryClient.invalidateQueries({ queryKey: ["documents"] });
     },
-    onError: (e: unknown) =>
-      toast.error(e instanceof Error ? e.message : "Erro ao cadastrar documento"),
+    onError: (e: unknown) => toast.error(describeUploadError(e)),
   });
 
   const createMarca = useMutation({
@@ -197,14 +229,15 @@ function AdminPage() {
       let storage_path: string | null = null;
       let file_name: string | null = null;
       if (certFile) {
-        const safeName = certFile.name.replace(/[^\w.\-]/g, "_");
-        const path = `certificados/${Date.now()}-${safeName}`;
+        const checked = validateUploadFile(certFile);
+        if (!checked.ok) throw new Error(checked.message);
+        const path = `certificados/${checked.storageName}`;
         const { error: upErr } = await supabase.storage
           .from("certificados")
-          .upload(path, certFile);
+          .upload(path, checked.file, { contentType: checked.contentType, upsert: false });
         if (upErr) throw upErr;
         storage_path = path;
-        file_name = certFile.name;
+        file_name = checked.displayName;
       }
       const { error } = await supabase.from("certificates").insert({
         title: cert.title.trim(),
@@ -232,8 +265,7 @@ function AdminPage() {
       if (certFileRef.current) certFileRef.current.value = "";
       queryClient.invalidateQueries({ queryKey: ["certificates"] });
     },
-    onError: (e: unknown) =>
-      toast.error(e instanceof Error ? e.message : "Erro ao publicar certificado"),
+    onError: (e: unknown) => toast.error(describeUploadError(e)),
   });
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Carregando...</p>;
@@ -288,16 +320,32 @@ function AdminPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="ndfile">Arquivo * (até 50 MB)</Label>
+                <Label htmlFor="ndfile">Arquivo *</Label>
                 <Input
                   id="ndfile"
                   type="file"
                   ref={newDocFileRef}
-                  onChange={(e) => setNewDocFile(e.target.files?.[0] ?? null)}
+                  accept={ACCEPT_ATTRIBUTE}
+                  aria-describedby="ndfile-help"
+                  onChange={(e) =>
+                    pickFile(e.target.files?.[0] ?? null, setNewDocFile, newDocFileRef)
+                  }
                 />
+                <p id="ndfile-help" className="text-xs text-muted-foreground">
+                  {UPLOAD_HELP_TEXT}
+                </p>
+                {newDocFile && (
+                  <p className="break-all text-xs text-foreground">
+                    Selecionado: {newDocFile.name} · {formatBytes(newDocFile.size)}
+                  </p>
+                )}
               </div>
-              <Button type="submit" disabled={createDoc.isPending}>
-                {createDoc.isPending ? "Cadastrando..." : "Cadastrar documento"}
+              <Button
+                type="submit"
+                disabled={createDoc.isPending || !newDocFile}
+                aria-busy={createDoc.isPending}
+              >
+                {createDoc.isPending ? "Enviando arquivo..." : "Cadastrar documento"}
               </Button>
             </form>
           </CardContent>
@@ -369,8 +417,6 @@ function AdminPage() {
           </CardContent>
         </Card>
       </div>
-
-
 
       <Card className="bg-card/70">
         <CardHeader>
@@ -444,8 +490,18 @@ function AdminPage() {
                 id="cfile"
                 type="file"
                 ref={certFileRef}
-                onChange={(e) => setCertFile(e.target.files?.[0] ?? null)}
+                accept={ACCEPT_ATTRIBUTE}
+                aria-describedby="cfile-help"
+                onChange={(e) => pickFile(e.target.files?.[0] ?? null, setCertFile, certFileRef)}
               />
+              <p id="cfile-help" className="text-xs text-muted-foreground">
+                {UPLOAD_HELP_TEXT}
+              </p>
+              {certFile && (
+                <p className="break-all text-xs text-foreground">
+                  Selecionado: {certFile.name} · {formatBytes(certFile.size)}
+                </p>
+              )}
             </div>
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="cnotes">Observações</Label>
@@ -457,7 +513,11 @@ function AdminPage() {
               />
             </div>
             <div className="sm:col-span-2">
-              <Button type="submit" disabled={createCert.isPending}>
+              <Button
+                type="submit"
+                disabled={createCert.isPending}
+                aria-busy={createCert.isPending}
+              >
                 {createCert.isPending ? "Publicando..." : "Publicar certificado"}
               </Button>
             </div>
@@ -566,9 +626,7 @@ function AdminPage() {
           {(data?.suporte ?? []).map((s) => (
             <div key={s.id} className="rounded-lg border border-border/60 p-4">
               <p className="font-medium">{s.subject}</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {formatDateTime(s.created_at)}
-              </p>
+              <p className="mt-1 text-xs text-muted-foreground">{formatDateTime(s.created_at)}</p>
               <p className="mt-2 whitespace-pre-line text-sm text-muted-foreground">{s.message}</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <Select

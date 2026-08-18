@@ -13,6 +13,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
 import { DOCUMENT_STATUS_LABEL, PRAZO_TEXTO, formatDateTime, formatBytes } from "@/lib/portal";
+import {
+  ACCEPT_ATTRIBUTE,
+  UPLOAD_HELP_TEXT,
+  describeUploadError,
+  validateUploadFile,
+} from "@/lib/uploads";
+import { downloadFromBucket } from "@/lib/downloads";
+
+import { RouteErrorState } from "@/components/RouteErrorState";
 
 export const Route = createFileRoute("/_authenticated/painel/documentos")({
   head: () => ({
@@ -30,6 +39,7 @@ export const Route = createFileRoute("/_authenticated/painel/documentos")({
       },
     ],
   }),
+  errorComponent: RouteErrorState,
   component: DocumentosPage,
 });
 
@@ -39,6 +49,21 @@ function DocumentosPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
+
+  function handleFileChange(selected: File | null) {
+    if (!selected) {
+      setFile(null);
+      return;
+    }
+    const result = validateUploadFile(selected);
+    if (!result.ok) {
+      toast.error(result.message);
+      setFile(null);
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
+    setFile(selected);
+  }
 
   const { data: docs, isLoading } = useQuery({
     queryKey: ["documents"],
@@ -66,26 +91,28 @@ function DocumentosPage() {
 
   const upload = useMutation({
     mutationFn: async () => {
-      if (!file) throw new Error("Selecione um arquivo");
       if (title.trim().length < 2) throw new Error("Informe um título para o documento");
-      if (file.size > 50 * 1024 * 1024) throw new Error("Arquivo maior que 50 MB");
+      // Revalidação imediatamente antes do envio.
+      const checked = validateUploadFile(file);
+      if (!checked.ok) throw new Error(checked.message);
 
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
       if (!userId) throw new Error("Sessão expirada");
 
-      const safeName = file.name.replace(/[^\w.\-]/g, "_");
-      const path = `${userId}/${Date.now()}-${safeName}`;
-      const { error: upErr } = await supabase.storage.from("documentos").upload(path, file);
+      const path = `${userId}/${checked.storageName}`;
+      const { error: upErr } = await supabase.storage
+        .from("documentos")
+        .upload(path, checked.file, { contentType: checked.contentType, upsert: false });
       if (upErr) throw upErr;
 
       const { error } = await supabase.from("documents").insert({
         title: title.trim(),
         description: description.trim() || null,
         storage_path: path,
-        file_name: file.name,
-        file_size: file.size,
-        mime_type: file.type || null,
+        file_name: checked.displayName,
+        file_size: checked.file.size,
+        mime_type: checked.contentType,
         created_by: userId,
       });
       if (error) throw error;
@@ -98,22 +125,12 @@ function DocumentosPage() {
       if (fileRef.current) fileRef.current.value = "";
       queryClient.invalidateQueries({ queryKey: ["documents"] });
     },
-    onError: (e: unknown) =>
-      toast.error(e instanceof Error ? e.message : "Erro ao enviar documento"),
+    onError: (e: unknown) => toast.error(describeUploadError(e)),
   });
 
   async function download(path: string, name: string) {
-    const { data, error } = await supabase.storage.from("documentos").createSignedUrl(path, 60);
-    if (error || !data) {
-      toast.error("Não foi possível gerar o link do arquivo");
-      return;
-    }
-    const a = document.createElement("a");
-    a.href = data.signedUrl;
-    a.download = name;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    a.click();
+    const result = await downloadFromBucket("documentos", path, name);
+    if (!result.ok) toast.error(result.message);
   }
 
   return (
@@ -169,18 +186,38 @@ function DocumentosPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="file">Arquivo * (até 50 MB)</Label>
+                <Label htmlFor="file">Arquivo *</Label>
                 <Input
                   id="file"
                   type="file"
                   ref={fileRef}
-                  onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                  accept={ACCEPT_ATTRIBUTE}
+                  aria-describedby="file-help"
+                  onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)}
                 />
+                <p id="file-help" className="text-xs text-muted-foreground">
+                  {UPLOAD_HELP_TEXT}
+                </p>
+                {file && (
+                  <p className="break-all text-xs text-foreground">
+                    Selecionado: {file.name} · {formatBytes(file.size)}
+                  </p>
+                )}
               </div>
-              <Button type="submit" className="w-full" disabled={upload.isPending}>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={upload.isPending || !file}
+                aria-busy={upload.isPending}
+              >
                 <UploadCloud className="mr-2 h-4 w-4" />
-                {upload.isPending ? "Enviando..." : "Enviar para registro"}
+                {upload.isPending ? "Enviando arquivo..." : "Enviar para registro"}
               </Button>
+              {upload.isPending && (
+                <p className="text-xs text-muted-foreground" role="status">
+                  Envio em andamento — não feche esta página.
+                </p>
+              )}
             </form>
           </CardContent>
         </Card>

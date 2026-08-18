@@ -14,6 +14,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SUPPORT_STATUS_LABEL, formatDateTime } from "@/lib/portal";
 
+import { RouteErrorState } from "@/components/RouteErrorState";
+
 export const Route = createFileRoute("/_authenticated/painel/suporte")({
   head: () => ({
     meta: [
@@ -29,6 +31,7 @@ export const Route = createFileRoute("/_authenticated/painel/suporte")({
       },
     ],
   }),
+  errorComponent: RouteErrorState,
   component: SuportePage,
 });
 
