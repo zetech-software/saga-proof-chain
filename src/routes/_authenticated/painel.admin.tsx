@@ -256,6 +256,122 @@ function AdminPage() {
         </p>
       </div>
 
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="bg-card/70">
+          <CardHeader>
+            <CardTitle className="text-lg">Cadastrar documento</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form
+              className="space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                createDoc.mutate();
+              }}
+            >
+              <div className="space-y-2">
+                <Label htmlFor="ndtitle">Título *</Label>
+                <Input
+                  id="ndtitle"
+                  value={newDoc.title}
+                  maxLength={160}
+                  onChange={(e) => setNewDoc({ ...newDoc, title: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="nddesc">Descrição</Label>
+                <Textarea
+                  id="nddesc"
+                  value={newDoc.description}
+                  maxLength={1000}
+                  onChange={(e) => setNewDoc({ ...newDoc, description: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="ndfile">Arquivo * (até 50 MB)</Label>
+                <Input
+                  id="ndfile"
+                  type="file"
+                  ref={newDocFileRef}
+                  onChange={(e) => setNewDocFile(e.target.files?.[0] ?? null)}
+                />
+              </div>
+              <Button type="submit" disabled={createDoc.isPending}>
+                {createDoc.isPending ? "Cadastrando..." : "Cadastrar documento"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card/70">
+          <CardHeader>
+            <CardTitle className="text-lg">Cadastrar marca</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form
+              className="space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                createMarca.mutate();
+              }}
+            >
+              <div className="space-y-2">
+                <Label htmlFor="nmname">Nome da marca *</Label>
+                <Input
+                  id="nmname"
+                  value={newMarca.name}
+                  maxLength={160}
+                  onChange={(e) => setNewMarca({ ...newMarca, name: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="nmholder">Titular</Label>
+                  <Input
+                    id="nmholder"
+                    value={newMarca.holder}
+                    maxLength={160}
+                    onChange={(e) => setNewMarca({ ...newMarca, holder: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="nmclass">Classe</Label>
+                  <Input
+                    id="nmclass"
+                    value={newMarca.nice_class}
+                    maxLength={80}
+                    onChange={(e) => setNewMarca({ ...newMarca, nice_class: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="nmseg">Segmento</Label>
+                <Input
+                  id="nmseg"
+                  value={newMarca.segment}
+                  maxLength={160}
+                  onChange={(e) => setNewMarca({ ...newMarca, segment: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="nmnotes">Observações</Label>
+                <Textarea
+                  id="nmnotes"
+                  value={newMarca.notes}
+                  maxLength={1000}
+                  onChange={(e) => setNewMarca({ ...newMarca, notes: e.target.value })}
+                />
+              </div>
+              <Button type="submit" disabled={createMarca.isPending}>
+                {createMarca.isPending ? "Cadastrando..." : "Cadastrar marca"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+
+
+
       <Card className="bg-card/70">
         <CardHeader>
           <CardTitle className="text-lg">Publicar certificado blockchain</CardTitle>
