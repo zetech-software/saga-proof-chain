@@ -39,6 +39,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sendingReset, setSendingReset] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -63,6 +64,32 @@ function AuthPage() {
     toast.success("Bem-vindo de volta!");
     navigate({ to: "/painel", replace: true });
   }
+
+  async function onForgotPassword() {
+    const parsedEmail = z
+      .string()
+      .trim()
+      .email({ message: "Informe um e-mail válido para recuperar a senha" })
+      .max(255)
+      .safeParse(email);
+    if (!parsedEmail.success) {
+      toast.error(parsedEmail.error.issues[0]?.message ?? "Informe um e-mail válido");
+      document.getElementById("email")?.focus();
+      return;
+    }
+    setSendingReset(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(parsedEmail.data, {
+      redirectTo: `${window.location.origin}/redefinir-senha`,
+    });
+    setSendingReset(false);
+    if (error && error.message?.toLowerCase().includes("rate")) {
+      toast.error("Muitas tentativas. Aguarde alguns minutos e tente novamente.");
+      return;
+    }
+    // Resposta neutra: não revela se o e-mail existe.
+    toast.success("Se este e-mail estiver cadastrado, enviamos um link de redefinição.");
+  }
+
 
   return (
     <div className="starfield flex min-h-screen flex-col items-center justify-center px-4 py-12">

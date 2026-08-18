@@ -12,10 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedPainelIndexRouteImport } from './routes/_authenticated/painel.index'
 import { Route as AuthenticatedPainelAdminRouteImport } from './routes/_authenticated/painel.admin'
 import { Route as AuthenticatedPainelCertificadosRouteImport } from './routes/_authenticated/painel.certificados'
+import { Route as AuthenticatedPainelContaRouteImport } from './routes/_authenticated/painel.conta'
 import { Route as AuthenticatedPainelDocumentosRouteImport } from './routes/_authenticated/painel.documentos'
 import { Route as AuthenticatedPainelMarcasRouteImport } from './routes/_authenticated/painel.marcas'
 import { Route as AuthenticatedPainelSuporteRouteImport } from './routes/_authenticated/painel.suporte'
@@ -32,6 +34,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RedefinirSenhaRoute = RedefinirSenhaRouteImport.update({
+  id: '/redefinir-senha',
+  path: '/redefinir-senha',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
@@ -57,6 +64,12 @@ const AuthenticatedPainelCertificadosRoute =
     path: '/certificados',
     getParentRoute: () => AuthenticatedPainelRoute,
   } as any)
+const AuthenticatedPainelContaRoute =
+  AuthenticatedPainelContaRouteImport.update({
+    id: '/conta',
+    path: '/conta',
+    getParentRoute: () => AuthenticatedPainelRoute,
+  } as any)
 const AuthenticatedPainelDocumentosRoute =
   AuthenticatedPainelDocumentosRouteImport.update({
     id: '/documentos',
@@ -79,9 +92,11 @@ const AuthenticatedPainelSuporteRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
   '/painel': typeof AuthenticatedPainelRouteWithChildren
   '/painel/admin': typeof AuthenticatedPainelAdminRoute
   '/painel/certificados': typeof AuthenticatedPainelCertificadosRoute
+  '/painel/conta': typeof AuthenticatedPainelContaRoute
   '/painel/documentos': typeof AuthenticatedPainelDocumentosRoute
   '/painel/marcas': typeof AuthenticatedPainelMarcasRoute
   '/painel/suporte': typeof AuthenticatedPainelSuporteRoute
@@ -90,8 +105,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
   '/painel/admin': typeof AuthenticatedPainelAdminRoute
   '/painel/certificados': typeof AuthenticatedPainelCertificadosRoute
+  '/painel/conta': typeof AuthenticatedPainelContaRoute
   '/painel/documentos': typeof AuthenticatedPainelDocumentosRoute
   '/painel/marcas': typeof AuthenticatedPainelMarcasRoute
   '/painel/suporte': typeof AuthenticatedPainelSuporteRoute
@@ -102,9 +119,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRouteWithChildren
   '/_authenticated/painel/admin': typeof AuthenticatedPainelAdminRoute
   '/_authenticated/painel/certificados': typeof AuthenticatedPainelCertificadosRoute
+  '/_authenticated/painel/conta': typeof AuthenticatedPainelContaRoute
   '/_authenticated/painel/documentos': typeof AuthenticatedPainelDocumentosRoute
   '/_authenticated/painel/marcas': typeof AuthenticatedPainelMarcasRoute
   '/_authenticated/painel/suporte': typeof AuthenticatedPainelSuporteRoute
@@ -115,9 +134,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/redefinir-senha'
     | '/painel'
     | '/painel/admin'
     | '/painel/certificados'
+    | '/painel/conta'
     | '/painel/documentos'
     | '/painel/marcas'
     | '/painel/suporte'
@@ -126,8 +147,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/redefinir-senha'
     | '/painel/admin'
     | '/painel/certificados'
+    | '/painel/conta'
     | '/painel/documentos'
     | '/painel/marcas'
     | '/painel/suporte'
@@ -137,9 +160,11 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/redefinir-senha'
     | '/_authenticated/painel'
     | '/_authenticated/painel/admin'
     | '/_authenticated/painel/certificados'
+    | '/_authenticated/painel/conta'
     | '/_authenticated/painel/documentos'
     | '/_authenticated/painel/marcas'
     | '/_authenticated/painel/suporte'
@@ -150,6 +175,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  RedefinirSenhaRoute: typeof RedefinirSenhaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -173,6 +199,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/redefinir-senha': {
+      id: '/redefinir-senha'
+      path: '/redefinir-senha'
+      fullPath: '/redefinir-senha'
+      preLoaderRoute: typeof RedefinirSenhaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/painel': {
@@ -203,6 +236,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelCertificadosRouteImport
       parentRoute: typeof AuthenticatedPainelRoute
     }
+    '/_authenticated/painel/conta': {
+      id: '/_authenticated/painel/conta'
+      path: '/conta'
+      fullPath: '/painel/conta'
+      preLoaderRoute: typeof AuthenticatedPainelContaRouteImport
+      parentRoute: typeof AuthenticatedPainelRoute
+    }
     '/_authenticated/painel/documentos': {
       id: '/_authenticated/painel/documentos'
       path: '/documentos'
@@ -230,6 +270,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedPainelRouteChildren {
   AuthenticatedPainelAdminRoute: typeof AuthenticatedPainelAdminRoute
   AuthenticatedPainelCertificadosRoute: typeof AuthenticatedPainelCertificadosRoute
+  AuthenticatedPainelContaRoute: typeof AuthenticatedPainelContaRoute
   AuthenticatedPainelDocumentosRoute: typeof AuthenticatedPainelDocumentosRoute
   AuthenticatedPainelMarcasRoute: typeof AuthenticatedPainelMarcasRoute
   AuthenticatedPainelSuporteRoute: typeof AuthenticatedPainelSuporteRoute
@@ -239,6 +280,7 @@ interface AuthenticatedPainelRouteChildren {
 const AuthenticatedPainelRouteChildren: AuthenticatedPainelRouteChildren = {
   AuthenticatedPainelAdminRoute: AuthenticatedPainelAdminRoute,
   AuthenticatedPainelCertificadosRoute: AuthenticatedPainelCertificadosRoute,
+  AuthenticatedPainelContaRoute: AuthenticatedPainelContaRoute,
   AuthenticatedPainelDocumentosRoute: AuthenticatedPainelDocumentosRoute,
   AuthenticatedPainelMarcasRoute: AuthenticatedPainelMarcasRoute,
   AuthenticatedPainelSuporteRoute: AuthenticatedPainelSuporteRoute,
@@ -263,6 +305,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  RedefinirSenhaRoute: RedefinirSenhaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
