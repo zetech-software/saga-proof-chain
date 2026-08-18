@@ -20,8 +20,11 @@ import { usePortalSession } from "@/hooks/usePortalSession";
 import {
   DOCUMENT_STATUSES,
   DOCUMENT_STATUS_LABEL,
+  SUPPORT_STATUSES,
+  SUPPORT_STATUS_LABEL,
   TRADEMARK_STATUSES,
   TRADEMARK_STATUS_LABEL,
+  formatDateTime,
 } from "@/lib/portal";
 
 export const Route = createFileRoute("/_authenticated/painel/admin")({
