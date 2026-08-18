@@ -16,7 +16,7 @@ import { TRADEMARK_STATUS_LABEL, formatDate } from "@/lib/portal";
 export const Route = createFileRoute("/_authenticated/painel/marcas")({
   head: () => ({
     meta: [
-      { title: "Registro de marcas — Portal Saga Mitologia Cósmica" },
+      { title: "Registro de marcas — Torre de Registros | Saga Mitologia Cósmica" },
       {
         name: "description",
         content: "Submeta novas marcas e acompanhe o andamento de cada pedido de registro.",

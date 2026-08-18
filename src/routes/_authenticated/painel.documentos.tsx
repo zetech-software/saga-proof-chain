@@ -16,7 +16,7 @@ import { DOCUMENT_STATUS_LABEL, PRAZO_TEXTO, formatDateTime, formatBytes } from 
 export const Route = createFileRoute("/_authenticated/painel/documentos")({
   head: () => ({
     meta: [
-      { title: "Documentos — Portal Saga Mitologia Cósmica" },
+      { title: "Documentos — Torre de Registros | Saga Mitologia Cósmica" },
       {
         name: "description",
         content:

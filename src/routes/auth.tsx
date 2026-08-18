@@ -17,7 +17,7 @@ export const Route = createFileRoute("/auth")({
       {
         name: "description",
         content:
-          "Área de acesso restrito ao torre de registros da Saga Mitologia Cósmica, por Zé Registra.",
+          "Área de acesso restrito à Torre de Registros da Saga Mitologia Cósmica, por Zé Registra.",
       },
       { property: "og:title", content: "Acesso à Torre — Saga Mitologia Cósmica" },
       {

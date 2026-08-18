@@ -16,7 +16,7 @@ import { SUPPORT_STATUS_LABEL, formatDateTime } from "@/lib/portal";
 export const Route = createFileRoute("/_authenticated/painel/suporte")({
   head: () => ({
     meta: [
-      { title: "Suporte — Portal Saga Mitologia Cósmica" },
+      { title: "Suporte — Torre de Registros | Saga Mitologia Cósmica" },
       {
         name: "description",
         content: "Envie dúvidas e solicitações à equipe Zé Registra e acompanhe as respostas.",

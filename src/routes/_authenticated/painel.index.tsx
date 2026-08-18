@@ -20,12 +20,12 @@ import {
 export const Route = createFileRoute("/_authenticated/painel/")({
   head: () => ({
     meta: [
-      { title: "Visão geral — Portal Saga Mitologia Cósmica" },
+      { title: "Visão geral — Torre de Registros | Saga Mitologia Cósmica" },
       {
         name: "description",
         content: "Resumo de marcas, documentos na esteira e certificados em blockchain.",
       },
-      { property: "og:title", content: "Visão geral — Portal Saga Mitologia Cósmica" },
+      { property: "og:title", content: "Visão geral — Torre de Registros | Saga Mitologia Cósmica" },
       { property: "og:description", content: "Acompanhe seus registros em tempo real." },
     ],
   }),

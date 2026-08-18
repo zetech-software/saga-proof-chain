@@ -12,7 +12,7 @@ import { OFFICIAL_LINKS, formatDateTime } from "@/lib/portal";
 export const Route = createFileRoute("/_authenticated/painel/certificados")({
   head: () => ({
     meta: [
-      { title: "Certificados blockchain — Portal Saga Mitologia Cósmica" },
+      { title: "Certificados blockchain — Torre de Registros | Saga Mitologia Cósmica" },
       {
         name: "description",
         content:
