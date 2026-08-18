@@ -17,8 +17,7 @@ export const Route = createFileRoute("/redefinir-senha")({
       { title: "Definir nova senha — Torre de Registros" },
       {
         name: "description",
-        content:
-          "Defina uma nova senha de acesso à Torre de Registros da Saga Mitologia Cósmica.",
+        content: "Defina uma nova senha de acesso à Torre de Registros da Saga Mitologia Cósmica.",
       },
       { property: "og:title", content: "Definir nova senha — Torre de Registros" },
       {
@@ -75,8 +74,17 @@ function ResetPasswordPage() {
           token_hash: tokenHash,
         });
         if (!active) return;
-        setLinkState(error ? "invalid" : "valid");
-        window.history.replaceState({}, "", "/redefinir-senha");
+        if (!error) {
+          setLinkState("valid");
+          window.history.replaceState({}, "", "/redefinir-senha");
+          return;
+        }
+        // O token só pode ser trocado uma vez: se a sessão de recuperação já
+        // foi criada nesta aba, o link continua válido para o usuário.
+        const { data: existing } = await supabase.auth.getSession();
+        if (!active) return;
+        setLinkState(existing.session ? "valid" : "invalid");
+        if (existing.session) window.history.replaceState({}, "", "/redefinir-senha");
         return;
       }
 

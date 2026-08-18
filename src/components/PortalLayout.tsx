@@ -1,6 +1,15 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { LayoutDashboard, Stamp, FileText, ShieldCheck, Shield, LifeBuoy, LogOut, UserCog } from "lucide-react";
+import {
+  LayoutDashboard,
+  Stamp,
+  FileText,
+  ShieldCheck,
+  Shield,
+  LifeBuoy,
+  LogOut,
+  UserCog,
+} from "lucide-react";
 import type { ReactNode } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -17,7 +26,6 @@ const navItems = [
   { to: "/painel/suporte", label: "Suporte", icon: LifeBuoy },
   { to: "/painel/conta", label: "Minha conta", icon: UserCog },
 ];
-
 
 export function PortalLayout({
   children,
@@ -60,26 +68,27 @@ export function PortalLayout({
           </div>
         </div>
         <nav className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-2 pb-2 sm:px-5">
-          {[...navItems, ...(isAdmin ? [{ to: "/painel/admin", label: "Admin", icon: Shield }] : [])].map(
-            (item) => {
-              const active =
-                "exact" in item && item.exact ? pathname === item.to : pathname.startsWith(item.to);
-              return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm transition-colors ${
-                    active
-                      ? "bg-primary/15 text-primary"
-                      : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-                  }`}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              );
-            },
-          )}
+          {[
+            ...navItems,
+            ...(isAdmin ? [{ to: "/painel/admin", label: "Admin", icon: Shield }] : []),
+          ].map((item) => {
+            const active =
+              "exact" in item && item.exact ? pathname === item.to : pathname.startsWith(item.to);
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm transition-colors ${
+                  active
+                    ? "bg-primary/15 text-primary"
+                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                }`}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
       </header>
 
