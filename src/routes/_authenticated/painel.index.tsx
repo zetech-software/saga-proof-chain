@@ -192,7 +192,20 @@ function Overview() {
                 />
               </div>
             ))}
-            {!data?.docs.length && !data?.marcas.length && (
+            {isLoading &&
+              Array.from({ length: 3 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-3 last:border-0"
+                >
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-40" />
+                    <Skeleton className="h-3 w-28" />
+                  </div>
+                  <Skeleton className="h-7 w-28 rounded-full" />
+                </div>
+              ))}
+            {!isLoading && !data?.docs.length && !data?.marcas.length && (
               <p className="text-sm text-muted-foreground">Nenhum registro ainda.</p>
             )}
           </CardContent>
