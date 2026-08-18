@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SUPPORT_STATUS_LABEL, formatDateTime } from "@/lib/portal";
 import { useSupportNotifications } from "@/hooks/useSupportNotifications";
+import { usePortalSession } from "@/hooks/usePortalSession";
 import { EmptyState } from "@/components/EmptyState";
 
 import { RouteErrorState } from "@/components/RouteErrorState";
