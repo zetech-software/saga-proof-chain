@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SUPPORT_STATUS_LABEL, formatDateTime } from "@/lib/portal";
 import { useSupportNotifications } from "@/hooks/useSupportNotifications";
+import { usePortalSession } from "@/hooks/usePortalSession";
 import { EmptyState } from "@/components/EmptyState";
 
 import { RouteErrorState } from "@/components/RouteErrorState";
@@ -39,7 +40,14 @@ export const Route = createFileRoute("/_authenticated/painel/suporte")({
 
 function SuportePage() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { data: session, isLoading: sessionLoading } = usePortalSession();
+  const isAdmin = session?.isAdmin ?? false;
   const { clientCount, unreadIdFor, markRead, markAllRead } = useSupportNotifications();
+
+  useEffect(() => {
+    if (isAdmin) navigate({ to: "/painel/admin", replace: true });
+  }, [isAdmin, navigate]);
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
 
@@ -92,6 +100,14 @@ function SuportePage() {
     onError: (e: unknown) =>
       toast.error(e instanceof Error ? e.message : "Erro ao enviar solicitação"),
   });
+
+  if (sessionLoading || isAdmin) {
+    return (
+      <div className="py-16 text-center text-sm text-muted-foreground" role="status">
+        Carregando...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
