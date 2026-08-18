@@ -39,7 +39,14 @@ export const Route = createFileRoute("/_authenticated/painel/suporte")({
 
 function SuportePage() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { data: session, isLoading: sessionLoading } = usePortalSession();
+  const isAdmin = session?.isAdmin ?? false;
   const { clientCount, unreadIdFor, markRead, markAllRead } = useSupportNotifications();
+
+  useEffect(() => {
+    if (isAdmin) navigate({ to: "/painel/admin", replace: true });
+  }, [isAdmin, navigate]);
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
 
