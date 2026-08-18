@@ -27,6 +27,8 @@ import {
   formatDateTime,
 } from "@/lib/portal";
 
+import { RouteErrorState } from "@/components/RouteErrorState";
+
 export const Route = createFileRoute("/_authenticated/painel/admin")({
   head: () => ({
     meta: [
@@ -39,6 +41,7 @@ export const Route = createFileRoute("/_authenticated/painel/admin")({
       { property: "og:description", content: "Gestão interna dos registros." },
     ],
   }),
+  errorComponent: RouteErrorState,
   component: AdminPage,
 });
 

@@ -10,6 +10,8 @@ import { ListSkeleton } from "@/components/ListSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { OFFICIAL_LINKS, formatDateTime } from "@/lib/portal";
 
+import { RouteErrorState } from "@/components/RouteErrorState";
+
 export const Route = createFileRoute("/_authenticated/painel/certificados")({
   head: () => ({
     meta: [
@@ -26,6 +28,7 @@ export const Route = createFileRoute("/_authenticated/painel/certificados")({
       },
     ],
   }),
+  errorComponent: RouteErrorState,
   component: CertificadosPage,
 });
 

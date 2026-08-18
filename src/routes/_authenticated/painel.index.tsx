@@ -19,6 +19,8 @@ import {
   formatDateTime,
 } from "@/lib/portal";
 
+import { RouteErrorState } from "@/components/RouteErrorState";
+
 export const Route = createFileRoute("/_authenticated/painel/")({
   head: () => ({
     meta: [
@@ -31,6 +33,7 @@ export const Route = createFileRoute("/_authenticated/painel/")({
       { property: "og:description", content: "Acompanhe seus registros em tempo real." },
     ],
   }),
+  errorComponent: RouteErrorState,
   component: Overview,
 });
 

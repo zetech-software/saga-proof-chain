@@ -14,6 +14,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
 import { TRADEMARK_STATUS_LABEL, formatDate } from "@/lib/portal";
 
+import { RouteErrorState } from "@/components/RouteErrorState";
+
 export const Route = createFileRoute("/_authenticated/painel/marcas")({
   head: () => ({
     meta: [
@@ -26,6 +28,7 @@ export const Route = createFileRoute("/_authenticated/painel/marcas")({
       { property: "og:description", content: "Submissão e acompanhamento de pedidos de marca." },
     ],
   }),
+  errorComponent: RouteErrorState,
   component: MarcasPage,
 });
 

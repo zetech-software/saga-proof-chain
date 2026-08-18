@@ -14,6 +14,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
 import { DOCUMENT_STATUS_LABEL, PRAZO_TEXTO, formatDateTime, formatBytes } from "@/lib/portal";
 
+import { RouteErrorState } from "@/components/RouteErrorState";
+
 export const Route = createFileRoute("/_authenticated/painel/documentos")({
   head: () => ({
     meta: [
@@ -30,6 +32,7 @@ export const Route = createFileRoute("/_authenticated/painel/documentos")({
       },
     ],
   }),
+  errorComponent: RouteErrorState,
   component: DocumentosPage,
 });
 
