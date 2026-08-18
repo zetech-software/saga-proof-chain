@@ -51,6 +51,8 @@ export function statusTone(status: string): "gold" | "violet" | "green" | "red" 
     case "registrado":
     case "certificado_emitido":
     case "deferida":
+    case "respondida":
+      return "green";
       return "green";
     case "em_registro":
     case "protocolada":
