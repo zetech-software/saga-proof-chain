@@ -15,6 +15,7 @@ import type { ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PoweredBy } from "@/components/PoweredBy";
 import { SagaLogo } from "@/components/SagaLogo";
+import { formatBadgeCount, useSupportNotifications } from "@/hooks/useSupportNotifications";
 
 import { Button } from "@/components/ui/button";
 
@@ -39,6 +40,7 @@ export function PortalLayout({
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { adminCount, clientCount } = useSupportNotifications();
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -74,6 +76,14 @@ export function PortalLayout({
           ].map((item) => {
             const active =
               "exact" in item && item.exact ? pathname === item.to : pathname.startsWith(item.to);
+            const count =
+              item.to === "/painel/admin"
+                ? isAdmin
+                  ? adminCount
+                  : 0
+                : item.to === "/painel/suporte"
+                  ? clientCount
+                  : 0;
             return (
               <Link
                 key={item.to}
@@ -86,6 +96,21 @@ export function PortalLayout({
               >
                 <item.icon className="h-4 w-4" />
                 {item.label}
+                {count > 0 && (
+                  <span
+                    className="inline-flex min-w-5 items-center justify-center rounded-full border border-primary/40 bg-primary/20 px-1.5 text-[11px] font-semibold text-primary"
+                    aria-hidden="true"
+                  >
+                    {formatBadgeCount(count)}
+                  </span>
+                )}
+                {count > 0 && (
+                  <span className="sr-only">
+                    {item.to === "/painel/admin"
+                      ? `${count} ${count === 1 ? "chamado novo não visualizado" : "chamados novos não visualizados"}`
+                      : `${count} ${count === 1 ? "resposta não lida" : "respostas não lidas"}`}
+                  </span>
+                )}
               </Link>
             );
           })}

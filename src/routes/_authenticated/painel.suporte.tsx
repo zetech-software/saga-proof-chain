@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SUPPORT_STATUS_LABEL, formatDateTime } from "@/lib/portal";
+import { useSupportNotifications } from "@/hooks/useSupportNotifications";
 
 import { RouteErrorState } from "@/components/RouteErrorState";
 
@@ -37,6 +38,7 @@ export const Route = createFileRoute("/_authenticated/painel/suporte")({
 
 function SuportePage() {
   const queryClient = useQueryClient();
+  const { clientCount, unreadIdFor, markRead, markAllRead } = useSupportNotifications();
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
 
@@ -141,33 +143,73 @@ function SuportePage() {
         </Card>
 
         <div className="space-y-4">
-          {(requests ?? []).map((r) => (
-            <Card key={r.id} className="bg-card/70">
-              <CardContent className="pt-6">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h3 className="font-serif text-xl">{r.subject}</h3>
-                    <p className="text-xs text-muted-foreground">
-                      Enviada em {formatDateTime(r.created_at)}
-                    </p>
+          {clientCount > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
+              <p className="text-sm">
+                Você tem {clientCount}{" "}
+                {clientCount === 1 ? "resposta não lida" : "respostas não lidas"}.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => markAllRead.mutate("support_response")}
+                disabled={markAllRead.isPending}
+                aria-busy={markAllRead.isPending}
+              >
+                Marcar todas como lidas
+              </Button>
+            </div>
+          )}
+          {(requests ?? []).map((r) => {
+            const unreadId = unreadIdFor("support_response", r.id);
+            return (
+              <Card
+                key={r.id}
+                className={`bg-card/70 ${unreadId ? "border-primary/50 ring-1 ring-primary/30" : ""}`}
+              >
+                <CardContent className="pt-6">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h3 className="font-serif text-xl">{r.subject}</h3>
+                      <p className="text-xs text-muted-foreground">
+                        Enviada em {formatDateTime(r.created_at)}
+                      </p>
+                    </div>
+                    <StatusBadge
+                      status={r.status}
+                      label={SUPPORT_STATUS_LABEL[r.status] ?? r.status}
+                    />
                   </div>
-                  <StatusBadge
-                    status={r.status}
-                    label={SUPPORT_STATUS_LABEL[r.status] ?? r.status}
-                  />
-                </div>
-                <p className="mt-3 whitespace-pre-line text-sm text-muted-foreground">
-                  {r.message}
-                </p>
-                {r.admin_reply && (
-                  <p className="mt-3 whitespace-pre-line rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
-                    <span className="text-primary">Zé Registra: </span>
-                    {r.admin_reply}
+                  <p className="mt-3 whitespace-pre-line text-sm text-muted-foreground">
+                    {r.message}
                   </p>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+                  {r.admin_reply && (
+                    <p className="mt-3 whitespace-pre-line rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+                      <span className="text-primary">Zé Registra: </span>
+                      {r.admin_reply}
+                    </p>
+                  )}
+                  {unreadId && (
+                    <div className="mt-3 flex items-center gap-3">
+                      <span className="inline-flex items-center rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs text-primary">
+                        Resposta não lida
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => markRead.mutate(unreadId)}
+                        disabled={markRead.isPending}
+                        aria-label={`Marcar resposta do chamado ${r.subject} como lida`}
+                      >
+                        Marcar como lida
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+
           {isLoading && <ListSkeleton />}
           {!isLoading && !requests?.length && (
             <Card className="bg-card/70">
