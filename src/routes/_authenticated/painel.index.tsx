@@ -35,7 +35,7 @@ export const Route = createFileRoute("/_authenticated/painel/")({
 function Overview() {
   const queryClient = useQueryClient();
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["overview"],
     queryFn: async () => {
       const [marcas, docs, certs] = await Promise.all([
