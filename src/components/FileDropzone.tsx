@@ -81,13 +81,13 @@ export function FileDropzone({
             "flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed px-4 py-7 text-center transition-colors",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
             dragging
-              ? "border-primary/70 bg-primary/10"
-              : "border-border/70 bg-background/40 hover:border-primary/50 hover:bg-primary/5",
+              ? "border-brand-hover/70 bg-brand-hover/10"
+              : "border-border/70 bg-background/40 hover:border-brand-hover/50 hover:bg-brand-hover/5",
             disabled && "pointer-events-none opacity-60",
           )}
         >
-          <span className="rounded-full bg-primary/10 p-2.5">
-            <UploadCloud className="h-5 w-5 text-primary" />
+          <span className="rounded-full bg-brand-hover/10 p-2.5">
+            <UploadCloud className="h-5 w-5 text-brand-hover" />
           </span>
           <span className="text-sm font-medium text-foreground">Selecionar arquivo</span>
           <span className="text-xs text-muted-foreground">ou arraste e solte aqui</span>
@@ -99,8 +99,8 @@ export function FileDropzone({
 
       {file && (
         <div className="flex items-start gap-3 rounded-xl border border-border/70 bg-background/50 p-3">
-          <span className="mt-0.5 shrink-0 rounded-lg bg-primary/10 p-2">
-            <FileText className="h-4 w-4 text-primary" />
+          <span className="mt-0.5 shrink-0 rounded-lg bg-brand-hover/10 p-2">
+            <FileText className="h-4 w-4 text-brand-hover" />
           </span>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-foreground" title={file.name}>

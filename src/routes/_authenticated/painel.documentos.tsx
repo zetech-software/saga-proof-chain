@@ -136,9 +136,9 @@ function DocumentosPage() {
         </p>
       </div>
 
-      <Card className="border-primary/30 bg-primary/5">
+      <Card className="border-brand-hover/30 bg-brand-hover/5">
         <CardContent className="flex flex-wrap items-center gap-3 pt-6 text-sm">
-          <Clock className="h-4 w-4 text-primary" />
+          <Clock className="h-4 w-4 text-brand-hover" />
           <span>
             O registro em blockchain leva em média <strong>{PRAZO_TEXTO}</strong> por documento, em
             razão do prazo documental e da disponibilidade da plataforma.
@@ -232,8 +232,8 @@ function DocumentosPage() {
                   <p className="mt-3 text-sm text-muted-foreground">{d.description}</p>
                 )}
                 {d.admin_notes && (
-                  <p className="mt-3 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
-                    <span className="text-primary">Zé Registra: </span>
+                  <p className="mt-3 rounded-lg border border-brand-hover/30 bg-brand-hover/5 p-3 text-sm">
+                    <span className="text-brand-hover">Zé Registra: </span>
                     {d.admin_notes}
                   </p>
                 )}

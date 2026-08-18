@@ -100,7 +100,7 @@ export function PortalLayout({
                 aria-current={active ? "page" : undefined}
                 className={`flex min-h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:px-4 ${
                   active
-                    ? "bg-primary/15 font-medium text-primary ring-1 ring-inset ring-primary/25"
+                    ? "bg-brand-hover/15 font-medium text-brand-hover ring-1 ring-inset ring-brand-hover/25"
                     : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                 }`}
               >
@@ -108,7 +108,7 @@ export function PortalLayout({
                 {item.label}
                 {count > 0 && (
                   <span
-                    className="inline-flex min-w-5 items-center justify-center rounded-full border border-primary/40 bg-primary/20 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-primary"
+                    className="inline-flex min-w-5 items-center justify-center rounded-full border border-brand-hover/40 bg-brand-hover/20 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-brand-hover"
                     aria-hidden="true"
                   >
 

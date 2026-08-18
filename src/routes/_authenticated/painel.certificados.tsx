@@ -77,12 +77,12 @@ function CertificadosPage() {
 
       <div className="grid gap-4">
         {(certs ?? []).map((c) => (
-          <Card key={c.id} className="border-primary/25 bg-card/70">
+          <Card key={c.id} className="border-brand-hover/25 bg-card/70">
             <CardContent className="pt-6">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex min-w-0 items-start gap-3">
-                  <div className="shrink-0 rounded-xl bg-primary/10 p-3">
-                    <ShieldCheck className="h-5 w-5 text-primary" />
+                  <div className="shrink-0 rounded-xl bg-brand-hover/10 p-3">
+                    <ShieldCheck className="h-5 w-5 text-brand-hover" />
                   </div>
                   <div className="min-w-0">
                     <h3 className="break-words font-serif text-xl leading-snug">{c.title}</h3>
@@ -145,7 +145,7 @@ function CertificadosPage() {
               href={l.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-lg border border-border/60 p-3 transition-colors hover:border-primary/50"
+              className="rounded-lg border border-border/60 p-3 transition-colors hover:border-brand-hover/50"
             >
               <p className="flex items-center gap-2 text-sm font-medium">
                 {l.name} <ExternalLink className="h-3 w-3 text-muted-foreground" />

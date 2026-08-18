@@ -664,14 +664,14 @@ function AdminPage() {
               <div
                 key={s.id}
                 className={`rounded-lg border p-4 ${
-                  unreadId ? "border-primary/50 bg-primary/5" : "border-border/60"
+                  unreadId ? "border-brand-hover/50 bg-brand-hover/5" : "border-border/60"
                 }`}
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <p className="font-medium">{s.subject}</p>
                   {unreadId && (
                     <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs text-primary">
+                      <span className="inline-flex items-center rounded-full border border-brand-hover/40 bg-brand-hover/10 px-3 py-1 text-xs text-brand-hover">
                         Não visualizado
                       </span>
                       <Button

@@ -210,8 +210,8 @@ function MarcasPage() {
                 </div>
                 {m.notes && <p className="mt-3 text-sm text-muted-foreground">{m.notes}</p>}
                 {m.admin_notes && (
-                  <p className="mt-3 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
-                    <span className="text-primary">Zé Registra: </span>
+                  <p className="mt-3 rounded-lg border border-brand-hover/30 bg-brand-hover/5 p-3 text-sm">
+                    <span className="text-brand-hover">Zé Registra: </span>
                     {m.admin_notes}
                   </p>
                 )}
