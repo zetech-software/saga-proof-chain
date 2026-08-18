@@ -128,7 +128,7 @@ export function PortalLayout({
         </nav>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">{children}</main>
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-10">{children}</main>
 
       <footer className="mt-12 border-t border-border/60 py-8">
         <PoweredBy />
