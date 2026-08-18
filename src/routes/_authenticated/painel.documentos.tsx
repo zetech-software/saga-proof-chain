@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Clock, Download, UploadCloud } from "lucide-react";
+import { Clock, Download, FileText, UploadCloud } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -13,12 +13,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
 import { DOCUMENT_STATUS_LABEL, PRAZO_TEXTO, formatDateTime, formatBytes } from "@/lib/portal";
-import {
-  ACCEPT_ATTRIBUTE,
-  UPLOAD_HELP_TEXT,
-  describeUploadError,
-  validateUploadFile,
-} from "@/lib/uploads";
+import { UPLOAD_HELP_TEXT, describeUploadError, validateUploadFile } from "@/lib/uploads";
+import { FileDropzone } from "@/components/FileDropzone";
+import { EmptyState } from "@/components/EmptyState";
 import { downloadFromBucket } from "@/lib/downloads";
 
 import { RouteErrorState } from "@/components/RouteErrorState";
@@ -45,7 +42,6 @@ export const Route = createFileRoute("/_authenticated/painel/documentos")({
 
 function DocumentosPage() {
   const queryClient = useQueryClient();
-  const fileRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -59,7 +55,6 @@ function DocumentosPage() {
     if (!result.ok) {
       toast.error(result.message);
       setFile(null);
-      if (fileRef.current) fileRef.current.value = "";
       return;
     }
     setFile(selected);
@@ -122,7 +117,6 @@ function DocumentosPage() {
       setTitle("");
       setDescription("");
       setFile(null);
-      if (fileRef.current) fileRef.current.value = "";
       queryClient.invalidateQueries({ queryKey: ["documents"] });
     },
     onError: (e: unknown) => toast.error(describeUploadError(e)),
@@ -222,9 +216,9 @@ function DocumentosPage() {
             <Card key={d.id} className="bg-card/70">
               <CardContent className="pt-6">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h3 className="font-serif text-xl">{d.title}</h3>
-                    <p className="text-xs text-muted-foreground">
+                  <div className="min-w-0">
+                    <h3 className="break-words font-serif text-xl leading-snug">{d.title}</h3>
+                    <p className="mt-1 break-words text-xs text-muted-foreground">
                       {d.file_name} · {formatBytes(d.file_size)} · enviado em{" "}
                       {formatDateTime(d.submitted_at)}
                     </p>
@@ -249,7 +243,7 @@ function DocumentosPage() {
                     size="sm"
                     onClick={() => download(d.storage_path, d.file_name)}
                   >
-                    <Download className="mr-2 h-4 w-4" />
+                    <Download className="h-4 w-4" />
                     Baixar arquivo
                   </Button>
                   <span className="text-xs text-muted-foreground">
@@ -261,11 +255,11 @@ function DocumentosPage() {
           ))}
           {isLoading && <ListSkeleton />}
           {!isLoading && !docs?.length && (
-            <Card className="bg-card/70">
-              <CardContent className="pt-6 text-sm text-muted-foreground">
-                Nenhum documento enviado ainda.
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={FileText}
+              title="Nenhum documento enviado ainda"
+              description="Envie o primeiro arquivo pelo formulário ao lado para iniciar a esteira de registro em blockchain."
+            />
           )}
         </div>
       </div>
