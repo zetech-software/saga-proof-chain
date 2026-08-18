@@ -14,6 +14,7 @@ const navItems = [
   { to: "/painel/marcas", label: "Registro de marcas", icon: Stamp },
   { to: "/painel/documentos", label: "Documentos", icon: FileText },
   { to: "/painel/certificados", label: "Certificados", icon: ShieldCheck },
+  { to: "/painel/suporte", label: "Suporte", icon: LifeBuoy },
 ];
 
 export function PortalLayout({
