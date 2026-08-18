@@ -187,30 +187,24 @@ function DocumentosPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="file">Arquivo *</Label>
-                <Input
+                <FileDropzone
                   id="file"
-                  type="file"
-                  ref={fileRef}
-                  accept={ACCEPT_ATTRIBUTE}
-                  aria-describedby="file-help"
-                  onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)}
+                  file={file}
+                  disabled={upload.isPending}
+                  onSelect={handleFileChange}
                 />
-                <p id="file-help" className="text-xs text-muted-foreground">
+                <p id="file-help" className="text-xs leading-relaxed text-muted-foreground">
                   {UPLOAD_HELP_TEXT}
                 </p>
-                {file && (
-                  <p className="break-all text-xs text-foreground">
-                    Selecionado: {file.name} · {formatBytes(file.size)}
-                  </p>
-                )}
               </div>
               <Button
                 type="submit"
+                size="lg"
                 className="w-full"
                 disabled={upload.isPending || !file}
                 aria-busy={upload.isPending}
               >
-                <UploadCloud className="mr-2 h-4 w-4" />
+                <UploadCloud className="h-4 w-4" />
                 {upload.isPending ? "Enviando arquivo..." : "Enviar para registro"}
               </Button>
               {upload.isPending && (
@@ -218,6 +212,7 @@ function DocumentosPage() {
                   Envio em andamento — não feche esta página.
                 </p>
               )}
+
             </form>
           </CardContent>
         </Card>
