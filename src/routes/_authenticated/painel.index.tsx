@@ -132,7 +132,11 @@ function Overview() {
                   <c.icon className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-3xl font-semibold">{c.value}</p>
+                  {isLoading ? (
+                    <Skeleton className="h-9 w-12" />
+                  ) : (
+                    <p className="text-3xl font-semibold">{c.value}</p>
+                  )}
                   <p className="text-xs uppercase tracking-widest text-muted-foreground">
                     {c.label}
                   </p>
