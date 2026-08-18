@@ -101,6 +101,14 @@ function SuportePage() {
       toast.error(e instanceof Error ? e.message : "Erro ao enviar solicitação"),
   });
 
+  if (sessionLoading || isAdmin) {
+    return (
+      <div className="py-16 text-center text-sm text-muted-foreground" role="status">
+        Carregando...
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <div>
