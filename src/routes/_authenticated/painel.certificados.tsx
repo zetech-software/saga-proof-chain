@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ListSkeleton } from "@/components/ListSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { OFFICIAL_LINKS, formatDateTime } from "@/lib/portal";
+import { EmptyState } from "@/components/EmptyState";
 import { downloadFromBucket } from "@/lib/downloads";
 
 import { RouteErrorState } from "@/components/RouteErrorState";
@@ -79,13 +80,13 @@ function CertificadosPage() {
           <Card key={c.id} className="border-primary/25 bg-card/70">
             <CardContent className="pt-6">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <div className="rounded-xl bg-primary/10 p-3">
+                <div className="flex min-w-0 items-start gap-3">
+                  <div className="shrink-0 rounded-xl bg-primary/10 p-3">
                     <ShieldCheck className="h-5 w-5 text-primary" />
                   </div>
-                  <div>
-                    <h3 className="font-serif text-xl">{c.title}</h3>
-                    <p className="text-xs text-muted-foreground">
+                  <div className="min-w-0">
+                    <h3 className="break-words font-serif text-xl leading-snug">{c.title}</h3>
+                    <p className="mt-1 text-xs text-muted-foreground">
                       Emitido em {formatDateTime(c.issued_at)}
                       {c.network ? ` · Rede ${c.network}` : ""}
                     </p>
@@ -107,14 +108,14 @@ function CertificadosPage() {
                     size="sm"
                     onClick={() => download(c.storage_path!, c.file_name ?? "certificado.pdf")}
                   >
-                    <Download className="mr-2 h-4 w-4" />
+                    <Download className="h-4 w-4" />
                     Baixar certificado
                   </Button>
                 )}
                 {c.verification_url && (
                   <Button variant="ghost" size="sm" asChild>
                     <a href={c.verification_url} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="mr-2 h-4 w-4" />
+                      <ExternalLink className="h-4 w-4" />
                       Verificar publicamente
                     </a>
                   </Button>
@@ -125,12 +126,11 @@ function CertificadosPage() {
         ))}
         {isLoading && <ListSkeleton />}
         {!isLoading && !certs?.length && (
-          <Card className="bg-card/70">
-            <CardContent className="pt-6 text-sm text-muted-foreground">
-              Nenhum certificado emitido ainda. Assim que o registro for concluído, ele aparece aqui
-              automaticamente.
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={ShieldCheck}
+            title="Nenhum certificado emitido ainda"
+            description="Assim que um registro em blockchain for concluído, o certificado aparece aqui automaticamente."
+          />
         )}
       </div>
 

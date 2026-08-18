@@ -129,10 +129,14 @@ function Overview() {
 
       <div className="grid gap-4 sm:grid-cols-3">
         {cards.map((c) => (
-          <Link key={c.label} to={c.to}>
-            <Card className="h-full border-border/70 bg-card/70 transition-colors hover:border-primary/50">
+          <Link
+            key={c.label}
+            to={c.to}
+            className="rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            <Card className="h-full border-border/70 bg-card/70 transition-colors hover:border-primary/50 hover:bg-card/90">
               <CardContent className="flex items-center gap-4 pt-6">
-                <div className="rounded-xl bg-primary/10 p-3">
+                <div className="shrink-0 rounded-xl bg-primary/10 p-3">
                   <c.icon className="h-5 w-5 text-primary" />
                 </div>
                 <div>
@@ -172,8 +176,8 @@ function Overview() {
                 key={d.id}
                 className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-3 last:border-0"
               >
-                <div>
-                  <p className="text-sm font-medium">{d.title}</p>
+                <div className="min-w-0">
+                  <p className="break-words text-sm font-medium">{d.title}</p>
                   <p className="text-xs text-muted-foreground">
                     Atualizado em {formatDateTime(d.updated_at)}
                   </p>
@@ -189,8 +193,8 @@ function Overview() {
                 key={m.id}
                 className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-3 last:border-0"
               >
-                <div>
-                  <p className="text-sm font-medium">Marca: {m.name}</p>
+                <div className="min-w-0">
+                  <p className="break-words text-sm font-medium">Marca: {m.name}</p>
                   <p className="text-xs text-muted-foreground">
                     Atualizado em {formatDateTime(m.updated_at)}
                   </p>

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { LifeBuoy } from "lucide-react";
+import { CheckCheck, LifeBuoy, MessageSquare } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SUPPORT_STATUS_LABEL, formatDateTime } from "@/lib/portal";
 import { useSupportNotifications } from "@/hooks/useSupportNotifications";
+import { EmptyState } from "@/components/EmptyState";
 
 import { RouteErrorState } from "@/components/RouteErrorState";
 
@@ -130,14 +131,29 @@ function SuportePage() {
                   id="message"
                   value={message}
                   maxLength={2000}
+                  className="min-h-35"
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Descreva sua dúvida ou solicitação"
+                  placeholder="Descreva sua dúvida ou solicitação com o máximo de detalhes possível."
                 />
+                <p className="text-xs text-muted-foreground">
+                  {message.length}/2000 caracteres
+                </p>
               </div>
-              <Button type="submit" className="w-full" disabled={send.isPending}>
-                <LifeBuoy className="mr-2 h-4 w-4" />
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
+                disabled={send.isPending}
+                aria-busy={send.isPending}
+              >
+                <LifeBuoy className="h-4 w-4" />
                 {send.isPending ? "Enviando..." : "Enviar solicitação"}
               </Button>
+              {send.isPending && (
+                <p className="text-xs text-muted-foreground" role="status">
+                  Enviando sua solicitação...
+                </p>
+              )}
             </form>
           </CardContent>
         </Card>
@@ -156,7 +172,8 @@ function SuportePage() {
                 disabled={markAllRead.isPending}
                 aria-busy={markAllRead.isPending}
               >
-                Marcar todas como lidas
+                <CheckCheck className="h-4 w-4" />
+                {markAllRead.isPending ? "Marcando..." : "Marcar todas como lidas"}
               </Button>
             </div>
           )}
@@ -169,9 +186,9 @@ function SuportePage() {
               >
                 <CardContent className="pt-6">
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <h3 className="font-serif text-xl">{r.subject}</h3>
-                      <p className="text-xs text-muted-foreground">
+                    <div className="min-w-0">
+                      <h3 className="break-words font-serif text-xl leading-snug">{r.subject}</h3>
+                      <p className="mt-1 text-xs text-muted-foreground">
                         Enviada em {formatDateTime(r.created_at)}
                       </p>
                     </div>
@@ -180,14 +197,25 @@ function SuportePage() {
                       label={SUPPORT_STATUS_LABEL[r.status] ?? r.status}
                     />
                   </div>
-                  <p className="mt-3 whitespace-pre-line text-sm text-muted-foreground">
-                    {r.message}
-                  </p>
-                  {r.admin_reply && (
-                    <p className="mt-3 whitespace-pre-line rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
-                      <span className="text-primary">Zé Registra: </span>
-                      {r.admin_reply}
+
+                  <div className="mt-4 rounded-lg border border-border/60 bg-background/40 p-3">
+                    <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                      Sua mensagem
                     </p>
+                    <p className="mt-1.5 whitespace-pre-line break-words text-sm text-muted-foreground">
+                      {r.message}
+                    </p>
+                  </div>
+
+                  {r.admin_reply && (
+                    <div className="mt-3 rounded-lg border border-primary/25 bg-primary/5 p-3">
+                      <p className="text-[11px] uppercase tracking-[0.14em] text-primary">
+                        Resposta da Zé Registra
+                      </p>
+                      <p className="mt-1.5 whitespace-pre-line break-words text-sm text-foreground">
+                        {r.admin_reply}
+                      </p>
+                    </div>
                   )}
                   {unreadId && (
                     <div className="mt-3 flex items-center gap-3">
@@ -212,11 +240,11 @@ function SuportePage() {
 
           {isLoading && <ListSkeleton />}
           {!isLoading && !requests?.length && (
-            <Card className="bg-card/70">
-              <CardContent className="pt-6 text-sm text-muted-foreground">
-                Nenhuma solicitação enviada ainda.
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={MessageSquare}
+              title="Nenhuma solicitação enviada ainda"
+              description="Abra um chamado no formulário ao lado. As respostas da equipe Zé Registra aparecem aqui."
+            />
           )}
         </div>
       </div>
