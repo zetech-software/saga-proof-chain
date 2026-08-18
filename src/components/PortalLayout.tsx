@@ -80,7 +80,7 @@ export function PortalLayout({
         >
 
           {[
-            ...navItems,
+            ...navItems.filter((item) => !(isAdmin && item.to === "/painel/suporte")),
             ...(isAdmin ? [{ to: "/painel/admin", label: "Admin", icon: Shield }] : []),
           ].map((item) => {
             const active =
