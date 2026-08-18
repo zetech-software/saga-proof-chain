@@ -53,6 +53,13 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-background-secondary: var(--background-secondary);
+  --color-surface: var(--surface);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-blue: var(--brand-blue);
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
   --font-display: "Cinzel", "Playfair Display", serif;
   --font-serif: "Playfair Display", serif;
   --font-sans: "Montserrat", system-ui, sans-serif;
@@ -60,52 +67,64 @@
 
 :root {
   --radius: 0.75rem;
-  --background: oklch(0.16 0.045 275);
-  --foreground: oklch(0.95 0.012 275);
-  --card: oklch(0.21 0.05 278);
-  --card-foreground: oklch(0.95 0.012 275);
-  --popover: oklch(0.19 0.05 278);
-  --popover-foreground: oklch(0.95 0.012 275);
-  --primary: oklch(0.81 0.14 85);
-  --primary-foreground: oklch(0.18 0.05 278);
-  --secondary: oklch(0.31 0.09 288);
-  --secondary-foreground: oklch(0.95 0.012 275);
-  --muted: oklch(0.26 0.05 278);
-  --muted-foreground: oklch(0.72 0.03 278);
-  --accent: oklch(0.55 0.19 295);
-  --accent-foreground: oklch(0.97 0.01 275);
+
+  /* Paleta oficial Saga Mitologia Cósmica */
+  --background: #030712;
+  --background-secondary: #081329;
+  --surface: #101b38;
+  --brand: #542c83;
+  --brand-hover: #8145d6;
+  --brand-blue: #326bff;
+  --gold: #ff8a32;
+  --gold-light: #ffb05a;
+
+  --foreground: #f5f3fa;
+  --card: #101b38;
+  --card-foreground: #f5f3fa;
+  --popover: #0b1densely;
+  --popover: #0b1428;
+  --popover-foreground: #f5f3fa;
+  --primary: #542c83;
+  --primary-foreground: #f5f3fa;
+  --secondary: #1a2547;
+  --secondary-foreground: #f5f3fa;
+  --muted: #16203f;
+  --muted-foreground: #b8b3c7;
+  --accent: #3a2160;
+  --accent-foreground: #ede8f8;
   --destructive: oklch(0.6 0.21 22);
-  --destructive-foreground: oklch(0.97 0.01 275);
+  --destructive-foreground: #f5f3fa;
   --success: oklch(0.68 0.15 160);
-  --success-foreground: oklch(0.16 0.045 275);
+  --success-foreground: #061019;
   --warning: oklch(0.79 0.14 75);
-  --warning-foreground: oklch(0.18 0.05 278);
-  --border: oklch(0.34 0.06 285);
-  --input: oklch(0.3 0.06 285);
-  --ring: oklch(0.81 0.14 85);
-  --chart-1: oklch(0.81 0.14 85);
-  --chart-2: oklch(0.62 0.18 295);
+  --warning-foreground: #12081f;
+  --border: color-mix(in oklab, #8145d6 26%, #101b38);
+  --input: #0a1224;
+  --ring: #8145d6;
+  --chart-1: #8145d6;
+  --chart-2: #326bff;
   --chart-3: oklch(0.68 0.15 160);
-  --chart-4: oklch(0.7 0.14 250);
-  --chart-5: oklch(0.72 0.16 20);
-  --sidebar: oklch(0.19 0.05 278);
-  --sidebar-foreground: oklch(0.92 0.012 275);
-  --sidebar-primary: oklch(0.81 0.14 85);
-  --sidebar-primary-foreground: oklch(0.18 0.05 278);
-  --sidebar-accent: oklch(0.28 0.06 285);
-  --sidebar-accent-foreground: oklch(0.95 0.012 275);
-  --sidebar-border: oklch(0.32 0.06 285);
-  --sidebar-ring: oklch(0.81 0.14 85);
-  --gradient-cosmic: radial-gradient(
-      1200px 600px at 15% -10%,
-      oklch(0.42 0.16 295 / 45%),
-      transparent 60%
-    ),
-    radial-gradient(900px 500px at 90% 0%, oklch(0.45 0.13 250 / 35%), transparent 55%),
-    linear-gradient(180deg, oklch(0.16 0.045 275), oklch(0.13 0.04 275));
-  --gradient-gold: linear-gradient(100deg, oklch(0.87 0.11 92), oklch(0.75 0.15 62));
-  --shadow-cosmic: 0 24px 60px -24px oklch(0.05 0.05 280 / 90%);
-  --shadow-gold: 0 0 0 1px oklch(0.81 0.14 85 / 25%), 0 18px 40px -22px oklch(0.81 0.14 85 / 55%);
+  --chart-4: #ff8a32;
+  --chart-5: #ffb05a;
+  --sidebar: #081329;
+  --sidebar-foreground: #f5f3fa;
+  --sidebar-primary: #542c83;
+  --sidebar-primary-foreground: #f5f3fa;
+  --sidebar-accent: #101b38;
+  --sidebar-accent-foreground: #f5f3fa;
+  --sidebar-border: color-mix(in oklab, #8145d6 22%, #081329);
+  --sidebar-ring: #8145d6;
+
+  --gradient-cosmic: radial-gradient(1200px 600px at 15% -10%, color-mix(in oklab, #542c83 42%, transparent), transparent 60%),
+    radial-gradient(900px 500px at 90% 0%, color-mix(in oklab, #326bff 22%, transparent), transparent 55%),
+    linear-gradient(180deg, #081329, #030712);
+  --gradient-gold: linear-gradient(100deg, #ffb05a, #ff8a32);
+  --gradient-brand: linear-gradient(120deg, #542c83, #8145d6 55%, #326bff);
+  --shadow-cosmic: 0 24px 60px -24px color-mix(in oklab, #030712 90%, transparent);
+  --shadow-gold:
+    0 0 0 1px color-mix(in oklab, #ff8a32 25%, transparent),
+    0 18px 40px -22px color-mix(in oklab, #ff8a32 45%, transparent);
+  --shadow-brand: 0 18px 44px -24px color-mix(in oklab, #8145d6 55%, transparent);
 }
 
 .dark {
@@ -148,8 +167,8 @@
     background-image:
       radial-gradient(1.4px 1.4px at 12% 22%, oklch(1 0 0 / 55%), transparent 60%),
       radial-gradient(1.2px 1.2px at 68% 12%, oklch(1 0 0 / 40%), transparent 60%),
-      radial-gradient(1.6px 1.6px at 82% 66%, oklch(0.9 0.1 85 / 55%), transparent 60%),
-      radial-gradient(1.1px 1.1px at 34% 78%, oklch(1 0 0 / 35%), transparent 60%),
+      radial-gradient(1.6px 1.6px at 82% 66%, color-mix(in oklab, #ff8a32 55%, transparent), transparent 60%),
+      radial-gradient(1.1px 1.1px at 34% 78%, color-mix(in oklab, #8145d6 55%, transparent), transparent 60%),
       radial-gradient(1.3px 1.3px at 52% 44%, oklch(1 0 0 / 30%), transparent 60%);
   }
 }
@@ -159,3 +178,4 @@
   background-clip: text;
   color: transparent;
 }
+
