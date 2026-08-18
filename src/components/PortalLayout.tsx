@@ -51,7 +51,7 @@ export function PortalLayout({
 
   return (
     <div className="min-h-screen overflow-x-hidden">
-      <header className="sticky top-0 z-20 border-b border-border/60 bg-background/85 backdrop-blur-xl">
+      <header className="sticky top-0 z-20 border-b border-border/60 bg-background-secondary/90 backdrop-blur-xl">
         <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 sm:flex sm:flex-wrap sm:justify-between sm:gap-4 sm:px-6 sm:py-4">
           <Link
             to="/painel"
@@ -100,8 +100,8 @@ export function PortalLayout({
                 aria-current={active ? "page" : undefined}
                 className={`flex min-h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:px-4 ${
                   active
-                    ? "bg-brand-hover/15 font-medium text-brand-hover ring-1 ring-inset ring-brand-hover/25"
-                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                    ? "bg-brand/60 font-medium text-foreground ring-1 ring-inset ring-brand-hover/40"
+                    : "text-muted-foreground hover:bg-brand-hover/15 hover:text-foreground"
                 }`}
               >
                 <item.icon className="h-4 w-4 shrink-0" />
