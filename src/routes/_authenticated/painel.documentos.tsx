@@ -6,6 +6,7 @@ import { Clock, Download, UploadCloud } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { ListSkeleton } from "@/components/ListSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,7 +40,7 @@ function DocumentosPage() {
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
 
-  const { data: docs } = useQuery({
+  const { data: docs, isLoading } = useQuery({
     queryKey: ["documents"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -226,7 +227,8 @@ function DocumentosPage() {
               </CardContent>
             </Card>
           ))}
-          {!docs?.length && (
+          {isLoading && <ListSkeleton />}
+          {!isLoading && !docs?.length && (
             <Card className="bg-card/70">
               <CardContent className="pt-6 text-sm text-muted-foreground">
                 Nenhum documento enviado ainda.

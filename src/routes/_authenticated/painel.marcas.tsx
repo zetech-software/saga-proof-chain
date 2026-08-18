@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { ListSkeleton } from "@/components/ListSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,7 +47,7 @@ function MarcasPage() {
     notes: "",
   });
 
-  const { data: marcas } = useQuery({
+  const { data: marcas, isLoading } = useQuery({
     queryKey: ["trademarks"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -206,7 +207,8 @@ function MarcasPage() {
               </CardContent>
             </Card>
           ))}
-          {!marcas?.length && (
+          {isLoading && <ListSkeleton />}
+          {!isLoading && !marcas?.length && (
             <Card className="bg-card/70">
               <CardContent className="pt-6 text-sm text-muted-foreground">
                 Nenhuma marca submetida ainda.

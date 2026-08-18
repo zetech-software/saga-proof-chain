@@ -6,6 +6,7 @@ import { Download, ExternalLink, ShieldCheck } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { ListSkeleton } from "@/components/ListSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { OFFICIAL_LINKS, formatDateTime } from "@/lib/portal";
 
@@ -31,7 +32,7 @@ export const Route = createFileRoute("/_authenticated/painel/certificados")({
 function CertificadosPage() {
   const queryClient = useQueryClient();
 
-  const { data: certs } = useQuery({
+  const { data: certs, isLoading } = useQuery({
     queryKey: ["certificates"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -127,7 +128,8 @@ function CertificadosPage() {
             </CardContent>
           </Card>
         ))}
-        {!certs?.length && (
+        {isLoading && <ListSkeleton />}
+        {!isLoading && !certs?.length && (
           <Card className="bg-card/70">
             <CardContent className="pt-6 text-sm text-muted-foreground">
               Nenhum certificado emitido ainda. Assim que o registro for concluído, ele aparece aqui
