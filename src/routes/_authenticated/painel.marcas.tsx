@@ -162,7 +162,13 @@ function MarcasPage() {
                   placeholder="Detalhes relevantes sobre a marca"
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={createMutation.isPending}>
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
+                disabled={createMutation.isPending}
+                aria-busy={createMutation.isPending}
+              >
                 {createMutation.isPending ? "Enviando..." : "Submeter marca"}
               </Button>
             </form>
@@ -174,9 +180,9 @@ function MarcasPage() {
             <Card key={m.id} className="bg-card/70">
               <CardContent className="pt-6">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h3 className="font-serif text-xl">{m.name}</h3>
-                    <p className="text-xs text-muted-foreground">
+                  <div className="min-w-0">
+                    <h3 className="break-words font-serif text-xl leading-snug">{m.name}</h3>
+                    <p className="mt-1 break-words text-xs text-muted-foreground">
                       Submetida em {formatDate(m.submitted_at)}
                       {m.protocol_number ? ` · Protocolo ${m.protocol_number}` : ""}
                     </p>
@@ -212,11 +218,11 @@ function MarcasPage() {
           ))}
           {isLoading && <ListSkeleton />}
           {!isLoading && !marcas?.length && (
-            <Card className="bg-card/70">
-              <CardContent className="pt-6 text-sm text-muted-foreground">
-                Nenhuma marca submetida ainda.
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={Stamp}
+              title="Nenhuma marca submetida ainda"
+              description="Use o formulário ao lado para submeter a primeira marca ao processo de registro."
+            />
           )}
         </div>
       </div>
