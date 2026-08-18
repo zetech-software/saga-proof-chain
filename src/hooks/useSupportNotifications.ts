@@ -14,7 +14,6 @@ export type SupportNotification = {
   read_at: string | null;
 };
 
-
 const activeChannels = new Map<
   string,
   { channel: ReturnType<typeof supabase.channel>; refs: number }
@@ -88,7 +87,6 @@ export function useSupportNotifications() {
     };
   }, [userId, queryClient]);
 
-
   const unread = query.data ?? [];
 
   const markRead = useMutation({
@@ -98,8 +96,7 @@ export function useSupportNotifications() {
       });
       if (error) throw error;
     },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["support-notifications", userId] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["support-notifications", userId] }),
   });
 
   const markAllRead = useMutation({
@@ -109,8 +106,7 @@ export function useSupportNotifications() {
       });
       if (error) throw error;
     },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["support-notifications", userId] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["support-notifications", userId] }),
   });
 
   function unreadOfType(type: SupportNotificationType) {

@@ -686,9 +686,7 @@ function AdminPage() {
                     </div>
                   )}
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {formatDateTime(s.created_at)}
-                </p>
+                <p className="mt-1 text-xs text-muted-foreground">{formatDateTime(s.created_at)}</p>
                 <p className="mt-2 whitespace-pre-line text-sm text-muted-foreground">
                   {s.message}
                 </p>
@@ -727,7 +725,6 @@ function AdminPage() {
           )}
         </CardContent>
       </Card>
-
     </div>
   );
 }
