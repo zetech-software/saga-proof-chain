@@ -50,26 +50,35 @@ export function PortalLayout({
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-hidden">
       <header className="sticky top-0 z-20 border-b border-border/60 bg-background/85 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <Link to="/painel" className="flex items-center gap-3">
-            <SagaLogo className="h-10 sm:h-12" />
-            <span className="hidden text-[11px] uppercase tracking-[0.3em] text-muted-foreground sm:inline">
+        <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 sm:flex sm:flex-wrap sm:justify-between sm:gap-4 sm:px-6 sm:py-4">
+          <Link
+            to="/painel"
+            className="flex min-w-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            <SagaLogo className="h-9 shrink-0 sm:h-12" />
+            <span className="hidden text-[11px] uppercase tracking-[0.3em] text-muted-foreground lg:inline">
               Torre de Registros
             </span>
           </Link>
 
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-3">
             {email && (
-              <span className="hidden text-xs text-muted-foreground sm:inline">{email}</span>
+              <span className="hidden max-w-[220px] truncate text-xs text-muted-foreground lg:inline">
+                {email}
+              </span>
             )}
             <Button variant="outline" size="sm" onClick={signOut}>
-              <LogOut className="mr-2 h-4 w-4" /> Sair
+              <LogOut className="h-4 w-4" /> Sair
             </Button>
           </div>
         </div>
-        <nav className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-2 pb-2 sm:px-5">
+        <nav
+          aria-label="Navegação do portal"
+          className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-3 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] sm:px-5 [&::-webkit-scrollbar]:hidden"
+        >
+
           {[
             ...navItems,
             ...(isAdmin ? [{ to: "/painel/admin", label: "Admin", icon: Shield }] : []),
