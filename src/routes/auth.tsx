@@ -125,10 +125,23 @@ function AuthPage() {
               placeholder="••••••••"
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full" disabled={loading} aria-busy={loading}>
             {loading ? "Entrando..." : "Entrar na torre"}
           </Button>
         </form>
+
+        <div className="mt-4 text-center">
+          <button
+            type="button"
+            onClick={onForgotPassword}
+            disabled={sendingReset}
+            aria-busy={sendingReset}
+            className="rounded text-xs text-muted-foreground underline underline-offset-4 transition-colors hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+          >
+            {sendingReset ? "Enviando link..." : "Esqueci minha senha"}
+          </button>
+        </div>
+
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
           Acesso exclusivo. Os usuários são criados pela equipe Zé Registra.
