@@ -288,7 +288,7 @@ function AdminPage() {
   if (!session?.isAdmin) {
     return (
       <Card className="bg-card/70">
-        <CardContent className="pt-6 text-sm text-muted-foreground">
+        <CardContent className="px-6 py-8 text-sm text-muted-foreground">
           Área restrita à equipe Zé Registra.
         </CardContent>
       </Card>
@@ -547,8 +547,8 @@ function AdminPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {(data?.docs ?? []).map((d) => (
-            <div key={d.id} className="rounded-lg border border-border/60 p-4">
-              <p className="font-medium">{d.title}</p>
+            <div key={d.id} className="rounded-xl border border-border/60 bg-background/30 p-4">
+              <p className="break-words font-medium">{d.title}</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <Select
                   value={d.status}
@@ -589,8 +589,8 @@ function AdminPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {(data?.marcas ?? []).map((m) => (
-            <div key={m.id} className="rounded-lg border border-border/60 p-4">
-              <p className="font-medium">{m.name}</p>
+            <div key={m.id} className="rounded-xl border border-border/60 bg-background/30 p-4">
+              <p className="break-words font-medium">{m.name}</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-3">
                 <Select
                   value={m.status}
