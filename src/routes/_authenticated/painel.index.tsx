@@ -6,9 +6,11 @@ import { Stamp, FileText, ShieldCheck, Clock, ExternalLink } from "lucide-react"
 
 import { supabase } from "@/integrations/supabase/client";
 import guardiaoVideo from "@/assets/guardiao.mp4.asset.json";
+import guardiaoPoster from "@/assets/guardiao-poster.jpg";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/StatusBadge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DOCUMENT_STATUS_LABEL,
   OFFICIAL_LINKS,
@@ -20,12 +22,12 @@ import {
 export const Route = createFileRoute("/_authenticated/painel/")({
   head: () => ({
     meta: [
-      { title: "Visão geral — Portal Saga Mitologia Cósmica" },
+      { title: "Visão geral — Torre de Registros | Saga Mitologia Cósmica" },
       {
         name: "description",
         content: "Resumo de marcas, documentos na esteira e certificados em blockchain.",
       },
-      { property: "og:title", content: "Visão geral — Portal Saga Mitologia Cósmica" },
+      { property: "og:title", content: "Visão geral — Torre de Registros | Saga Mitologia Cósmica" },
       { property: "og:description", content: "Acompanhe seus registros em tempo real." },
     ],
   }),
@@ -35,7 +37,7 @@ export const Route = createFileRoute("/_authenticated/painel/")({
 function Overview() {
   const queryClient = useQueryClient();
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["overview"],
     queryFn: async () => {
       const [marcas, docs, certs] = await Promise.all([
@@ -100,6 +102,8 @@ function Overview() {
         <video
           className="aspect-video w-full object-contain mix-blend-screen"
           src={guardiaoVideo.url}
+          poster={guardiaoPoster}
+          preload="metadata"
           autoPlay
           loop
           muted
@@ -128,7 +132,11 @@ function Overview() {
                   <c.icon className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-3xl font-semibold">{c.value}</p>
+                  {isLoading ? (
+                    <Skeleton className="h-9 w-12" />
+                  ) : (
+                    <p className="text-3xl font-semibold">{c.value}</p>
+                  )}
                   <p className="text-xs uppercase tracking-widest text-muted-foreground">
                     {c.label}
                   </p>
@@ -189,7 +197,20 @@ function Overview() {
                 />
               </div>
             ))}
-            {!data?.docs.length && !data?.marcas.length && (
+            {isLoading &&
+              Array.from({ length: 3 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-3 last:border-0"
+                >
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-40" />
+                    <Skeleton className="h-3 w-28" />
+                  </div>
+                  <Skeleton className="h-7 w-28 rounded-full" />
+                </div>
+              ))}
+            {!isLoading && !data?.docs.length && !data?.marcas.length && (
               <p className="text-sm text-muted-foreground">Nenhum registro ainda.</p>
             )}
           </CardContent>

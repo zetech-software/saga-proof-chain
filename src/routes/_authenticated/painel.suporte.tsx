@@ -6,6 +6,7 @@ import { LifeBuoy } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { ListSkeleton } from "@/components/ListSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +17,7 @@ import { SUPPORT_STATUS_LABEL, formatDateTime } from "@/lib/portal";
 export const Route = createFileRoute("/_authenticated/painel/suporte")({
   head: () => ({
     meta: [
-      { title: "Suporte — Portal Saga Mitologia Cósmica" },
+      { title: "Suporte — Torre de Registros | Saga Mitologia Cósmica" },
       {
         name: "description",
         content: "Envie dúvidas e solicitações à equipe Zé Registra e acompanhe as respostas.",
@@ -36,7 +37,7 @@ function SuportePage() {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
 
-  const { data: requests } = useQuery({
+  const { data: requests, isLoading } = useQuery({
     queryKey: ["support-requests"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -164,7 +165,8 @@ function SuportePage() {
               </CardContent>
             </Card>
           ))}
-          {!requests?.length && (
+          {isLoading && <ListSkeleton />}
+          {!isLoading && !requests?.length && (
             <Card className="bg-card/70">
               <CardContent className="pt-6 text-sm text-muted-foreground">
                 Nenhuma solicitação enviada ainda.

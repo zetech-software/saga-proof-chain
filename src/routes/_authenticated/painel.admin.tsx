@@ -30,12 +30,12 @@ import {
 export const Route = createFileRoute("/_authenticated/painel/admin")({
   head: () => ({
     meta: [
-      { title: "Administração — Portal Saga Mitologia Cósmica" },
+      { title: "Administração — Torre de Registros | Saga Mitologia Cósmica" },
       {
         name: "description",
         content: "Painel interno Zé Registra para atualizar status e emitir certificados.",
       },
-      { property: "og:title", content: "Administração — Portal Saga Mitologia Cósmica" },
+      { property: "og:title", content: "Administração — Torre de Registros | Saga Mitologia Cósmica" },
       { property: "og:description", content: "Gestão interna dos registros." },
     ],
   }),
