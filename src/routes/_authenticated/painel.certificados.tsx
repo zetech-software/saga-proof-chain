@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ListSkeleton } from "@/components/ListSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { OFFICIAL_LINKS, formatDateTime } from "@/lib/portal";
+import { downloadFromBucket } from "@/lib/downloads";
 
 import { RouteErrorState } from "@/components/RouteErrorState";
 
@@ -60,17 +61,8 @@ function CertificadosPage() {
   }, [queryClient]);
 
   async function download(path: string, name: string) {
-    const { data, error } = await supabase.storage.from("certificados").createSignedUrl(path, 60);
-    if (error || !data) {
-      toast.error("Não foi possível gerar o link do certificado");
-      return;
-    }
-    const a = document.createElement("a");
-    a.href = data.signedUrl;
-    a.download = name;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    a.click();
+    const result = await downloadFromBucket("certificados", path, name);
+    if (!result.ok) toast.error(result.message);
   }
 
   return (
