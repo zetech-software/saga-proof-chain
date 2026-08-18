@@ -17,8 +17,7 @@ export const Route = createFileRoute("/redefinir-senha")({
       { title: "Definir nova senha — Torre de Registros" },
       {
         name: "description",
-        content:
-          "Defina uma nova senha de acesso à Torre de Registros da Saga Mitologia Cósmica.",
+        content: "Defina uma nova senha de acesso à Torre de Registros da Saga Mitologia Cósmica.",
       },
       { property: "og:title", content: "Definir nova senha — Torre de Registros" },
       {
@@ -99,7 +98,6 @@ function ResetPasswordPage() {
     void resolveRecovery();
     return () => {
       active = false;
-
     };
   }, []);
 

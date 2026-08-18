@@ -90,7 +90,6 @@ function AuthPage() {
     toast.success("Se este e-mail estiver cadastrado, enviamos um link de redefinição.");
   }
 
-
   return (
     <div className="starfield flex min-h-screen flex-col items-center justify-center px-4 py-12">
       <div className="w-full max-w-md rounded-2xl border border-border/70 bg-card/80 p-8 shadow-[var(--shadow-cosmic)] backdrop-blur">
@@ -100,7 +99,6 @@ function AuthPage() {
             Torre de Registros
           </p>
         </div>
-
 
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -141,7 +139,6 @@ function AuthPage() {
             {sendingReset ? "Enviando link..." : "Esqueci minha senha"}
           </button>
         </div>
-
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
           Acesso exclusivo. Os usuários são criados pela equipe Zé Registra.
