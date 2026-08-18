@@ -39,6 +39,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sendingReset, setSendingReset] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -63,6 +64,32 @@ function AuthPage() {
     toast.success("Bem-vindo de volta!");
     navigate({ to: "/painel", replace: true });
   }
+
+  async function onForgotPassword() {
+    const parsedEmail = z
+      .string()
+      .trim()
+      .email({ message: "Informe um e-mail válido para recuperar a senha" })
+      .max(255)
+      .safeParse(email);
+    if (!parsedEmail.success) {
+      toast.error(parsedEmail.error.issues[0]?.message ?? "Informe um e-mail válido");
+      document.getElementById("email")?.focus();
+      return;
+    }
+    setSendingReset(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(parsedEmail.data, {
+      redirectTo: `${window.location.origin}/redefinir-senha`,
+    });
+    setSendingReset(false);
+    if (error && error.message?.toLowerCase().includes("rate")) {
+      toast.error("Muitas tentativas. Aguarde alguns minutos e tente novamente.");
+      return;
+    }
+    // Resposta neutra: não revela se o e-mail existe.
+    toast.success("Se este e-mail estiver cadastrado, enviamos um link de redefinição.");
+  }
+
 
   return (
     <div className="starfield flex min-h-screen flex-col items-center justify-center px-4 py-12">
@@ -98,10 +125,23 @@ function AuthPage() {
               placeholder="••••••••"
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full" disabled={loading} aria-busy={loading}>
             {loading ? "Entrando..." : "Entrar na torre"}
           </Button>
         </form>
+
+        <div className="mt-4 text-center">
+          <button
+            type="button"
+            onClick={onForgotPassword}
+            disabled={sendingReset}
+            aria-busy={sendingReset}
+            className="rounded text-xs text-muted-foreground underline underline-offset-4 transition-colors hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+          >
+            {sendingReset ? "Enviando link..." : "Esqueci minha senha"}
+          </button>
+        </div>
+
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
           Acesso exclusivo. Os usuários são criados pela equipe Zé Registra.

@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { LayoutDashboard, Stamp, FileText, ShieldCheck, Shield, LifeBuoy, LogOut } from "lucide-react";
+import { LayoutDashboard, Stamp, FileText, ShieldCheck, Shield, LifeBuoy, LogOut, UserCog } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +15,9 @@ const navItems = [
   { to: "/painel/documentos", label: "Documentos", icon: FileText },
   { to: "/painel/certificados", label: "Certificados", icon: ShieldCheck },
   { to: "/painel/suporte", label: "Suporte", icon: LifeBuoy },
+  { to: "/painel/conta", label: "Minha conta", icon: UserCog },
 ];
+
 
 export function PortalLayout({
   children,
