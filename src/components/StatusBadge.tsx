@@ -1,8 +1,9 @@
 import { statusTone } from "@/lib/portal";
 
 const toneClass: Record<string, string> = {
-  gold: "border-primary/35 bg-primary/10 text-primary",
-  violet: "border-accent/40 bg-accent/15 text-accent-foreground",
+  gold: "border-gold/35 bg-gold/10 text-gold-light",
+  violet: "border-brand-hover/40 bg-brand-hover/15 text-brand-hover",
+
   green: "border-success/35 bg-success/10 text-success",
   red: "border-destructive/35 bg-destructive/10 text-destructive",
   muted: "border-border/70 bg-muted/50 text-muted-foreground",

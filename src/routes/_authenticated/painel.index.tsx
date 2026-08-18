@@ -134,10 +134,10 @@ function Overview() {
             to={c.to}
             className="rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
-            <Card className="h-full border-border/70 bg-card/70 transition-colors hover:border-primary/50 hover:bg-card/90">
+            <Card className="h-full border-border/70 bg-card/70 transition-colors hover:border-brand-hover/50 hover:bg-card/90">
               <CardContent className="flex items-center gap-4 pt-6">
-                <div className="shrink-0 rounded-xl bg-primary/10 p-3">
-                  <c.icon className="h-5 w-5 text-primary" />
+                <div className="shrink-0 rounded-xl bg-brand-hover/10 p-3">
+                  <c.icon className="h-5 w-5 text-brand-hover" />
                 </div>
                 <div>
                   {isLoading ? (
@@ -155,9 +155,9 @@ function Overview() {
         ))}
       </div>
 
-      <Card className="border-primary/30 bg-primary/5">
+      <Card className="border-brand-hover/30 bg-brand-hover/5">
         <CardContent className="flex flex-wrap items-center gap-3 pt-6 text-sm">
-          <Clock className="h-4 w-4 text-primary" />
+          <Clock className="h-4 w-4 text-brand-hover" />
           <span>
             Prazo médio de registro em blockchain: <strong>{PRAZO_TEXTO}</strong> por documento
             submetido, por razão de prazo documental e disponibilidade da plataforma.
@@ -235,7 +235,7 @@ function Overview() {
                 href={l.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block rounded-lg border border-border/60 p-3 transition-colors hover:border-primary/50"
+                className="block rounded-lg border border-border/60 p-3 transition-colors hover:border-brand-hover/50"
               >
                 <p className="flex items-center gap-2 text-sm font-medium">
                   {l.name} <ExternalLink className="h-3 w-3 text-muted-foreground" />

@@ -48,7 +48,7 @@ function Home() {
   return (
     <div className="starfield flex min-h-screen flex-col">
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center px-6 py-20">
-        <p className="text-xs uppercase tracking-[0.4em] text-primary">Acesso exclusivo</p>
+        <p className="text-xs uppercase tracking-[0.4em] text-brand-hover">Acesso exclusivo</p>
         <SagaLogo className="mt-6 h-28 sm:h-40" />
         <h1 className="mt-4 font-display text-3xl leading-tight text-gold sm:text-4xl">
           <span className="sr-only">Saga Mitologia Cósmica — </span>
@@ -74,7 +74,7 @@ function Home() {
               key={f.title}
               className="rounded-2xl border border-border/70 bg-card/60 p-6 backdrop-blur"
             >
-              <f.icon className="h-5 w-5 text-primary" />
+              <f.icon className="h-5 w-5 text-brand-hover" />
               <h2 className="mt-4 font-serif text-lg">{f.title}</h2>
               <p className="mt-2 text-sm text-muted-foreground">{f.text}</p>
             </div>

@@ -51,7 +51,7 @@ export function PortalLayout({
 
   return (
     <div className="min-h-screen overflow-x-hidden">
-      <header className="sticky top-0 z-20 border-b border-border/60 bg-background/85 backdrop-blur-xl">
+      <header className="sticky top-0 z-20 border-b border-border/60 bg-background-secondary/90 backdrop-blur-xl">
         <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 sm:flex sm:flex-wrap sm:justify-between sm:gap-4 sm:px-6 sm:py-4">
           <Link
             to="/painel"
@@ -100,15 +100,15 @@ export function PortalLayout({
                 aria-current={active ? "page" : undefined}
                 className={`flex min-h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:px-4 ${
                   active
-                    ? "bg-primary/15 font-medium text-primary ring-1 ring-inset ring-primary/25"
-                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                    ? "bg-brand/60 font-medium text-foreground ring-1 ring-inset ring-brand-hover/40"
+                    : "text-muted-foreground hover:bg-brand-hover/15 hover:text-foreground"
                 }`}
               >
                 <item.icon className="h-4 w-4 shrink-0" />
                 {item.label}
                 {count > 0 && (
                   <span
-                    className="inline-flex min-w-5 items-center justify-center rounded-full border border-primary/40 bg-primary/20 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-primary"
+                    className="inline-flex min-w-5 items-center justify-center rounded-full border border-brand-hover/40 bg-brand-hover/20 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-brand-hover"
                     aria-hidden="true"
                   >
 

@@ -176,7 +176,7 @@ function SuportePage() {
 
         <div className="space-y-4">
           {clientCount > 0 && (
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-brand-hover/30 bg-brand-hover/5 px-4 py-3">
               <p className="text-sm">
                 Você tem {clientCount}{" "}
                 {clientCount === 1 ? "resposta não lida" : "respostas não lidas"}.
@@ -198,7 +198,7 @@ function SuportePage() {
             return (
               <Card
                 key={r.id}
-                className={`bg-card/70 ${unreadId ? "border-primary/50 ring-1 ring-primary/30" : ""}`}
+                className={`bg-card/70 ${unreadId ? "border-brand-hover/50 ring-1 ring-brand-hover/30" : ""}`}
               >
                 <CardContent className="pt-6">
                   <div className="flex flex-wrap items-start justify-between gap-3">
@@ -224,8 +224,8 @@ function SuportePage() {
                   </div>
 
                   {r.admin_reply && (
-                    <div className="mt-3 rounded-lg border border-primary/25 bg-primary/5 p-3">
-                      <p className="text-[11px] uppercase tracking-[0.14em] text-primary">
+                    <div className="mt-3 rounded-lg border border-brand-hover/25 bg-brand-hover/5 p-3">
+                      <p className="text-[11px] uppercase tracking-[0.14em] text-brand-hover">
                         Resposta da Zé Registra
                       </p>
                       <p className="mt-1.5 whitespace-pre-line break-words text-sm text-foreground">
@@ -235,7 +235,7 @@ function SuportePage() {
                   )}
                   {unreadId && (
                     <div className="mt-3 flex items-center gap-3">
-                      <span className="inline-flex items-center rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs text-primary">
+                      <span className="inline-flex items-center rounded-full border border-brand-hover/40 bg-brand-hover/10 px-3 py-1 text-xs text-brand-hover">
                         Resposta não lida
                       </span>
                       <Button
