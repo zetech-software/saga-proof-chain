@@ -160,6 +160,41 @@ export type Database = {
         }
         Relationships: []
       }
+      support_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          read_at: string | null
+          recipient_id: string
+          support_request_id: string
+          type: Database["public"]["Enums"]["support_notification_type"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          recipient_id: string
+          support_request_id: string
+          type: Database["public"]["Enums"]["support_notification_type"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          recipient_id?: string
+          support_request_id?: string
+          type?: Database["public"]["Enums"]["support_notification_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_notifications_support_request_id_fkey"
+            columns: ["support_request_id"]
+            isOneToOne: false
+            referencedRelation: "support_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_requests: {
         Row: {
           admin_reply: string | null
@@ -274,9 +309,20 @@ export type Database = {
         }
         Returns: boolean
       }
+      mark_all_support_notifications_read: {
+        Args: {
+          _type: Database["public"]["Enums"]["support_notification_type"]
+        }
+        Returns: undefined
+      }
+      mark_support_notification_read: {
+        Args: { _notification_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "cliente"
+      support_notification_type: "new_support_request" | "support_response"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -405,6 +451,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "cliente"],
+      support_notification_type: ["new_support_request", "support_response"],
     },
   },
 } as const

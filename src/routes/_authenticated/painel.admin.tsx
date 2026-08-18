@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { usePortalSession } from "@/hooks/usePortalSession";
+import { useSupportNotifications } from "@/hooks/useSupportNotifications";
 import {
   DOCUMENT_STATUSES,
   DOCUMENT_STATUS_LABEL,
@@ -58,7 +59,22 @@ export const Route = createFileRoute("/_authenticated/painel/admin")({
 function AdminPage() {
   const { data: session, isLoading } = usePortalSession();
   const queryClient = useQueryClient();
+  const { adminCount, unreadIdFor, markRead, markAllRead } = useSupportNotifications();
   const certFileRef = useRef<HTMLInputElement>(null);
+
+  const isAdmin = !!session?.isAdmin;
+  useEffect(() => {
+    if (!isAdmin) return;
+    const channel = supabase
+      .channel("admin-support-queue")
+      .on("postgres_changes", { event: "*", schema: "public", table: "support_requests" }, () =>
+        queryClient.invalidateQueries({ queryKey: ["admin-data"] }),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isAdmin, queryClient]);
 
   const [cert, setCert] = useState({
     title: "",
@@ -619,48 +635,99 @@ function AdminPage() {
       </Card>
 
       <Card className="bg-card/70">
-        <CardHeader>
+        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
           <CardTitle className="text-lg">Solicitações de suporte</CardTitle>
+          {adminCount > 0 && (
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground">
+                {adminCount}{" "}
+                {adminCount === 1
+                  ? "chamado novo não visualizado"
+                  : "chamados novos não visualizados"}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => markAllRead.mutate("new_support_request")}
+                disabled={markAllRead.isPending}
+                aria-busy={markAllRead.isPending}
+              >
+                Marcar todas como lidas
+              </Button>
+            </div>
+          )}
         </CardHeader>
         <CardContent className="space-y-4">
-          {(data?.suporte ?? []).map((s) => (
-            <div key={s.id} className="rounded-lg border border-border/60 p-4">
-              <p className="font-medium">{s.subject}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{formatDateTime(s.created_at)}</p>
-              <p className="mt-2 whitespace-pre-line text-sm text-muted-foreground">{s.message}</p>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <Select
-                  value={s.status}
-                  onValueChange={(v) => updateSupport.mutate({ id: s.id, status: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SUPPORT_STATUSES.map((st) => (
-                      <SelectItem key={st} value={st}>
-                        {SUPPORT_STATUS_LABEL[st]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  defaultValue={s.admin_reply ?? ""}
-                  placeholder="Resposta ao cliente"
-                  maxLength={2000}
-                  onBlur={(e) =>
-                    e.target.value !== (s.admin_reply ?? "") &&
-                    updateSupport.mutate({ id: s.id, admin_reply: e.target.value })
-                  }
-                />
+          {(data?.suporte ?? []).map((s) => {
+            const unreadId = unreadIdFor("new_support_request", s.id);
+            return (
+              <div
+                key={s.id}
+                className={`rounded-lg border p-4 ${
+                  unreadId ? "border-primary/50 bg-primary/5" : "border-border/60"
+                }`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="font-medium">{s.subject}</p>
+                  {unreadId && (
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs text-primary">
+                        Não visualizado
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => markRead.mutate(unreadId)}
+                        disabled={markRead.isPending}
+                        aria-label={`Marcar chamado ${s.subject} como visualizado`}
+                      >
+                        Marcar como visualizado
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {formatDateTime(s.created_at)}
+                </p>
+                <p className="mt-2 whitespace-pre-line text-sm text-muted-foreground">
+                  {s.message}
+                </p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <Select
+                    value={s.status}
+                    onValueChange={(v) => updateSupport.mutate({ id: s.id, status: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SUPPORT_STATUSES.map((st) => (
+                        <SelectItem key={st} value={st}>
+                          {SUPPORT_STATUS_LABEL[st]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    defaultValue={s.admin_reply ?? ""}
+                    placeholder="Resposta ao cliente"
+                    maxLength={2000}
+                    onFocus={() => unreadId && markRead.mutate(unreadId)}
+                    onBlur={(e) =>
+                      e.target.value !== (s.admin_reply ?? "") &&
+                      updateSupport.mutate({ id: s.id, admin_reply: e.target.value })
+                    }
+                  />
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           {!data?.suporte.length && (
             <p className="text-sm text-muted-foreground">Nenhuma solicitação enviada ainda.</p>
           )}
         </CardContent>
       </Card>
+
     </div>
   );
 }
