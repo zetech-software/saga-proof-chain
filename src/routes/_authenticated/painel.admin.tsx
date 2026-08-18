@@ -489,8 +489,18 @@ function AdminPage() {
                 id="cfile"
                 type="file"
                 ref={certFileRef}
-                onChange={(e) => setCertFile(e.target.files?.[0] ?? null)}
+                accept={ACCEPT_ATTRIBUTE}
+                aria-describedby="cfile-help"
+                onChange={(e) => pickFile(e.target.files?.[0] ?? null, setCertFile, certFileRef)}
               />
+              <p id="cfile-help" className="text-xs text-muted-foreground">
+                {UPLOAD_HELP_TEXT}
+              </p>
+              {certFile && (
+                <p className="break-all text-xs text-foreground">
+                  Selecionado: {certFile.name} · {formatBytes(certFile.size)}
+                </p>
+              )}
             </div>
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="cnotes">Observações</Label>
@@ -502,7 +512,11 @@ function AdminPage() {
               />
             </div>
             <div className="sm:col-span-2">
-              <Button type="submit" disabled={createCert.isPending}>
+              <Button
+                type="submit"
+                disabled={createCert.isPending}
+                aria-busy={createCert.isPending}
+              >
                 {createCert.isPending ? "Publicando..." : "Publicar certificado"}
               </Button>
             </div>
