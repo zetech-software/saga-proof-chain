@@ -57,16 +57,107 @@ function AdminPage() {
   });
   const [certFile, setCertFile] = useState<File | null>(null);
 
+  const newDocFileRef = useRef<HTMLInputElement>(null);
+  const [newDoc, setNewDoc] = useState({ title: "", description: "" });
+  const [newDocFile, setNewDocFile] = useState<File | null>(null);
+  const [newMarca, setNewMarca] = useState({
+    name: "",
+    holder: "",
+    nice_class: "",
+    segment: "",
+    notes: "",
+  });
+
   const { data } = useQuery({
     queryKey: ["admin-data"],
     queryFn: async () => {
-      const [marcas, docs] = await Promise.all([
+      const [marcas, docs, suporte] = await Promise.all([
         supabase.from("trademarks").select("*").order("submitted_at", { ascending: false }),
         supabase.from("documents").select("*").order("submitted_at", { ascending: false }),
+        supabase.from("support_requests").select("*").order("created_at", { ascending: false }),
       ]);
-      return { marcas: marcas.data ?? [], docs: docs.data ?? [] };
+      return { marcas: marcas.data ?? [], docs: docs.data ?? [], suporte: suporte.data ?? [] };
     },
     enabled: !!session?.isAdmin,
+  });
+
+  const createDoc = useMutation({
+    mutationFn: async () => {
+      if (newDoc.title.trim().length < 2) throw new Error("Informe o título do documento");
+      if (!newDocFile) throw new Error("Selecione um arquivo");
+      if (newDocFile.size > 50 * 1024 * 1024) throw new Error("Arquivo maior que 50 MB");
+
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      if (!userId) throw new Error("Sessão expirada");
+
+      const safeName = newDocFile.name.replace(/[^\w.\-]/g, "_");
+      const path = `${userId}/${Date.now()}-${safeName}`;
+      const { error: upErr } = await supabase.storage.from("documentos").upload(path, newDocFile);
+      if (upErr) throw upErr;
+
+      const { error } = await supabase.from("documents").insert({
+        title: newDoc.title.trim(),
+        description: newDoc.description.trim() || null,
+        storage_path: path,
+        file_name: newDocFile.name,
+        file_size: newDocFile.size,
+        mime_type: newDocFile.type || null,
+        created_by: userId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Documento cadastrado");
+      setNewDoc({ title: "", description: "" });
+      setNewDocFile(null);
+      if (newDocFileRef.current) newDocFileRef.current.value = "";
+      queryClient.invalidateQueries({ queryKey: ["admin-data"] });
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+    },
+    onError: (e: unknown) =>
+      toast.error(e instanceof Error ? e.message : "Erro ao cadastrar documento"),
+  });
+
+  const createMarca = useMutation({
+    mutationFn: async () => {
+      if (newMarca.name.trim().length < 2) throw new Error("Informe o nome da marca");
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      if (!userId) throw new Error("Sessão expirada");
+
+      const { error } = await supabase.from("trademarks").insert({
+        name: newMarca.name.trim(),
+        holder: newMarca.holder.trim() || null,
+        nice_class: newMarca.nice_class.trim() || null,
+        segment: newMarca.segment.trim() || null,
+        notes: newMarca.notes.trim() || null,
+        created_by: userId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Marca cadastrada");
+      setNewMarca({ name: "", holder: "", nice_class: "", segment: "", notes: "" });
+      queryClient.invalidateQueries({ queryKey: ["admin-data"] });
+      queryClient.invalidateQueries({ queryKey: ["trademarks"] });
+    },
+    onError: (e: unknown) =>
+      toast.error(e instanceof Error ? e.message : "Erro ao cadastrar marca"),
+  });
+
+  const updateSupport = useMutation({
+    mutationFn: async (input: { id: string; status?: string; admin_reply?: string }) => {
+      const { id, ...patch } = input;
+      const { error } = await supabase.from("support_requests").update(patch).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Solicitação atualizada");
+      queryClient.invalidateQueries({ queryKey: ["admin-data"] });
+      queryClient.invalidateQueries({ queryKey: ["support-requests"] });
+    },
+    onError: () => toast.error("Erro ao atualizar solicitação"),
   });
 
   const updateDoc = useMutation({
