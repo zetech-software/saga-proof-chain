@@ -18,6 +18,7 @@ import { Route as AuthenticatedPainelAdminRouteImport } from './routes/_authenti
 import { Route as AuthenticatedPainelCertificadosRouteImport } from './routes/_authenticated/painel.certificados'
 import { Route as AuthenticatedPainelDocumentosRouteImport } from './routes/_authenticated/painel.documentos'
 import { Route as AuthenticatedPainelMarcasRouteImport } from './routes/_authenticated/painel.marcas'
+import { Route as AuthenticatedPainelSuporteRouteImport } from './routes/_authenticated/painel.suporte'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -68,6 +69,12 @@ const AuthenticatedPainelMarcasRoute =
     path: '/marcas',
     getParentRoute: () => AuthenticatedPainelRoute,
   } as any)
+const AuthenticatedPainelSuporteRoute =
+  AuthenticatedPainelSuporteRouteImport.update({
+    id: '/suporte',
+    path: '/suporte',
+    getParentRoute: () => AuthenticatedPainelRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -77,6 +84,7 @@ export interface FileRoutesByFullPath {
   '/painel/certificados': typeof AuthenticatedPainelCertificadosRoute
   '/painel/documentos': typeof AuthenticatedPainelDocumentosRoute
   '/painel/marcas': typeof AuthenticatedPainelMarcasRoute
+  '/painel/suporte': typeof AuthenticatedPainelSuporteRoute
   '/painel/': typeof AuthenticatedPainelIndexRoute
 }
 export interface FileRoutesByTo {
@@ -86,6 +94,7 @@ export interface FileRoutesByTo {
   '/painel/certificados': typeof AuthenticatedPainelCertificadosRoute
   '/painel/documentos': typeof AuthenticatedPainelDocumentosRoute
   '/painel/marcas': typeof AuthenticatedPainelMarcasRoute
+  '/painel/suporte': typeof AuthenticatedPainelSuporteRoute
   '/painel': typeof AuthenticatedPainelIndexRoute
 }
 export interface FileRoutesById {
@@ -98,6 +107,7 @@ export interface FileRoutesById {
   '/_authenticated/painel/certificados': typeof AuthenticatedPainelCertificadosRoute
   '/_authenticated/painel/documentos': typeof AuthenticatedPainelDocumentosRoute
   '/_authenticated/painel/marcas': typeof AuthenticatedPainelMarcasRoute
+  '/_authenticated/painel/suporte': typeof AuthenticatedPainelSuporteRoute
   '/_authenticated/painel/': typeof AuthenticatedPainelIndexRoute
 }
 export interface FileRouteTypes {
@@ -110,6 +120,7 @@ export interface FileRouteTypes {
     | '/painel/certificados'
     | '/painel/documentos'
     | '/painel/marcas'
+    | '/painel/suporte'
     | '/painel/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/painel/certificados'
     | '/painel/documentos'
     | '/painel/marcas'
+    | '/painel/suporte'
     | '/painel'
   id:
     | '__root__'
@@ -130,6 +142,7 @@ export interface FileRouteTypes {
     | '/_authenticated/painel/certificados'
     | '/_authenticated/painel/documentos'
     | '/_authenticated/painel/marcas'
+    | '/_authenticated/painel/suporte'
     | '/_authenticated/painel/'
   fileRoutesById: FileRoutesById
 }
@@ -204,6 +217,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelMarcasRouteImport
       parentRoute: typeof AuthenticatedPainelRoute
     }
+    '/_authenticated/painel/suporte': {
+      id: '/_authenticated/painel/suporte'
+      path: '/suporte'
+      fullPath: '/painel/suporte'
+      preLoaderRoute: typeof AuthenticatedPainelSuporteRouteImport
+      parentRoute: typeof AuthenticatedPainelRoute
+    }
   }
 }
 
@@ -212,6 +232,7 @@ interface AuthenticatedPainelRouteChildren {
   AuthenticatedPainelCertificadosRoute: typeof AuthenticatedPainelCertificadosRoute
   AuthenticatedPainelDocumentosRoute: typeof AuthenticatedPainelDocumentosRoute
   AuthenticatedPainelMarcasRoute: typeof AuthenticatedPainelMarcasRoute
+  AuthenticatedPainelSuporteRoute: typeof AuthenticatedPainelSuporteRoute
   AuthenticatedPainelIndexRoute: typeof AuthenticatedPainelIndexRoute
 }
 
@@ -220,6 +241,7 @@ const AuthenticatedPainelRouteChildren: AuthenticatedPainelRouteChildren = {
   AuthenticatedPainelCertificadosRoute: AuthenticatedPainelCertificadosRoute,
   AuthenticatedPainelDocumentosRoute: AuthenticatedPainelDocumentosRoute,
   AuthenticatedPainelMarcasRoute: AuthenticatedPainelMarcasRoute,
+  AuthenticatedPainelSuporteRoute: AuthenticatedPainelSuporteRoute,
   AuthenticatedPainelIndexRoute: AuthenticatedPainelIndexRoute,
 }
 

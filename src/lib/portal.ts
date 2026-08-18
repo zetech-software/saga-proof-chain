@@ -38,12 +38,23 @@ export const TRADEMARK_STATUS_LABEL: Record<string, string> = {
   indeferida: "Indeferida",
 };
 
+export const SUPPORT_STATUSES = ["aberta", "respondida", "fechada"] as const;
+
+export const SUPPORT_STATUS_LABEL: Record<string, string> = {
+  aberta: "Aberta",
+  respondida: "Respondida",
+  fechada: "Fechada",
+};
+
 export function statusTone(status: string): "gold" | "violet" | "green" | "red" | "muted" {
   switch (status) {
     case "registrado":
     case "certificado_emitido":
     case "deferida":
+    case "respondida":
       return "green";
+    case "aberta":
+      return "gold";
     case "em_registro":
     case "protocolada":
     case "publicada":
