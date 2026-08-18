@@ -75,8 +75,17 @@ function ResetPasswordPage() {
           token_hash: tokenHash,
         });
         if (!active) return;
-        setLinkState(error ? "invalid" : "valid");
-        window.history.replaceState({}, "", "/redefinir-senha");
+        if (!error) {
+          setLinkState("valid");
+          window.history.replaceState({}, "", "/redefinir-senha");
+          return;
+        }
+        // O token só pode ser trocado uma vez: se a sessão de recuperação já
+        // foi criada nesta aba, o link continua válido para o usuário.
+        const { data: existing } = await supabase.auth.getSession();
+        if (!active) return;
+        setLinkState(existing.session ? "valid" : "invalid");
+        if (existing.session) window.history.replaceState({}, "", "/redefinir-senha");
         return;
       }
 
@@ -90,6 +99,7 @@ function ResetPasswordPage() {
     void resolveRecovery();
     return () => {
       active = false;
+
     };
   }, []);
 
