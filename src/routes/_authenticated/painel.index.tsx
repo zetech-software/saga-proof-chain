@@ -100,6 +100,8 @@ function Overview() {
         <video
           className="aspect-video w-full object-contain mix-blend-screen"
           src={guardiaoVideo.url}
+          poster={guardiaoPoster}
+          preload="metadata"
           autoPlay
           loop
           muted
