@@ -10,6 +10,7 @@ import guardiaoPoster from "@/assets/guardiao-poster.jpg";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/StatusBadge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DOCUMENT_STATUS_LABEL,
   OFFICIAL_LINKS,
