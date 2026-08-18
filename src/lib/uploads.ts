@@ -47,10 +47,54 @@ const GENERIC_MIMES = new Set(["", "application/octet-stream", "binary/octet-str
 
 /** Extensões perigosas — bloqueadas em qualquer posição do nome (extensão dupla). */
 const DANGEROUS_EXTS = new Set([
-  "html", "htm", "xhtml", "phtml", "shtml", "svg", "svgz", "xml", "js", "mjs", "cjs", "jsx",
-  "php", "php3", "php5", "asp", "aspx", "jsp", "exe", "com", "scr", "pif", "msi", "bat", "cmd",
-  "sh", "bash", "ps1", "vbs", "vbe", "wsf", "hta", "jar", "apk", "app", "dll", "so", "dylib",
-  "bin", "reg", "lnk", "iso", "dmg", "deb", "rpm", "py", "rb", "pl",
+  "html",
+  "htm",
+  "xhtml",
+  "phtml",
+  "shtml",
+  "svg",
+  "svgz",
+  "xml",
+  "js",
+  "mjs",
+  "cjs",
+  "jsx",
+  "php",
+  "php3",
+  "php5",
+  "asp",
+  "aspx",
+  "jsp",
+  "exe",
+  "com",
+  "scr",
+  "pif",
+  "msi",
+  "bat",
+  "cmd",
+  "sh",
+  "bash",
+  "ps1",
+  "vbs",
+  "vbe",
+  "wsf",
+  "hta",
+  "jar",
+  "apk",
+  "app",
+  "dll",
+  "so",
+  "dylib",
+  "bin",
+  "reg",
+  "lnk",
+  "iso",
+  "dmg",
+  "deb",
+  "rpm",
+  "py",
+  "rb",
+  "pl",
 ]);
 
 export const ACCEPT_ATTRIBUTE =
@@ -67,15 +111,17 @@ function normalize(value: string) {
 /** Remove diretórios, caracteres de controle e sequências perigosas do nome. */
 export function sanitizeFileName(rawName: string): string {
   const withoutDirs = rawName.split(/[\\/]/).pop() ?? "";
-  return withoutDirs
-    .normalize("NFKD")
-    // eslint-disable-next-line no-control-regex
-    .replace(/[\u0000-\u001f\u007f]/g, "")
-    .replace(/\.{2,}/g, ".")
-    .replace(/[^\w.\- ]/g, "_")
-    .replace(/\s+/g, "_")
-    .replace(/^[._-]+/, "")
-    .slice(0, 120);
+  return (
+    withoutDirs
+      .normalize("NFKD")
+      // eslint-disable-next-line no-control-regex
+      .replace(/[\u0000-\u001f\u007f]/g, "")
+      .replace(/\.{2,}/g, ".")
+      .replace(/[^\w.\- ]/g, "_")
+      .replace(/\s+/g, "_")
+      .replace(/^[._-]+/, "")
+      .slice(0, 120)
+  );
 }
 
 function extensionsOf(name: string): string[] {
@@ -190,7 +236,10 @@ export function describeUploadError(error: unknown): string {
     ) {
       return "Você não tem permissão para enviar este arquivo.";
     }
-    if (message.includes("exceeded the maximum allowed size") || message.includes("payload too large")) {
+    if (
+      message.includes("exceeded the maximum allowed size") ||
+      message.includes("payload too large")
+    ) {
       return `Arquivo maior que ${MAX_UPLOAD_LABEL}.`;
     }
     // Mensagens já geradas pela validação local são seguras para exibir.

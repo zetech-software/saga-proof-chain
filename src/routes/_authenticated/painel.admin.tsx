@@ -44,7 +44,10 @@ export const Route = createFileRoute("/_authenticated/painel/admin")({
         name: "description",
         content: "Painel interno Zé Registra para atualizar status e emitir certificados.",
       },
-      { property: "og:title", content: "Administração — Torre de Registros | Saga Mitologia Cósmica" },
+      {
+        property: "og:title",
+        content: "Administração — Torre de Registros | Saga Mitologia Cósmica",
+      },
       { property: "og:description", content: "Gestão interna dos registros." },
     ],
   }),
@@ -415,8 +418,6 @@ function AdminPage() {
         </Card>
       </div>
 
-
-
       <Card className="bg-card/70">
         <CardHeader>
           <CardTitle className="text-lg">Publicar certificado blockchain</CardTitle>
@@ -625,9 +626,7 @@ function AdminPage() {
           {(data?.suporte ?? []).map((s) => (
             <div key={s.id} className="rounded-lg border border-border/60 p-4">
               <p className="font-medium">{s.subject}</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {formatDateTime(s.created_at)}
-              </p>
+              <p className="mt-1 text-xs text-muted-foreground">{formatDateTime(s.created_at)}</p>
               <p className="mt-2 whitespace-pre-line text-sm text-muted-foreground">{s.message}</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <Select
