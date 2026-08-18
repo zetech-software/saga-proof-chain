@@ -557,6 +557,52 @@ function AdminPage() {
           )}
         </CardContent>
       </Card>
+
+      <Card className="bg-card/70">
+        <CardHeader>
+          <CardTitle className="text-lg">Solicitações de suporte</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {(data?.suporte ?? []).map((s) => (
+            <div key={s.id} className="rounded-lg border border-border/60 p-4">
+              <p className="font-medium">{s.subject}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {formatDateTime(s.created_at)}
+              </p>
+              <p className="mt-2 whitespace-pre-line text-sm text-muted-foreground">{s.message}</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <Select
+                  value={s.status}
+                  onValueChange={(v) => updateSupport.mutate({ id: s.id, status: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SUPPORT_STATUSES.map((st) => (
+                      <SelectItem key={st} value={st}>
+                        {SUPPORT_STATUS_LABEL[st]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  defaultValue={s.admin_reply ?? ""}
+                  placeholder="Resposta ao cliente"
+                  maxLength={2000}
+                  onBlur={(e) =>
+                    e.target.value !== (s.admin_reply ?? "") &&
+                    updateSupport.mutate({ id: s.id, admin_reply: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+          ))}
+          {!data?.suporte.length && (
+            <p className="text-sm text-muted-foreground">Nenhuma solicitação enviada ainda.</p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
