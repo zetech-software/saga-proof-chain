@@ -97,19 +97,21 @@ export function PortalLayout({
               <Link
                 key={item.to}
                 to={item.to}
-                className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm transition-colors ${
+                aria-current={active ? "page" : undefined}
+                className={`flex min-h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:px-4 ${
                   active
-                    ? "bg-primary/15 text-primary"
+                    ? "bg-primary/15 font-medium text-primary ring-1 ring-inset ring-primary/25"
                     : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                 }`}
               >
-                <item.icon className="h-4 w-4" />
+                <item.icon className="h-4 w-4 shrink-0" />
                 {item.label}
                 {count > 0 && (
                   <span
-                    className="inline-flex min-w-5 items-center justify-center rounded-full border border-primary/40 bg-primary/20 px-1.5 text-[11px] font-semibold text-primary"
+                    className="inline-flex min-w-5 items-center justify-center rounded-full border border-primary/40 bg-primary/20 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-primary"
                     aria-hidden="true"
                   >
+
                     {formatBadgeCount(count)}
                   </span>
                 )}
