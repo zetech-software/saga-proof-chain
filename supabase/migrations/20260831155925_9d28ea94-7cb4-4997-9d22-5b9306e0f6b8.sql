@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.admin_list_user_activity() FROM anon;
