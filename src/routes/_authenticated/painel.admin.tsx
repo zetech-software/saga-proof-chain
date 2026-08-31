@@ -38,6 +38,7 @@ import {
 import { RouteErrorState } from "@/components/RouteErrorState";
 import { UserAccessActivity } from "@/components/UserAccessActivity";
 import { PrivacyOverview } from "@/components/PrivacyOverview";
+import { OwnershipManager } from "@/components/OwnershipManager";
 
 export const Route = createFileRoute("/_authenticated/painel/admin")({
   head: () => ({
@@ -126,6 +127,21 @@ function AdminPage() {
     notes: "",
   });
 
+  // Organização titular padrão (Saga) para novos cadastros feitos pelo admin.
+  const { data: defaultOrgId } = useQuery({
+    queryKey: ["default-organization"],
+    enabled: !!session?.isAdmin,
+    staleTime: 300_000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("organizations")
+        .select("id")
+        .eq("slug", "saga-mitologia-cosmica")
+        .maybeSingle();
+      return data?.id ?? null;
+    },
+  });
+
   const { data } = useQuery({
     queryKey: ["admin-data"],
     queryFn: async () => {
@@ -163,6 +179,7 @@ function AdminPage() {
         file_size: checked.file.size,
         mime_type: checked.contentType,
         created_by: userId,
+        organization_id: defaultOrgId ?? null,
       });
       if (error) throw error;
     },
@@ -191,6 +208,7 @@ function AdminPage() {
         segment: newMarca.segment.trim() || null,
         notes: newMarca.notes.trim() || null,
         created_by: userId,
+        organization_id: defaultOrgId ?? null,
       });
       if (error) throw error;
     },
@@ -324,7 +342,9 @@ function AdminPage() {
           marcas={data?.marcas}
           suporte={data?.suporte}
         />
+        <OwnershipManager enabled={isAdmin} />
         <PrivacyOverview enabled={isAdmin} />
+
       </section>
 
       <div className="grid gap-6 lg:grid-cols-2">

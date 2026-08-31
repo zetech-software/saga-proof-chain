@@ -88,6 +88,7 @@ export type Database = {
           file_size: number | null
           id: string
           mime_type: string | null
+          organization_id: string | null
           status: string
           storage_path: string
           submitted_at: string
@@ -105,6 +106,7 @@ export type Database = {
           file_size?: number | null
           id?: string
           mime_type?: string | null
+          organization_id?: string | null
           status?: string
           storage_path: string
           submitted_at?: string
@@ -122,6 +124,7 @@ export type Database = {
           file_size?: number | null
           id?: string
           mime_type?: string | null
+          organization_id?: string | null
           status?: string
           storage_path?: string
           submitted_at?: string
@@ -131,6 +134,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "documents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "documents_trademark_id_fkey"
             columns: ["trademark_id"]
             isOneToOne: false
@@ -138,6 +148,62 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      organization_members: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -157,6 +223,36 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+        }
+        Relationships: []
+      }
+      resource_shares: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          note: string | null
+          resource_id: string
+          resource_type: Database["public"]["Enums"]["shared_resource_type"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          resource_id: string
+          resource_type: Database["public"]["Enums"]["shared_resource_type"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          resource_id?: string
+          resource_type?: Database["public"]["Enums"]["shared_resource_type"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -238,6 +334,7 @@ export type Database = {
           name: string
           nice_class: string | null
           notes: string | null
+          organization_id: string | null
           protocol_number: string | null
           segment: string | null
           status: string
@@ -253,6 +350,7 @@ export type Database = {
           name: string
           nice_class?: string | null
           notes?: string | null
+          organization_id?: string | null
           protocol_number?: string | null
           segment?: string | null
           status?: string
@@ -268,13 +366,22 @@ export type Database = {
           name?: string
           nice_class?: string | null
           notes?: string | null
+          organization_id?: string | null
           protocol_number?: string | null
           segment?: string | null
           status?: string
           submitted_at?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "trademarks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -326,11 +433,31 @@ export type Database = {
           using_expression: string
         }[]
       }
+      can_view_document: {
+        Args: { _document_id: string; _user_id: string }
+        Returns: boolean
+      }
+      can_view_trademark: {
+        Args: { _trademark_id: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      has_share: {
+        Args: {
+          _resource_id: string
+          _type: Database["public"]["Enums"]["shared_resource_type"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_org_member: {
+        Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
       mark_all_support_notifications_read: {
@@ -358,6 +485,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "cliente"
+      shared_resource_type: "trademark" | "document" | "certificate"
       support_notification_type: "new_support_request" | "support_response"
     }
     CompositeTypes: {
@@ -487,6 +615,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "cliente"],
+      shared_resource_type: ["trademark", "document", "certificate"],
       support_notification_type: ["new_support_request", "support_response"],
     },
   },
