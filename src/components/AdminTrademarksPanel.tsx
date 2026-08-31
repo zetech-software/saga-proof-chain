@@ -98,18 +98,18 @@ export function AdminTrademarksPanel({
   }, [users.data]);
 
   const update = useMutation({
-    mutationFn: async (input: { id: string; patch: Partial<EditState> }) => {
+    mutationFn: async (input: { id: string; patch: EditState }) => {
       const { error } = await supabase
         .from("trademarks")
         .update({
-          name: input.patch.name?.trim(),
-          holder: input.patch.holder?.trim() || null,
-          nice_class: input.patch.nice_class?.trim() || null,
-          segment: input.patch.segment?.trim() || null,
-          protocol_number: input.patch.protocol_number?.trim() || null,
+          name: input.patch.name.trim(),
+          holder: input.patch.holder.trim() || null,
+          nice_class: input.patch.nice_class.trim() || null,
+          segment: input.patch.segment.trim() || null,
+          protocol_number: input.patch.protocol_number.trim() || null,
           status: input.patch.status,
-          notes: input.patch.notes?.trim() || null,
-          admin_notes: input.patch.admin_notes?.trim() || null,
+          notes: input.patch.notes.trim() || null,
+          admin_notes: input.patch.admin_notes.trim() || null,
         })
         .eq("id", input.id);
       if (error) throw error;
