@@ -16,6 +16,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { PoweredBy } from "@/components/PoweredBy";
 import { SagaLogo } from "@/components/SagaLogo";
 import { formatBadgeCount, useSupportNotifications } from "@/hooks/useSupportNotifications";
+import { usePageVisitTracker } from "@/hooks/usePageVisitTracker";
+
 
 import { Button } from "@/components/ui/button";
 
