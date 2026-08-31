@@ -23,9 +23,9 @@ type OwnedItem = { created_by: string | null };
 type Props = {
   enabled: boolean;
   /** Itens já carregados no painel Admin — usados apenas para contagem por usuário. */
-  docs?: OwnedItem[];
-  marcas?: OwnedItem[];
-  suporte?: OwnedItem[];
+  docs?: OwnedItem[] | undefined;
+  marcas?: OwnedItem[] | undefined;
+  suporte?: OwnedItem[] | undefined;
 };
 
 type SortId = "recentes" | "nome" | "cadastro";
