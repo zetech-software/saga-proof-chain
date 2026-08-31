@@ -82,13 +82,13 @@ Sim, as quatro sugestões destacadas podem (e devem) virar **uma só área**, se
 
 E, para o cliente, "Status de conta" fica dentro da tela `/painel/conta` já existente — não vira rota nova. Assim, 4 sugestões viram 1 aba administrativa + 1 bloco na conta do cliente.
 
-## Pergunta aberta (bloqueia o item mais importante)
+## Decisão registrada
 
-Marcas, documentos e certificados hoje são visíveis a todos os clientes. Mariana e Léo são da mesma empresa (Saga) e podem ser vistos como uma equipe única, ou cada um deve ver apenas o que enviou? A resposta define se a correção é "isolar por usuário" ou "manter compartilhado entre clientes e apenas documentar". Vou perguntar isso antes de qualquer implementação.
+Marcas, documentos e certificados permanecem **compartilhados entre os clientes da Saga** (equipe única). Nenhuma mudança de RLS nessas três tabelas. Revisitar apenas se entrar um cliente de outra empresa.
 
 ## Ordem recomendada
 
-1. **Isolamento de dados do negócio + varredura final de e-mails** (itens 1 e o achado) — é a única exposição real que resta; tudo o mais é conveniência.
+1. **Varredura final de e-mails e dados pessoais** (item 1) — confirmar que nenhuma tela, consulta ou resposta de API ainda devolve nome/e-mail de terceiros; risco quase nulo e fecha o tema privacidade.
 2. **Aba "Usuários e privacidade" no Admin — parte usuários** (item 3, absorvendo a seção atual) — dá ao time visão completa sem criar telas paralelas.
 3. **Status de conta do cliente em /painel/conta** (item 4) — reaproveita a leitura criada no passo 2.
 4. **Resumo de privacidade na mesma aba** (item 2) — depende das regras finais do passo 1 para não nascer desatualizado.
