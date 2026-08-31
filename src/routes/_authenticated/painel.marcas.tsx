@@ -6,6 +6,7 @@ import { z } from "zod";
 import { Stamp } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { useMyOrganization } from "@/hooks/useMyOrganization";
 import { Button } from "@/components/ui/button";
 import { ListSkeleton } from "@/components/ListSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,6 +65,8 @@ function MarcasPage() {
     },
   });
 
+  const { data: myOrgId } = useMyOrganization();
+
   const createMutation = useMutation({
     mutationFn: async () => {
       const parsed = schema.parse(form);
@@ -75,6 +78,7 @@ function MarcasPage() {
         segment: parsed.segment || null,
         notes: parsed.notes || null,
         created_by: userData.user?.id ?? null,
+        organization_id: myOrgId ?? null,
       });
       if (error) throw error;
     },

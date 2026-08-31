@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Clock, Download, FileText, UploadCloud } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { useMyOrganization } from "@/hooks/useMyOrganization";
 import { Button } from "@/components/ui/button";
 import { ListSkeleton } from "@/components/ListSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -109,6 +110,7 @@ function DocumentosPage() {
         file_size: checked.file.size,
         mime_type: checked.contentType,
         created_by: userId,
+        organization_id: myOrgId ?? null,
       });
       if (error) throw error;
     },
