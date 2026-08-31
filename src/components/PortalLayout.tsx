@@ -41,6 +41,8 @@ export function PortalLayout({
   const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { adminCount, clientCount } = useSupportNotifications();
+  usePageVisitTracker();
+
 
   async function signOut() {
     await queryClient.cancelQueries();
