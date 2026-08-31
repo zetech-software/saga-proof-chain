@@ -59,10 +59,18 @@ export const Route = createFileRoute("/_authenticated/painel/admin")({
 function AdminPage() {
   const { data: session, isLoading } = usePortalSession();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { adminCount, unreadIdFor, markRead, markAllRead } = useSupportNotifications();
   const certFileRef = useRef<HTMLInputElement>(null);
 
   const isAdmin = !!session?.isAdmin;
+
+  // Sem cargo admin: mesmo comportamento da rota de Suporte (redireciona).
+  useEffect(() => {
+    if (isLoading || isAdmin) return;
+    navigate({ to: "/painel", replace: true });
+  }, [isAdmin, isLoading, navigate]);
+
   useEffect(() => {
     if (!isAdmin) return;
     const channel = supabase
