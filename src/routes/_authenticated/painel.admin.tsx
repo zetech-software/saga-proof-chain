@@ -312,6 +312,8 @@ function AdminPage() {
         </p>
       </div>
 
+      <UserAccessActivity enabled={isAdmin} />
+
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="bg-card/70">
           <CardHeader>
