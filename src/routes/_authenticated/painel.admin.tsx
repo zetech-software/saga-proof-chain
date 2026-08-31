@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -36,6 +36,7 @@ import {
 } from "@/lib/uploads";
 
 import { RouteErrorState } from "@/components/RouteErrorState";
+import { UserAccessActivity } from "@/components/UserAccessActivity";
 
 export const Route = createFileRoute("/_authenticated/painel/admin")({
   head: () => ({
@@ -59,10 +60,18 @@ export const Route = createFileRoute("/_authenticated/painel/admin")({
 function AdminPage() {
   const { data: session, isLoading } = usePortalSession();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { adminCount, unreadIdFor, markRead, markAllRead } = useSupportNotifications();
   const certFileRef = useRef<HTMLInputElement>(null);
 
   const isAdmin = !!session?.isAdmin;
+
+  // Sem cargo admin: mesmo comportamento da rota de Suporte (redireciona).
+  useEffect(() => {
+    if (isLoading || isAdmin) return;
+    navigate({ to: "/painel", replace: true });
+  }, [isAdmin, isLoading, navigate]);
+
   useEffect(() => {
     if (!isAdmin) return;
     const channel = supabase
@@ -285,11 +294,11 @@ function AdminPage() {
   });
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Carregando...</p>;
-  if (!session?.isAdmin) {
+  if (!isAdmin) {
     return (
       <Card className="bg-card/70">
         <CardContent className="px-6 py-8 text-sm text-muted-foreground">
-          Área restrita à equipe Zé Registra.
+          Área restrita à equipe Zé Registra. Redirecionando...
         </CardContent>
       </Card>
     );
@@ -303,6 +312,8 @@ function AdminPage() {
           Atualize status e publique certificados — os clientes veem em tempo real.
         </p>
       </div>
+
+      <UserAccessActivity enabled={isAdmin} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="bg-card/70">
