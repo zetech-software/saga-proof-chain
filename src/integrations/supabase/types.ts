@@ -313,6 +313,19 @@ export type Database = {
           user_id: string
         }[]
       }
+      admin_privacy_overview: {
+        Args: never
+        Returns: {
+          check_expression: string
+          command: string
+          is_broad: boolean
+          policy_name: string
+          rls_enabled: boolean
+          roles: string[]
+          table_name: string
+          using_expression: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -329,6 +342,18 @@ export type Database = {
       mark_support_notification_read: {
         Args: { _notification_id: string }
         Returns: undefined
+      }
+      me_account_status: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          email_confirmed_at: string
+          full_name: string
+          last_sign_in_at: string
+          roles: string[]
+          user_id: string
+        }[]
       }
     }
     Enums: {
