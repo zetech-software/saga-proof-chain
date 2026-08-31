@@ -324,7 +324,9 @@ function AdminPage() {
           marcas={data?.marcas}
           suporte={data?.suporte}
         />
+        <OwnershipManager enabled={isAdmin} />
         <PrivacyOverview enabled={isAdmin} />
+
       </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
