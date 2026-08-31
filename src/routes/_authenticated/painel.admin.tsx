@@ -37,6 +37,7 @@ import {
 
 import { RouteErrorState } from "@/components/RouteErrorState";
 import { UserAccessActivity } from "@/components/UserAccessActivity";
+import { PrivacyOverview } from "@/components/PrivacyOverview";
 
 export const Route = createFileRoute("/_authenticated/painel/admin")({
   head: () => ({
