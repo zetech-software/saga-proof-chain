@@ -37,6 +37,7 @@ import {
 
 import { RouteErrorState } from "@/components/RouteErrorState";
 import { UserAccessActivity } from "@/components/UserAccessActivity";
+import { PrivacyOverview } from "@/components/PrivacyOverview";
 
 export const Route = createFileRoute("/_authenticated/painel/admin")({
   head: () => ({
@@ -313,7 +314,18 @@ function AdminPage() {
         </p>
       </div>
 
-      <UserAccessActivity enabled={isAdmin} />
+      <section className="space-y-4" aria-labelledby="usuarios-privacidade">
+        <h2 id="usuarios-privacidade" className="font-display text-xl text-gold-light">
+          Usuários e privacidade
+        </h2>
+        <UserAccessActivity
+          enabled={isAdmin}
+          docs={data?.docs}
+          marcas={data?.marcas}
+          suporte={data?.suporte}
+        />
+        <PrivacyOverview enabled={isAdmin} />
+      </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="bg-card/70">

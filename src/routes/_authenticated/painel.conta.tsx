@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RouteErrorState } from "@/components/RouteErrorState";
+import { AccountStatusCard } from "@/components/AccountStatusCard";
 import { usePortalSession } from "@/hooks/usePortalSession";
 
 export const Route = createFileRoute("/_authenticated/painel/conta")({
@@ -109,6 +110,8 @@ function ContaPage() {
             : "Gerencie seu acesso à Torre de Registros."}
         </p>
       </header>
+
+      <AccountStatusCard />
 
       <Card className="max-w-xl">
         <CardHeader>
