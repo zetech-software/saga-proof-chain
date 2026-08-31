@@ -285,11 +285,11 @@ function AdminPage() {
   });
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Carregando...</p>;
-  if (!session?.isAdmin) {
+  if (!isAdmin) {
     return (
       <Card className="bg-card/70">
         <CardContent className="px-6 py-8 text-sm text-muted-foreground">
-          Área restrita à equipe Zé Registra.
+          Área restrita à equipe Zé Registra. Redirecionando...
         </CardContent>
       </Card>
     );
