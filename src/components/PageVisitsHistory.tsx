@@ -153,7 +153,7 @@ export function PageVisitsHistory({ enabled }: { enabled: boolean }) {
       </CardHeader>
       <CardContent className="space-y-4">
         {visits.isLoading ? (
-          <ListSkeleton rows={4} />
+          <ListSkeleton items={4} />
         ) : visits.isError ? (
           <p className="text-sm text-muted-foreground">
             Não foi possível carregar o histórico de acessos agora.
