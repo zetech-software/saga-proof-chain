@@ -85,6 +85,8 @@ function DocumentosPage() {
     };
   }, [queryClient]);
 
+  const { data: myOrgId } = useMyOrganization();
+
   const upload = useMutation({
     mutationFn: async () => {
       if (title.trim().length < 2) throw new Error("Informe um título para o documento");
