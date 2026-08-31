@@ -36,6 +36,7 @@ import {
 } from "@/lib/uploads";
 
 import { RouteErrorState } from "@/components/RouteErrorState";
+import { UserAccessActivity } from "@/components/UserAccessActivity";
 
 export const Route = createFileRoute("/_authenticated/painel/admin")({
   head: () => ({
