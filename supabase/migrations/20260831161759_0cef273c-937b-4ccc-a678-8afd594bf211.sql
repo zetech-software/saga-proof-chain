@@ -1,0 +1,10 @@
+REVOKE EXECUTE ON FUNCTION public.is_org_member(uuid, uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.has_share(uuid, public.shared_resource_type, uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.can_view_trademark(uuid, uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.can_view_document(uuid, uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.me_account_status() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.admin_privacy_overview() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.admin_list_user_activity() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.mark_support_notification_read(uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.mark_all_support_notifications_read(public.support_notification_type) FROM PUBLIC, anon;
