@@ -345,7 +345,9 @@ function AdminPage() {
           marcas={data?.marcas}
           suporte={data?.suporte}
         />
+        <PageVisitsHistory enabled={isAdmin} />
         <OwnershipManager enabled={isAdmin} />
+
         <PrivacyOverview enabled={isAdmin} />
 
       </section>
