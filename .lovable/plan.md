@@ -4,7 +4,7 @@ Nada será implementado agora. Abaixo, avaliação individual, consolidação e 
 
 ## Achado importante que muda a prioridade
 
-Ao revisar as regras atuais, marcas, documentos e certificados continuam com leitura liberada para **qualquer usuário autenticado** (`documents`, `trademarks`, `certificates` usam condição `true`). Ou seja: o cliente Mariana enxerga documentos e marcas do Léo, e vice-versa. A correção de `profiles` fechou os e-mails, mas o conteúdo do negócio ainda é compartilhado entre clientes. Isso pesa mais que qualquer uma das 8 sugestões — mas depende de uma decisão sua (ver "Pergunta aberta").
+Ao revisar as regras atuais, marcas, documentos e certificados continuam com leitura liberada para **qualquer usuário autenticado**. Você confirmou que Mariana e Léo devem ser tratados como **equipe única da Saga** — logo, esse compartilhamento é intencional e nada muda no banco. Fica apenas registrado como decisão de produto: qualquer cliente novo que não seja da Saga passaria a enxergar esse conteúdo, então a entrada de um cliente de outra empresa exige revisar essa regra antes.
 
 ## Avaliação individual
 
