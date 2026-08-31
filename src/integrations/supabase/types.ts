@@ -205,6 +205,36 @@ export type Database = {
         }
         Relationships: []
       }
+      page_visits: {
+        Row: {
+          created_at: string
+          id: string
+          page_title: string | null
+          path: string
+          user_agent: string | null
+          user_id: string
+          visited_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          page_title?: string | null
+          path: string
+          user_agent?: string | null
+          user_id: string
+          visited_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          page_title?: string | null
+          path?: string
+          user_agent?: string | null
+          user_id?: string
+          visited_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -418,6 +448,18 @@ export type Database = {
           last_sign_in_at: string
           roles: string[]
           user_id: string
+        }[]
+      }
+      admin_page_visit_summary: {
+        Args: never
+        Returns: {
+          email: string
+          first_visit_at: string
+          full_name: string
+          last_path: string
+          last_visit_at: string
+          user_id: string
+          visits: number
         }[]
       }
       admin_privacy_overview: {

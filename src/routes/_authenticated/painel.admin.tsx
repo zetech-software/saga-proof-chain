@@ -37,6 +37,7 @@ import {
 
 import { RouteErrorState } from "@/components/RouteErrorState";
 import { UserAccessActivity } from "@/components/UserAccessActivity";
+import { PageVisitsHistory } from "@/components/PageVisitsHistory";
 import { PrivacyOverview } from "@/components/PrivacyOverview";
 import { OwnershipManager } from "@/components/OwnershipManager";
 import { AdminDocumentsPanel } from "@/components/AdminDocumentsPanel";
@@ -345,7 +346,9 @@ function AdminPage() {
           marcas={data?.marcas}
           suporte={data?.suporte}
         />
+        <PageVisitsHistory enabled={isAdmin} />
         <OwnershipManager enabled={isAdmin} />
+
         <PrivacyOverview enabled={isAdmin} />
 
       </section>

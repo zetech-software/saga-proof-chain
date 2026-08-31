@@ -16,6 +16,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { PoweredBy } from "@/components/PoweredBy";
 import { SagaLogo } from "@/components/SagaLogo";
 import { formatBadgeCount, useSupportNotifications } from "@/hooks/useSupportNotifications";
+import { usePageVisitTracker } from "@/hooks/usePageVisitTracker";
+
 
 import { Button } from "@/components/ui/button";
 
@@ -41,6 +43,8 @@ export function PortalLayout({
   const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { adminCount, clientCount } = useSupportNotifications();
+  usePageVisitTracker();
+
 
   async function signOut() {
     await queryClient.cancelQueries();
