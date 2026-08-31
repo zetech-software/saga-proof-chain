@@ -437,6 +437,10 @@ export type Database = {
         Args: { _document_id: string; _user_id: string }
         Returns: boolean
       }
+      can_view_storage_object: {
+        Args: { _bucket: string; _path: string; _user_id: string }
+        Returns: boolean
+      }
       can_view_trademark: {
         Args: { _trademark_id: string; _user_id: string }
         Returns: boolean
