@@ -39,6 +39,9 @@ import { RouteErrorState } from "@/components/RouteErrorState";
 import { UserAccessActivity } from "@/components/UserAccessActivity";
 import { PrivacyOverview } from "@/components/PrivacyOverview";
 import { OwnershipManager } from "@/components/OwnershipManager";
+import { AdminDocumentsPanel } from "@/components/AdminDocumentsPanel";
+import { AdminTrademarksPanel } from "@/components/AdminTrademarksPanel";
+
 
 export const Route = createFileRoute("/_authenticated/painel/admin")({
   head: () => ({
@@ -584,98 +587,14 @@ function AdminPage() {
         </CardContent>
       </Card>
 
-      <Card className="bg-card/70">
-        <CardHeader>
-          <CardTitle className="text-lg">Documentos na esteira</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {(data?.docs ?? []).map((d) => (
-            <div key={d.id} className="rounded-xl border border-border/60 bg-background/30 p-4">
-              <p className="break-words font-medium">{d.title}</p>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <Select
-                  value={d.status}
-                  onValueChange={(v) => updateDoc.mutate({ id: d.id, status: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DOCUMENT_STATUSES.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {DOCUMENT_STATUS_LABEL[s]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  defaultValue={d.admin_notes ?? ""}
-                  placeholder="Nota para o cliente"
-                  maxLength={1000}
-                  onBlur={(e) =>
-                    e.target.value !== (d.admin_notes ?? "") &&
-                    updateDoc.mutate({ id: d.id, admin_notes: e.target.value })
-                  }
-                />
-              </div>
-            </div>
-          ))}
-          {!data?.docs.length && (
-            <p className="text-sm text-muted-foreground">Nenhum documento enviado.</p>
-          )}
-        </CardContent>
-      </Card>
+      <AdminDocumentsPanel
+        docs={(data?.docs ?? []) as never}
+        enabled={isAdmin}
+        adminUserId={session?.user?.id ?? null}
+      />
 
-      <Card className="bg-card/70">
-        <CardHeader>
-          <CardTitle className="text-lg">Marcas submetidas</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {(data?.marcas ?? []).map((m) => (
-            <div key={m.id} className="rounded-xl border border-border/60 bg-background/30 p-4">
-              <p className="break-words font-medium">{m.name}</p>
-              <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                <Select
-                  value={m.status}
-                  onValueChange={(v) => updateMarca.mutate({ id: m.id, status: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TRADEMARK_STATUSES.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {TRADEMARK_STATUS_LABEL[s]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  defaultValue={m.protocol_number ?? ""}
-                  placeholder="Nº de protocolo"
-                  maxLength={80}
-                  onBlur={(e) =>
-                    e.target.value !== (m.protocol_number ?? "") &&
-                    updateMarca.mutate({ id: m.id, protocol_number: e.target.value })
-                  }
-                />
-                <Input
-                  defaultValue={m.admin_notes ?? ""}
-                  placeholder="Nota para o cliente"
-                  maxLength={1000}
-                  onBlur={(e) =>
-                    e.target.value !== (m.admin_notes ?? "") &&
-                    updateMarca.mutate({ id: m.id, admin_notes: e.target.value })
-                  }
-                />
-              </div>
-            </div>
-          ))}
-          {!data?.marcas.length && (
-            <p className="text-sm text-muted-foreground">Nenhuma marca submetida.</p>
-          )}
-        </CardContent>
-      </Card>
+      <AdminTrademarksPanel marcas={(data?.marcas ?? []) as never} enabled={isAdmin} />
+
 
       <Card className="bg-card/70">
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
