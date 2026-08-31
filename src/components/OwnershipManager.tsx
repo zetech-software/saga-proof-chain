@@ -86,7 +86,7 @@ export function OwnershipManager({ enabled }: { enabled: boolean }) {
 
   const userName = useMemo(() => {
     const map = new Map<string, string>();
-    for (const u of users.data ?? []) map.set(u.user_id, u.full_name || u.email);
+    for (const u of users.data ?? []) map.set(u.user_id, u.full_name || u.email || u.user_id);
     return map;
   }, [users.data]);
 
@@ -140,7 +140,7 @@ export function OwnershipManager({ enabled }: { enabled: boolean }) {
       </CardHeader>
       <CardContent className="space-y-4">
         {isLoading ? (
-          <ListSkeleton rows={3} />
+          <ListSkeleton items={3} />
         ) : filtered.length === 0 ? (
           <EmptyState
             title="Nenhum item encontrado"
