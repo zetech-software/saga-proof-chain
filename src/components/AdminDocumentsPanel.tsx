@@ -33,7 +33,7 @@ import { FileDropzone } from "@/components/FileDropzone";
 import { useOwnership } from "@/hooks/useOwnership";
 import { useUserActivity } from "@/hooks/useUserActivity";
 import { downloadFromBucket } from "@/lib/downloads";
-import { validateUploadFile, buildStoragePath } from "@/lib/uploads";
+import { validateUploadFile } from "@/lib/uploads";
 import {
   DOCUMENT_STATUSES,
   DOCUMENT_STATUS_LABEL,
@@ -143,18 +143,18 @@ export function AdminDocumentsPanel({
     }
     setBusyId(doc.id);
     try {
-      const path = buildStoragePath(adminUserId, replaceFile.name);
+      const path = `${adminUserId}/${validation.storageName}`;
       const uploaded = await supabase.storage
         .from("documentos")
-        .upload(path, replaceFile, { contentType: validation.contentType, upsert: false });
+        .upload(path, validation.file, { contentType: validation.contentType, upsert: false });
       if (uploaded.error) throw uploaded.error;
 
       const { error } = await supabase
         .from("documents")
         .update({
           storage_path: path,
-          file_name: replaceFile.name,
-          file_size: replaceFile.size,
+          file_name: validation.displayName,
+          file_size: validation.file.size,
           mime_type: validation.contentType,
         })
         .eq("id", doc.id);
@@ -424,7 +424,7 @@ export function AdminDocumentsPanel({
                       <FileDropzone
                         id={`replace-${d.id}`}
                         file={replaceFile}
-                        onFileChange={setReplaceFile}
+                        onSelect={setReplaceFile}
                       />
                       <Button
                         type="button"
