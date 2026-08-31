@@ -39,6 +39,9 @@ import { RouteErrorState } from "@/components/RouteErrorState";
 import { UserAccessActivity } from "@/components/UserAccessActivity";
 import { PrivacyOverview } from "@/components/PrivacyOverview";
 import { OwnershipManager } from "@/components/OwnershipManager";
+import { AdminDocumentsPanel } from "@/components/AdminDocumentsPanel";
+import { AdminTrademarksPanel } from "@/components/AdminTrademarksPanel";
+
 
 export const Route = createFileRoute("/_authenticated/painel/admin")({
   head: () => ({
