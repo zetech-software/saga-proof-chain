@@ -110,6 +110,8 @@ function ContaPage() {
         </p>
       </header>
 
+      <AccountStatusCard />
+
       <Card className="max-w-xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
