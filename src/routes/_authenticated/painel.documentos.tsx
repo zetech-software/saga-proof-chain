@@ -6,6 +6,7 @@ import { Clock, Download, FileText, UploadCloud } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useMyOrganization } from "@/hooks/useMyOrganization";
+import { usePortalSession } from "@/hooks/usePortalSession";
 import { Button } from "@/components/ui/button";
 import { ListSkeleton } from "@/components/ListSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,6 +44,8 @@ export const Route = createFileRoute("/_authenticated/painel/documentos")({
 
 function DocumentosPage() {
   const queryClient = useQueryClient();
+  const { data: session } = usePortalSession();
+  const isAdmin = session?.isAdmin ?? false;
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -223,8 +226,8 @@ function DocumentosPage() {
                   <div className="min-w-0">
                     <h3 className="break-words font-serif text-xl leading-snug">{d.title}</h3>
                     <p className="mt-1 break-words text-xs text-muted-foreground">
-                      {d.file_name} · {formatBytes(d.file_size)} · enviado em{" "}
-                      {formatDateTime(d.submitted_at)}
+                      {d.file_name} · {formatBytes(d.file_size)}
+                      {isAdmin ? ` · enviado em ${formatDateTime(d.submitted_at)}` : ""}
                     </p>
                   </div>
                   <StatusBadge
@@ -250,9 +253,11 @@ function DocumentosPage() {
                     <Download className="h-4 w-4" />
                     Baixar arquivo
                   </Button>
-                  <span className="text-xs text-muted-foreground">
-                    Última atualização: {formatDateTime(d.updated_at)}
-                  </span>
+                  {isAdmin && (
+                    <span className="text-xs text-muted-foreground">
+                      Última atualização: {formatDateTime(d.updated_at)}
+                    </span>
+                  )}
                 </div>
               </CardContent>
             </Card>
