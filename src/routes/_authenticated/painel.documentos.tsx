@@ -7,6 +7,7 @@ import { Clock, Download, FileText, UploadCloud } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMyOrganization } from "@/hooks/useMyOrganization";
 import { usePortalSession } from "@/hooks/usePortalSession";
+import { logResourceView } from "@/hooks/useResourceViews";
 import { Button } from "@/components/ui/button";
 import { ListSkeleton } from "@/components/ListSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -129,7 +130,14 @@ function DocumentosPage() {
     onError: (e: unknown) => toast.error(describeUploadError(e)),
   });
 
-  async function download(path: string, name: string) {
+  // Registra o acesso do cliente aos documentos visíveis (histórico para o admin).
+  useEffect(() => {
+    if (isAdmin) return;
+    for (const d of docs ?? []) void logResourceView("document", d.id);
+  }, [docs, isAdmin]);
+
+  async function download(id: string, path: string, name: string) {
+    if (!isAdmin) void logResourceView("document", id, "download");
     const result = await downloadFromBucket("documentos", path, name);
     if (!result.ok) toast.error(result.message);
   }
@@ -248,7 +256,7 @@ function DocumentosPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => download(d.storage_path, d.file_name)}
+                    onClick={() => download(d.id, d.storage_path, d.file_name)}
                   >
                     <Download className="h-4 w-4" />
                     Baixar arquivo
