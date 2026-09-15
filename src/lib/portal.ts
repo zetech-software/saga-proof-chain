@@ -85,21 +85,6 @@ export const OFFICIAL_LINKS = [
     url: "https://revistas.inpi.gov.br/rpi/",
     description: "Publicações oficiais semanais sobre andamento dos processos.",
   },
-  {
-    name: "Portal do INPI",
-    url: "https://www.gov.br/inpi/pt-br",
-    description: "Serviços, prazos e orientações oficiais de propriedade industrial.",
-  },
-  {
-    name: "Polygonscan",
-    url: "https://polygonscan.com/",
-    description: "Explorador da blockchain Polygon para verificar transações e hashes.",
-  },
-  {
-    name: "Biblioteca Nacional — Direitos Autorais",
-    url: "https://www.gov.br/bn/pt-br/servicos/direitos-autorais",
-    description: "Registro de obras literárias e autorais (EDA/BN).",
-  },
 ];
 
 export function formatDate(value?: string | null) {
