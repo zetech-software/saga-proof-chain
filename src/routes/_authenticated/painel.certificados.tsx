@@ -128,14 +128,6 @@ function CertificadosPage() {
                     Baixar certificado
                   </Button>
                 )}
-                {c.verification_url && (
-                  <Button variant="ghost" size="sm" asChild>
-                    <a href={c.verification_url} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-4 w-4" />
-                      Verificar publicamente
-                    </a>
-                  </Button>
-                )}
               </div>
             </CardContent>
           </Card>
