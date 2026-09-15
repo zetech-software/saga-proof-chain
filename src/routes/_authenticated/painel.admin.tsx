@@ -42,6 +42,7 @@ import { PrivacyOverview } from "@/components/PrivacyOverview";
 import { OwnershipManager } from "@/components/OwnershipManager";
 import { AdminDocumentsPanel } from "@/components/AdminDocumentsPanel";
 import { AdminTrademarksPanel } from "@/components/AdminTrademarksPanel";
+import { AdminCertificatesPanel } from "@/components/AdminCertificatesPanel";
 
 
 export const Route = createFileRoute("/_authenticated/painel/admin")({
