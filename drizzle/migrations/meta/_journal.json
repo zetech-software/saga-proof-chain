@@ -8,6 +8,13 @@
       "when": 1789440471367,
       "tag": "0000_create_resource_views",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789492350383,
+      "tag": "0001_restrict_definer_helpers_to_self",
+      "breakpoints": true
     }
   ]
 }
