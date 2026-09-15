@@ -7,6 +7,7 @@ import { Stamp } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useMyOrganization } from "@/hooks/useMyOrganization";
+import { usePortalSession } from "@/hooks/usePortalSession";
 import { Button } from "@/components/ui/button";
 import { ListSkeleton } from "@/components/ListSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,6 +46,8 @@ const schema = z.object({
 
 function MarcasPage() {
   const queryClient = useQueryClient();
+  const { data: session } = usePortalSession();
+  const isAdmin = session?.isAdmin ?? false;
   const [form, setForm] = useState({
     name: "",
     holder: "",
@@ -188,10 +191,13 @@ function MarcasPage() {
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <h3 className="break-words font-serif text-xl leading-snug">{m.name}</h3>
-                    <p className="mt-1 break-words text-xs text-muted-foreground">
-                      Submetida em {formatDate(m.submitted_at)}
-                      {m.protocol_number ? ` · Protocolo ${m.protocol_number}` : ""}
-                    </p>
+                    {(isAdmin || m.protocol_number) && (
+                      <p className="mt-1 break-words text-xs text-muted-foreground">
+                        {isAdmin ? `Submetida em ${formatDate(m.submitted_at)}` : ""}
+                        {isAdmin && m.protocol_number ? " · " : ""}
+                        {m.protocol_number ? `Protocolo ${m.protocol_number}` : ""}
+                      </p>
+                    )}
                   </div>
                   <StatusBadge
                     status={m.status}

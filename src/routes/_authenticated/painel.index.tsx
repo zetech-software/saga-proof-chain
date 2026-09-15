@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Stamp, FileText, ShieldCheck, Clock, ExternalLink } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { usePortalSession } from "@/hooks/usePortalSession";
 import guardiaoVideo from "@/assets/guardiao.mp4.asset.json";
 import guardiaoPoster from "@/assets/guardiao-poster.jpg";
 
@@ -42,6 +43,8 @@ export const Route = createFileRoute("/_authenticated/painel/")({
 
 function Overview() {
   const queryClient = useQueryClient();
+  const { data: session } = usePortalSession();
+  const isAdmin = session?.isAdmin ?? false;
 
   const { data, isLoading } = useQuery({
     queryKey: ["overview"],
@@ -178,9 +181,11 @@ function Overview() {
               >
                 <div className="min-w-0">
                   <p className="break-words text-sm font-medium">{d.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Atualizado em {formatDateTime(d.updated_at)}
-                  </p>
+                  {isAdmin && (
+                    <p className="text-xs text-muted-foreground">
+                      Atualizado em {formatDateTime(d.updated_at)}
+                    </p>
+                  )}
                 </div>
                 <StatusBadge
                   status={d.status}
@@ -195,9 +200,11 @@ function Overview() {
               >
                 <div className="min-w-0">
                   <p className="break-words text-sm font-medium">Marca: {m.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Atualizado em {formatDateTime(m.updated_at)}
-                  </p>
+                  {isAdmin && (
+                    <p className="text-xs text-muted-foreground">
+                      Atualizado em {formatDateTime(m.updated_at)}
+                    </p>
+                  )}
                 </div>
                 <StatusBadge
                   status={m.status}

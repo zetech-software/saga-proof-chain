@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Download, ExternalLink, ShieldCheck } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { usePortalSession } from "@/hooks/usePortalSession";
 import { Button } from "@/components/ui/button";
 import { ListSkeleton } from "@/components/ListSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,6 +37,8 @@ export const Route = createFileRoute("/_authenticated/painel/certificados")({
 
 function CertificadosPage() {
   const queryClient = useQueryClient();
+  const { data: session } = usePortalSession();
+  const isAdmin = session?.isAdmin ?? false;
 
   const { data: certs, isLoading } = useQuery({
     queryKey: ["certificates"],
@@ -86,10 +89,13 @@ function CertificadosPage() {
                   </div>
                   <div className="min-w-0">
                     <h3 className="break-words font-serif text-xl leading-snug">{c.title}</h3>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Emitido em {formatDateTime(c.issued_at)}
-                      {c.network ? ` · Rede ${c.network}` : ""}
-                    </p>
+                    {(isAdmin || c.network) && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {isAdmin ? `Emitido em ${formatDateTime(c.issued_at)}` : ""}
+                        {isAdmin && c.network ? " · " : ""}
+                        {c.network ? `Rede ${c.network}` : ""}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
