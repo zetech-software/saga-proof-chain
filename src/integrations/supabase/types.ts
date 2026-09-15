@@ -286,6 +286,33 @@ export type Database = {
         }
         Relationships: []
       }
+      resource_views: {
+        Row: {
+          action: string
+          id: string
+          resource_id: string
+          resource_type: Database["public"]["Enums"]["shared_resource_type"]
+          user_id: string
+          viewed_at: string
+        }
+        Insert: {
+          action?: string
+          id?: string
+          resource_id: string
+          resource_type: Database["public"]["Enums"]["shared_resource_type"]
+          user_id: string
+          viewed_at?: string
+        }
+        Update: {
+          action?: string
+          id?: string
+          resource_id?: string
+          resource_type?: Database["public"]["Enums"]["shared_resource_type"]
+          user_id?: string
+          viewed_at?: string
+        }
+        Relationships: []
+      }
       support_notifications: {
         Row: {
           created_at: string
