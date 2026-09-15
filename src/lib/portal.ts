@@ -1,6 +1,7 @@
 export const PRAZO_TEXTO = "7 a 25 dias úteis";
 
 export const DOCUMENT_STATUSES = [
+  "documento",
   "recebido",
   "em_analise",
   "protocolado_inpi",
