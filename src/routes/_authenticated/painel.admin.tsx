@@ -605,6 +605,15 @@ function AdminPage() {
 
       <AdminTrademarksPanel marcas={(data?.marcas ?? []) as never} enabled={isAdmin} />
 
+      <AdminCertificatesPanel
+        certs={(data?.certs ?? []) as never}
+        docs={(data?.docs ?? []).map((d) => ({ id: d.id, label: d.title }))}
+        marcas={(data?.marcas ?? []).map((m) => ({ id: m.id, label: m.name }))}
+        enabled={isAdmin}
+        adminUserId={session?.user?.id ?? null}
+      />
+
+
 
       <Card className="bg-card/70">
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
