@@ -149,12 +149,18 @@ function AdminPage() {
   const { data } = useQuery({
     queryKey: ["admin-data"],
     queryFn: async () => {
-      const [marcas, docs, suporte] = await Promise.all([
+      const [marcas, docs, suporte, certs] = await Promise.all([
         supabase.from("trademarks").select("*").order("submitted_at", { ascending: false }),
         supabase.from("documents").select("*").order("submitted_at", { ascending: false }),
         supabase.from("support_requests").select("*").order("created_at", { ascending: false }),
+        supabase.from("certificates").select("*").order("issued_at", { ascending: false }),
       ]);
-      return { marcas: marcas.data ?? [], docs: docs.data ?? [], suporte: suporte.data ?? [] };
+      return {
+        marcas: marcas.data ?? [],
+        docs: docs.data ?? [],
+        suporte: suporte.data ?? [],
+        certs: certs.data ?? [],
+      };
     },
     enabled: !!session?.isAdmin,
   });
