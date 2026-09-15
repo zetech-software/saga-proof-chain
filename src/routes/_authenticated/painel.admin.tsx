@@ -42,6 +42,7 @@ import { PrivacyOverview } from "@/components/PrivacyOverview";
 import { OwnershipManager } from "@/components/OwnershipManager";
 import { AdminDocumentsPanel } from "@/components/AdminDocumentsPanel";
 import { AdminTrademarksPanel } from "@/components/AdminTrademarksPanel";
+import { AdminCertificatesPanel } from "@/components/AdminCertificatesPanel";
 
 
 export const Route = createFileRoute("/_authenticated/painel/admin")({
@@ -149,12 +150,18 @@ function AdminPage() {
   const { data } = useQuery({
     queryKey: ["admin-data"],
     queryFn: async () => {
-      const [marcas, docs, suporte] = await Promise.all([
+      const [marcas, docs, suporte, certs] = await Promise.all([
         supabase.from("trademarks").select("*").order("submitted_at", { ascending: false }),
         supabase.from("documents").select("*").order("submitted_at", { ascending: false }),
         supabase.from("support_requests").select("*").order("created_at", { ascending: false }),
+        supabase.from("certificates").select("*").order("issued_at", { ascending: false }),
       ]);
-      return { marcas: marcas.data ?? [], docs: docs.data ?? [], suporte: suporte.data ?? [] };
+      return {
+        marcas: marcas.data ?? [],
+        docs: docs.data ?? [],
+        suporte: suporte.data ?? [],
+        certs: certs.data ?? [],
+      };
     },
     enabled: !!session?.isAdmin,
   });
@@ -597,6 +604,15 @@ function AdminPage() {
       />
 
       <AdminTrademarksPanel marcas={(data?.marcas ?? []) as never} enabled={isAdmin} />
+
+      <AdminCertificatesPanel
+        certs={(data?.certs ?? []) as never}
+        docs={(data?.docs ?? []).map((d) => ({ id: d.id, label: d.title }))}
+        marcas={(data?.marcas ?? []).map((m) => ({ id: m.id, label: m.name }))}
+        enabled={isAdmin}
+        adminUserId={session?.user?.id ?? null}
+      />
+
 
 
       <Card className="bg-card/70">

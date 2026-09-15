@@ -17,6 +17,7 @@ import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedPainelIndexRouteImport } from './routes/_authenticated/painel.index'
 import { Route as AuthenticatedPainelAdminRouteImport } from './routes/_authenticated/painel.admin'
 import { Route as AuthenticatedPainelCertificadosRouteImport } from './routes/_authenticated/painel.certificados'
+import { Route as AuthenticatedPainelCompartilhadosRouteImport } from './routes/_authenticated/painel.compartilhados'
 import { Route as AuthenticatedPainelContaRouteImport } from './routes/_authenticated/painel.conta'
 import { Route as AuthenticatedPainelDocumentosRouteImport } from './routes/_authenticated/painel.documentos'
 import { Route as AuthenticatedPainelMarcasRouteImport } from './routes/_authenticated/painel.marcas'
@@ -64,6 +65,12 @@ const AuthenticatedPainelCertificadosRoute =
     path: '/certificados',
     getParentRoute: () => AuthenticatedPainelRoute,
   } as any)
+const AuthenticatedPainelCompartilhadosRoute =
+  AuthenticatedPainelCompartilhadosRouteImport.update({
+    id: '/compartilhados',
+    path: '/compartilhados',
+    getParentRoute: () => AuthenticatedPainelRoute,
+  } as any)
 const AuthenticatedPainelContaRoute =
   AuthenticatedPainelContaRouteImport.update({
     id: '/conta',
@@ -96,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/painel': typeof AuthenticatedPainelRouteWithChildren
   '/painel/admin': typeof AuthenticatedPainelAdminRoute
   '/painel/certificados': typeof AuthenticatedPainelCertificadosRoute
+  '/painel/compartilhados': typeof AuthenticatedPainelCompartilhadosRoute
   '/painel/conta': typeof AuthenticatedPainelContaRoute
   '/painel/documentos': typeof AuthenticatedPainelDocumentosRoute
   '/painel/marcas': typeof AuthenticatedPainelMarcasRoute
@@ -108,6 +116,7 @@ export interface FileRoutesByTo {
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/painel/admin': typeof AuthenticatedPainelAdminRoute
   '/painel/certificados': typeof AuthenticatedPainelCertificadosRoute
+  '/painel/compartilhados': typeof AuthenticatedPainelCompartilhadosRoute
   '/painel/conta': typeof AuthenticatedPainelContaRoute
   '/painel/documentos': typeof AuthenticatedPainelDocumentosRoute
   '/painel/marcas': typeof AuthenticatedPainelMarcasRoute
@@ -123,6 +132,7 @@ export interface FileRoutesById {
   '/_authenticated/painel': typeof AuthenticatedPainelRouteWithChildren
   '/_authenticated/painel/admin': typeof AuthenticatedPainelAdminRoute
   '/_authenticated/painel/certificados': typeof AuthenticatedPainelCertificadosRoute
+  '/_authenticated/painel/compartilhados': typeof AuthenticatedPainelCompartilhadosRoute
   '/_authenticated/painel/conta': typeof AuthenticatedPainelContaRoute
   '/_authenticated/painel/documentos': typeof AuthenticatedPainelDocumentosRoute
   '/_authenticated/painel/marcas': typeof AuthenticatedPainelMarcasRoute
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/painel'
     | '/painel/admin'
     | '/painel/certificados'
+    | '/painel/compartilhados'
     | '/painel/conta'
     | '/painel/documentos'
     | '/painel/marcas'
@@ -150,6 +161,7 @@ export interface FileRouteTypes {
     | '/redefinir-senha'
     | '/painel/admin'
     | '/painel/certificados'
+    | '/painel/compartilhados'
     | '/painel/conta'
     | '/painel/documentos'
     | '/painel/marcas'
@@ -164,6 +176,7 @@ export interface FileRouteTypes {
     | '/_authenticated/painel'
     | '/_authenticated/painel/admin'
     | '/_authenticated/painel/certificados'
+    | '/_authenticated/painel/compartilhados'
     | '/_authenticated/painel/conta'
     | '/_authenticated/painel/documentos'
     | '/_authenticated/painel/marcas'
@@ -236,6 +249,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelCertificadosRouteImport
       parentRoute: typeof AuthenticatedPainelRoute
     }
+    '/_authenticated/painel/compartilhados': {
+      id: '/_authenticated/painel/compartilhados'
+      path: '/compartilhados'
+      fullPath: '/painel/compartilhados'
+      preLoaderRoute: typeof AuthenticatedPainelCompartilhadosRouteImport
+      parentRoute: typeof AuthenticatedPainelRoute
+    }
     '/_authenticated/painel/conta': {
       id: '/_authenticated/painel/conta'
       path: '/conta'
@@ -270,6 +290,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedPainelRouteChildren {
   AuthenticatedPainelAdminRoute: typeof AuthenticatedPainelAdminRoute
   AuthenticatedPainelCertificadosRoute: typeof AuthenticatedPainelCertificadosRoute
+  AuthenticatedPainelCompartilhadosRoute: typeof AuthenticatedPainelCompartilhadosRoute
   AuthenticatedPainelContaRoute: typeof AuthenticatedPainelContaRoute
   AuthenticatedPainelDocumentosRoute: typeof AuthenticatedPainelDocumentosRoute
   AuthenticatedPainelMarcasRoute: typeof AuthenticatedPainelMarcasRoute
@@ -280,6 +301,8 @@ interface AuthenticatedPainelRouteChildren {
 const AuthenticatedPainelRouteChildren: AuthenticatedPainelRouteChildren = {
   AuthenticatedPainelAdminRoute: AuthenticatedPainelAdminRoute,
   AuthenticatedPainelCertificadosRoute: AuthenticatedPainelCertificadosRoute,
+  AuthenticatedPainelCompartilhadosRoute:
+    AuthenticatedPainelCompartilhadosRoute,
   AuthenticatedPainelContaRoute: AuthenticatedPainelContaRoute,
   AuthenticatedPainelDocumentosRoute: AuthenticatedPainelDocumentosRoute,
   AuthenticatedPainelMarcasRoute: AuthenticatedPainelMarcasRoute,

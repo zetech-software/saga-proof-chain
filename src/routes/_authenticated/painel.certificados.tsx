@@ -6,6 +6,7 @@ import { Download, ExternalLink, ShieldCheck } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { usePortalSession } from "@/hooks/usePortalSession";
+import { logResourceView } from "@/hooks/useResourceViews";
 import { Button } from "@/components/ui/button";
 import { ListSkeleton } from "@/components/ListSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,7 +65,14 @@ function CertificadosPage() {
     };
   }, [queryClient]);
 
-  async function download(path: string, name: string) {
+  // Registra o acesso do cliente aos certificados visíveis (histórico para o admin).
+  useEffect(() => {
+    if (isAdmin) return;
+    for (const c of certs ?? []) void logResourceView("certificate", c.id);
+  }, [certs, isAdmin]);
+
+  async function download(id: string, path: string, name: string) {
+    if (!isAdmin) void logResourceView("certificate", id, "download");
     const result = await downloadFromBucket("certificados", path, name);
     if (!result.ok) toast.error(result.message);
   }
@@ -112,7 +120,9 @@ function CertificadosPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => download(c.storage_path!, c.file_name ?? "certificado.pdf")}
+                    onClick={() =>
+                      download(c.id, c.storage_path!, c.file_name ?? "certificado.pdf")
+                    }
                   >
                     <Download className="h-4 w-4" />
                     Baixar certificado
