@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Stamp } from "lucide-react";
@@ -8,6 +8,7 @@ import { Stamp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useMyOrganization } from "@/hooks/useMyOrganization";
 import { usePortalSession } from "@/hooks/usePortalSession";
+import { logResourceView } from "@/hooks/useResourceViews";
 import { Button } from "@/components/ui/button";
 import { ListSkeleton } from "@/components/ListSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,7 +69,14 @@ function MarcasPage() {
     },
   });
 
+  // Registra o acesso do cliente às marcas visíveis (histórico para o admin).
+  useEffect(() => {
+    if (isAdmin) return;
+    for (const m of marcas ?? []) void logResourceView("trademark", m.id);
+  }, [marcas, isAdmin]);
+
   const { data: myOrgId } = useMyOrganization();
+
 
   const createMutation = useMutation({
     mutationFn: async () => {

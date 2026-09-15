@@ -8,6 +8,7 @@ import {
   Shield,
   LifeBuoy,
   LogOut,
+  Share2,
   UserCog,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -85,7 +86,12 @@ export function PortalLayout({
 
           {[
             ...navItems.filter((item) => !(isAdmin && item.to === "/painel/suporte")),
-            ...(isAdmin ? [{ to: "/painel/admin", label: "Admin", icon: Shield }] : []),
+            ...(isAdmin
+              ? [
+                  { to: "/painel/compartilhados", label: "Compartilhados", icon: Share2 },
+                  { to: "/painel/admin", label: "Admin", icon: Shield },
+                ]
+              : []),
           ].map((item) => {
             const active =
               "exact" in item && item.exact ? pathname === item.to : pathname.startsWith(item.to);
