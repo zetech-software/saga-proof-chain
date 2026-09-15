@@ -1,6 +1,7 @@
 export const PRAZO_TEXTO = "7 a 25 dias úteis";
 
 export const DOCUMENT_STATUSES = [
+  "documento",
   "recebido",
   "em_analise",
   "protocolado_inpi",
@@ -13,6 +14,7 @@ export const DOCUMENT_STATUSES = [
 export type DocumentStatus = (typeof DOCUMENT_STATUSES)[number];
 
 export const DOCUMENT_STATUS_LABEL: Record<string, string> = {
+  documento: "Documento",
   recebido: "Recebido",
   em_analise: "Em análise documental",
   protocolado_inpi: "Protocolado no INPI",
