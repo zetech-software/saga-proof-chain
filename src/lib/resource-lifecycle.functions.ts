@@ -588,10 +588,10 @@ export const listRestorationCandidates = createServerFn({ method: "GET" })
             : false;
         const deps: { type: string; id: string; label?: string }[] = c.dependencies ?? [];
         const depStatus = await Promise.all(
-          deps.map(async (d) => ({
-            ...d,
-            exists: TABLE_BY_CANDIDATE[d.type] ? await existsIn(sa, TABLE_BY_CANDIDATE[d.type], d.id) : false,
-          })),
+          deps.map(async (d) => {
+            const t = TABLE_BY_CANDIDATE[d.type];
+            return { ...d, exists: t ? await existsIn(sa, t, d.id) : false };
+          }),
         );
         return {
           id: c.id as string,
