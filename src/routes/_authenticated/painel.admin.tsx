@@ -94,7 +94,7 @@ function AdminPage() {
 
   const [cert, setCert] = useState({
     title: "",
-    network: "Polygon",
+    network: "Ethereum (ETH) via Authora — Homologação Zé Registra",
     tx_hash: "",
     verification_url: "",
     document_id: "",
@@ -310,7 +310,7 @@ function AdminPage() {
       toast.success("Certificado publicado no portal");
       setCert({
         title: "",
-        network: "Polygon",
+        network: "Ethereum (ETH) via Authora — Homologação Zé Registra",
         tx_hash: "",
         verification_url: "",
         document_id: "",
@@ -319,6 +319,7 @@ function AdminPage() {
       setCertFile(null);
       if (certFileRef.current) certFileRef.current.value = "";
       queryClient.invalidateQueries({ queryKey: ["certificates"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-data"] });
     },
     onError: (e: unknown) => toast.error(describeUploadError(e)),
   });
