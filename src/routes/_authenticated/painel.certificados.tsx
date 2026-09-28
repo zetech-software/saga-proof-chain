@@ -7,6 +7,7 @@ import { Download, ExternalLink, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePortalSession } from "@/hooks/usePortalSession";
 import { logResourceView } from "@/hooks/useResourceViews";
+import { useSupportNotifications } from "@/hooks/useSupportNotifications";
 import { Button } from "@/components/ui/button";
 import { ListSkeleton } from "@/components/ListSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,6 +65,13 @@ function CertificadosPage() {
       supabase.removeChannel(channel);
     };
   }, [queryClient]);
+
+  const { certificateCount, markAllRead } = useSupportNotifications();
+  const markAllMutate = markAllRead.mutate;
+  useEffect(() => {
+    if (isAdmin || !certs || certificateCount === 0) return;
+    markAllMutate("certificate_available");
+  }, [certs, certificateCount, isAdmin, markAllMutate]);
 
   // Registra o acesso do cliente aos certificados visíveis (histórico para o admin).
   useEffect(() => {
