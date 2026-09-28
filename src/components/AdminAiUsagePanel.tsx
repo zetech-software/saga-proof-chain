@@ -99,7 +99,7 @@ export function AdminAiUsagePanel({ enabled }: { enabled: boolean }) {
                   <div><dt className="text-muted-foreground">30 dias</dt><dd>{r.last_30d}</dd></div>
                   <div><dt className="text-muted-foreground">Total (90 dias)</dt><dd>{r.total_90d}</dd></div>
                   <div><dt className="text-muted-foreground">Último dia de uso</dt><dd>{fmtDay(r.last_day)}</dd></div>
-                  <div><dt className="text-muted-foreground">Custo estimado</dt><dd className="whitespace-nowrap">{fmtCost(r.last_30d)}</dd></div>
+                  <div><dt className="text-muted-foreground">Custo estimado (30 dias)</dt><dd className="whitespace-nowrap">{fmtCost(r.last_30d)}</dd></div>
                 </dl>
               </li>
             ))}
