@@ -214,7 +214,7 @@ export function extractRefs(raw: string, refs: Map<string, SafeRef>): { answer: 
   for (const line of lines) {
     const m = line.match(/^\s*FONTES\s*:(.*)$/i);
     if (m) {
-      for (const tok of m[1].toUpperCase().match(/\b[DCM]\d{1,3}\b/g) ?? []) cited.add(tok);
+      for (const tok of (m[1] ?? "").toUpperCase().match(/\b[DCM]\d{1,3}\b/g) ?? []) cited.add(tok);
     } else kept.push(line);
   }
   const links: SafeRef[] = [];
