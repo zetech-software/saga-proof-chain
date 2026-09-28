@@ -155,10 +155,10 @@ function AdminPage() {
     queryKey: ["admin-data"],
     queryFn: async () => {
       const [marcas, docs, suporte, certs, profiles] = await Promise.all([
-        supabase.from("trademarks").select("*").order("submitted_at", { ascending: false }),
-        supabase.from("documents").select("*").order("submitted_at", { ascending: false }),
+        supabase.from("trademarks").select("*").is("deleted_at", null).order("submitted_at", { ascending: false }),
+        supabase.from("documents").select("*").is("deleted_at", null).order("submitted_at", { ascending: false }),
         supabase.from("support_requests").select("*").order("created_at", { ascending: false }),
-        supabase.from("certificates").select("*").order("issued_at", { ascending: false }),
+        supabase.from("certificates").select("*").is("deleted_at", null).order("issued_at", { ascending: false }),
         supabase.from("profiles").select("id, full_name, email"),
       ]);
       return {

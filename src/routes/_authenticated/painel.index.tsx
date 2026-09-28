@@ -51,13 +51,13 @@ function Overview() {
     queryKey: ["overview"],
     queryFn: async () => {
       const [marcas, docs, certs] = await Promise.all([
-        supabase.from("trademarks").select("*").order("submitted_at", { ascending: false }),
+        supabase.from("trademarks").select("*").is("deleted_at", null).order("submitted_at", { ascending: false }),
         supabase
           .from("documents")
-          .select("*")
+          .select("*").is("deleted_at", null)
           .is("archived_at", null)
           .order("submitted_at", { ascending: false }),
-        supabase.from("certificates").select("*").order("issued_at", { ascending: false }),
+        supabase.from("certificates").select("*").is("deleted_at", null).order("issued_at", { ascending: false }),
       ]);
       return {
         marcas: marcas.data ?? [],

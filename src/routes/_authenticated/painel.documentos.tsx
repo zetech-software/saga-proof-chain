@@ -111,7 +111,7 @@ function DocumentosPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents")
-        .select("*")
+        .select("*").is("deleted_at", null)
         .order("submitted_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -127,7 +127,7 @@ function DocumentosPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("certificates")
-        .select("id, title, storage_path, file_name, document_id")
+        .select("id, title, storage_path, file_name, document_id").is("deleted_at", null)
         .in("document_id", docIds);
       if (error) throw error;
       return data ?? [];
