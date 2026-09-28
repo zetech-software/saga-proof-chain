@@ -382,7 +382,11 @@ export function AdminDocumentsPanel({
                       )}
                       <p className="mt-1 break-words text-xs text-muted-foreground">
                         {d.file_name}
-                        {d.file_size ? ` · ${formatBytes(d.file_size)}` : ""}
+                        {d.file_size ? (
+                          <span className="whitespace-nowrap">{` · ${formatBytes(d.file_size)}`}</span>
+                        ) : (
+                          ""
+                        )}
                         {" · enviado em "}
                         {formatDateTime(d.submitted_at)}
                       </p>
