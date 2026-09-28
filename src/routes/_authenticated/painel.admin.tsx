@@ -404,7 +404,7 @@ function AdminPage() {
 
         <TabsContent value="processos" className="space-y-6">
           <AdminDocumentsPanel
-            docs={docs as never}
+            docs={(data?.docs ?? []) as never}
             enabled={isAdmin}
             adminUserId={session?.user?.id ?? null}
           />
