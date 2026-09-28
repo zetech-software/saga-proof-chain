@@ -64,6 +64,13 @@
       "when": 1790605924814,
       "tag": "0008_cleanup_ai_question_usage",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790606832805,
+      "tag": "0009_ai_usage_daily_and_consume",
+      "breakpoints": true
     }
   ]
 }
