@@ -52,7 +52,11 @@ function Overview() {
     queryFn: async () => {
       const [marcas, docs, certs] = await Promise.all([
         supabase.from("trademarks").select("*").order("submitted_at", { ascending: false }),
-        supabase.from("documents").select("*").order("submitted_at", { ascending: false }),
+        supabase
+          .from("documents")
+          .select("*")
+          .is("archived_at", null)
+          .order("submitted_at", { ascending: false }),
         supabase.from("certificates").select("*").order("issued_at", { ascending: false }),
       ]);
       return {

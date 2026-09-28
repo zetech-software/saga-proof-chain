@@ -15,3 +15,4 @@
 - Assistente IA do cliente: somente leitura, contexto montado no servidor com a sessão do próprio usuário (RLS) em `src/lib/ai-assistant.server.ts`; sem ferramentas, sem histórico; limite por `ai_question_usage` (só user_id+data) — a IA nunca decide permissão.
 - Limite do assistente IA: consumido só pela função `consume_ai_question` (trava por usuário, grava detalhe + agregado `ai_usage_daily` na mesma transação), executável apenas pelo servidor com o id da sessão — sem corrida e sem o navegador escolher usuário.
 - Histórico de uso da IA: detalhe por 2 dias (janelas móveis) + agregado diário user_id/dia/quantidade por 90 dias — guarda o mínimo necessário para 7/30 dias.
+- Gerenciamento de documentos (editar/substituir/arquivar/restaurar/excluir) só por `src/lib/document-management.functions.ts`, com permissão decidida no servidor pela sessão e registro mínimo em `document_events` — o navegador nunca decide o que pode apagar.

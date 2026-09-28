@@ -1,11 +1,19 @@
 import { finalizeAdminUpload } from "@/lib/uploads.functions";
+import {
+  BLOCKED_DELETE_MESSAGE,
+  editDocument,
+  purgeDocument,
+  replaceDocumentFile,
+  setDocumentArchived,
+} from "@/lib/document-management.functions";
+import { DocumentHistory } from "@/components/DocumentHistory";
 import { stagePendingUpload } from "@/lib/secure-upload";
 import { useMemo, useState } from "react";
 import { ProcessStartDateEditor } from "@/components/ProcessStartDateEditor";
 import { ProcessEstimatePreview } from "@/components/ProcessEstimatePreview";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Award, Download, Pencil, RefreshCw, Search, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, Award, Download, Pencil, RefreshCw, Search, Trash2 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -64,6 +72,7 @@ export type AdminDocument = {
   is_additional?: boolean;
   related_document_id?: string | null;
   process_started_at?: string | null;
+  archived_at?: string | null;
 };
 
 type EditState = {
@@ -113,6 +122,10 @@ export function AdminDocumentsPanel({
   const [certHash, setCertHash] = useState("");
   const [certFile, setCertFile] = useState<File | null>(null);
   const [certConclude, setCertConclude] = useState(true);
+  const [view, setView] = useState<"ativos" | "arquivados" | "todos">("ativos");
+  const [confirmText, setConfirmText] = useState("");
+  const [replaceReason, setReplaceReason] = useState("");
+  const [newStatus, setNewStatus] = useState("");
 
   const orgName = useMemo(() => {
     const map = new Map<string, string>();
@@ -139,25 +152,47 @@ export function AdminDocumentsPanel({
 
   const update = useMutation({
     mutationFn: async (input: { id: string; patch: EditState }) => {
-      const { error } = await supabase
-        .from("documents")
-        .update({
+      await editDocument({
+        data: {
+          id: input.id,
           title: input.patch.title.trim(),
           description: input.patch.description.trim() || null,
-          admin_notes: input.patch.admin_notes.trim() || null,
-          status: input.patch.status,
-        })
-        .eq("id", input.id);
-      if (error) throw error;
+          adminNotes: input.patch.admin_notes.trim() || null,
+        },
+      });
     },
     onSuccess: () => {
       toast.success("Documento atualizado");
       refresh();
-      setOpenId(null);
-      setForm(null);
-      setReplaceFile(null);
     },
     onError: () => toast.error("Não foi possível salvar as alterações do documento"),
+  });
+
+  // Status é uma ação separada da edição, para nunca mudar sem querer.
+  const changeStatus = useMutation({
+    mutationFn: async (input: { id: string; status: string }) => {
+      const { error } = await supabase.from("documents").update({ status: input.status }).eq("id", input.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Status atualizado");
+      refresh();
+    },
+    onError: () => toast.error("Não foi possível alterar o status"),
+  });
+
+  const archive = useMutation({
+    mutationFn: async (input: { id: string; archived: boolean }) => {
+      await setDocumentArchived({ data: input });
+      return input.archived;
+    },
+    onSuccess: (archived) => {
+      toast.success(archived ? "Documento arquivado" : "Documento restaurado");
+      setOpenId(null);
+      setForm(null);
+      refresh();
+    },
+    onError: () => toast.error("Não foi possível atualizar o documento"),
   });
 
   async function handleDownload(doc: AdminDocument) {
@@ -182,29 +217,21 @@ export function AdminDocumentsPanel({
         validation.storageName,
         validation.contentType,
       );
-      const { path } = await finalizeAdminUpload({
-        data: { bucket: "documentos", pendingPath: pending },
+      await replaceDocumentFile({
+        data: {
+          id: doc.id,
+          pendingPath: pending,
+          fileName: validation.displayName,
+          reason: replaceReason.trim() || null,
+        },
       });
-
-      const { error } = await supabase
-        .from("documents")
-        .update({
-          storage_path: path,
-          file_name: validation.displayName,
-          file_size: validation.file.size,
-          mime_type: validation.contentType,
-        })
-        .eq("id", doc.id);
-      if (error) {
-        await supabase.storage.from("documentos").remove([path]);
-        throw error;
-      }
-      await supabase.storage.from("documentos").remove([doc.storage_path]);
       toast.success("Arquivo substituído");
       setReplaceFile(null);
+      setReplaceReason("");
       refresh();
-    } catch {
-      toast.error("Não foi possível substituir o arquivo.");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      toast.error(msg.startsWith("O ") || msg.startsWith("Não") ? msg : "Não foi possível substituir o arquivo. O arquivo anterior foi mantido.");
     } finally {
       setBusyId(null);
     }
@@ -213,25 +240,28 @@ export function AdminDocumentsPanel({
   async function handleDelete(doc: AdminDocument) {
     setBusyId(doc.id);
     try {
-      const { error } = await supabase.from("documents").delete().eq("id", doc.id);
-      if (error) throw error;
-      await supabase.storage.from("documentos").remove([doc.storage_path]);
-      toast.success("Documento excluído");
-      if (openId === doc.id) {
-        setOpenId(null);
-        setForm(null);
+      const r = await purgeDocument({ data: { id: doc.id, confirm: "EXCLUIR" } });
+      if (r.blocked) {
+        toast.error(`${BLOCKED_DELETE_MESSAGE} (${r.reasons.join(", ")}). Você pode arquivá-lo.`);
+        return;
       }
+      toast.success("Documento excluído definitivamente");
+      setOpenId(null);
+      setForm(null);
       refresh();
     } catch {
       toast.error("Não foi possível excluir o documento.");
     } finally {
       setBusyId(null);
+      setConfirmText("");
     }
   }
 
   const filtered = useMemo(() => {
     const q = term.trim().toLowerCase();
     return docs.filter((d) => {
+      if (view === "ativos" && d.archived_at) return false;
+      if (view === "arquivados" && !d.archived_at) return false;
       if (status !== "todos" && d.status !== status) return false;
       // Dia do envio no fuso de São Paulo (evita trocar de dia após 21h).
       const day = spDayKey(d.submitted_at);
@@ -245,7 +275,7 @@ export function AdminDocumentsPanel({
         .toLowerCase()
         .includes(q);
     });
-  }, [docs, term, status, fromDate, toDate, userSearch, orgName]);
+  }, [docs, term, status, fromDate, toDate, userSearch, orgName, view]);
 
   async function handleSendCertificate(doc: AdminDocument) {
     if (!adminUserId) return;
@@ -365,6 +395,20 @@ export function AdminDocumentsPanel({
               />
             </div>
           </div>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Mostrar documentos">
+            {(["ativos", "arquivados", "todos"] as const).map((v) => (
+              <Button
+                key={v}
+                type="button"
+                size="sm"
+                variant={view === v ? "default" : "outline"}
+                aria-pressed={view === v}
+                onClick={() => setView(v)}
+              >
+                {v === "ativos" ? "Ativos" : v === "arquivados" ? "Arquivados" : "Todos"}
+              </Button>
+            ))}
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {filtered.length === 0 ? (
@@ -385,6 +429,11 @@ export function AdminDocumentsPanel({
                     <div className="min-w-0">
                       <p className="break-words font-medium">
                         {d.title}
+                        {d.archived_at && (
+                          <span className="mr-2 inline-flex rounded-full border border-border px-2 py-0.5 align-middle text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                            Arquivado
+                          </span>
+                        )}
                         {d.is_additional && (
                           <span className="ml-2 inline-flex rounded-full border border-gold/40 bg-gold/10 px-2 py-0.5 align-middle text-[10px] font-medium uppercase tracking-wider text-gold-light">
                             Envio adicional
@@ -473,41 +522,15 @@ export function AdminDocumentsPanel({
                             admin_notes: d.admin_notes ?? "",
                             status: d.status,
                           });
+                          setNewStatus(d.status);
                           setReplaceFile(null);
+                          setReplaceReason("");
+                          setConfirmText("");
                         }}
                       >
                         <Pencil className="h-4 w-4" aria-hidden />
                         {isOpen ? "Fechar" : "Gerenciar"}
                       </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={busy}
-                            aria-label={`Excluir ${d.title}`}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" aria-hidden />
-                            Excluir
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Excluir “{d.title}”?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              O registro e o arquivo serão removidos definitivamente e o cliente
-                              deixará de visualizá-los. Esta ação não pode ser desfeita.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(d)}>
-                              Excluir documento
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
                     </div>
                   </div>
 
@@ -564,6 +587,7 @@ export function AdminDocumentsPanel({
                   )}
                   {isOpen && form && (
                     <div className="mt-4 space-y-4">
+                      <p className="text-sm font-medium">Editar</p>
                       <form
                         className="grid gap-3 sm:grid-cols-2"
                         onSubmit={(e) => {
@@ -583,29 +607,6 @@ export function AdminDocumentsPanel({
                             maxLength={160}
                             onChange={(e) => setForm({ ...form, title: e.target.value })}
                           />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor={`dstatus-${d.id}`}>Status</Label>
-                          <Select
-                            value={form.status}
-                            onValueChange={(v) => setForm({ ...form, status: v })}
-                          >
-                            <SelectTrigger id={`dstatus-${d.id}`}>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {DOCUMENT_STATUS_GROUPS.map((g) => (
-                                <SelectGroup key={g.label}>
-                                  <SelectLabel>{g.label}</SelectLabel>
-                                  {g.statuses.map((s) => (
-                                    <SelectItem key={s} value={s}>
-                                      {DOCUMENT_STATUS_LABEL[s]}
-                                    </SelectItem>
-                                  ))}
-                                </SelectGroup>
-                              ))}
-                            </SelectContent>
-                          </Select>
                         </div>
                         <div className="space-y-2 sm:col-span-2">
                           <Label htmlFor={`ddesc-${d.id}`}>Descrição</Label>
@@ -631,10 +632,42 @@ export function AdminDocumentsPanel({
                             disabled={update.isPending}
                             aria-busy={update.isPending}
                           >
-                            {update.isPending ? "Salvando..." : "Salvar alterações"}
+                            {update.isPending ? "Salvando…" : "Salvar alterações"}
                           </Button>
                         </div>
                       </form>
+
+                      <div className="space-y-2 rounded-lg border border-border/60 p-4">
+                        <Label htmlFor={`dstatus-${d.id}`} className="text-sm font-medium">Alterar status</Label>
+                        <div className="flex flex-wrap gap-2">
+                          <Select value={newStatus} onValueChange={setNewStatus}>
+                            <SelectTrigger id={`dstatus-${d.id}`} className="sm:w-64">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {DOCUMENT_STATUS_GROUPS.map((g) => (
+                                <SelectGroup key={g.label}>
+                                  <SelectLabel>{g.label}</SelectLabel>
+                                  {g.statuses.map((st) => (
+                                    <SelectItem key={st} value={st}>
+                                      {DOCUMENT_STATUS_LABEL[st]}
+                                    </SelectItem>
+                                  ))}
+                                </SelectGroup>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            disabled={changeStatus.isPending || newStatus === d.status}
+                            onClick={() => changeStatus.mutate({ id: d.id, status: newStatus })}
+                          >
+                            {changeStatus.isPending ? "Salvando…" : "Aplicar status"}
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">O cliente é avisado quando o status muda.</p>
+                      </div>
 
                       <ProcessStartDateEditor
                         documentId={d.id}
@@ -646,6 +679,14 @@ export function AdminDocumentsPanel({
                           id={`replace-${d.id}`}
                           file={replaceFile}
                           onSelect={setReplaceFile}
+                          disabled={busy}
+                        />
+                        <Input
+                          value={replaceReason}
+                          maxLength={300}
+                          onChange={(e) => setReplaceReason(e.target.value)}
+                          placeholder="Motivo (opcional)"
+                          aria-label="Motivo da substituição (opcional)"
                         />
                         <Button
                           type="button"
@@ -655,10 +696,101 @@ export function AdminDocumentsPanel({
                           onClick={() => handleReplace(d)}
                         >
                           <RefreshCw className="h-4 w-4" aria-hidden />
-                          {busy ? "Substituindo..." : "Substituir arquivo"}
+                          {busy ? "Substituindo…" : "Substituir arquivo"}
                         </Button>
                         <p className="text-xs text-muted-foreground">
-                          O arquivo anterior é removido do armazenamento após a substituição.
+                          O documento, o dono, a organização, o status e os vínculos continuam os mesmos.
+                          O arquivo anterior só é removido depois que o novo for validado.
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border/60 p-4">
+                        {d.archived_at ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            disabled={archive.isPending}
+                            onClick={() => archive.mutate({ id: d.id, archived: false })}
+                          >
+                            <ArchiveRestore className="h-4 w-4" aria-hidden />
+                            {archive.isPending ? "Restaurando…" : "Restaurar"}
+                          </Button>
+                        ) : (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button type="button" variant="outline" disabled={archive.isPending}>
+                                <Archive className="h-4 w-4" aria-hidden />
+                                Arquivar
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Arquivar “{d.title}”?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  O documento sai da lista principal, mas nada é apagado: arquivo,
+                                  vínculos e histórico continuam. Você pode restaurar depois.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => archive.mutate({ id: d.id, archived: true })}>
+                                  Arquivar
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          Arquivar não apaga nada e pode ser desfeito.
+                        </p>
+                      </div>
+
+                      <DocumentHistory documentId={d.id} />
+
+                      <div className="space-y-2 rounded-lg border border-destructive/50 bg-destructive/5 p-4">
+                        <p className="text-sm font-medium text-destructive">Zona de perigo</p>
+                        <AlertDialog onOpenChange={(o) => !o && setConfirmText("")}>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              disabled={busy}
+                              className="border-destructive/60 text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" aria-hidden />
+                              Excluir definitivamente
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir “{d.title}” definitivamente?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta ação apagará permanentemente o documento e o arquivo. Não será
+                                possível recuperar. Digite EXCLUIR para confirmar.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <Input
+                              value={confirmText}
+                              onChange={(e) => setConfirmText(e.target.value)}
+                              placeholder="EXCLUIR"
+                              aria-label="Digite EXCLUIR para confirmar"
+                              autoComplete="off"
+                            />
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                disabled={confirmText !== "EXCLUIR"}
+                                onClick={() => handleDelete(d)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Excluir definitivamente
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                        <p className="text-xs text-muted-foreground">
+                          Bloqueada quando há certificado, envio adicional, compartilhamento ou
+                          processo concluído. Nesses casos, use Arquivar.
                         </p>
                       </div>
                     </div>
