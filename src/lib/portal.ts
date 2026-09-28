@@ -181,7 +181,18 @@ function easterSunday(year: number): Date {
 }
 
 // Feriados fixos: nacionais (Lei 662/1949, 6.802/1980, 14.759/2023) + estadual SP (09/07, Lei 9.497/1997).
-const FIXED_HOLIDAYS = ["01-01", "04-21", "05-01", "07-09", "09-07", "10-12", "11-02", "11-15", "11-20", "12-25"];
+const FIXED_HOLIDAYS = [
+  "01-01",
+  "04-21",
+  "05-01",
+  "07-09",
+  "09-07",
+  "10-12",
+  "11-02",
+  "11-15",
+  "11-20",
+  "12-25",
+];
 const holidayCache = new Map<number, Set<string>>();
 
 function holidaysOf(year: number): Set<string> {
