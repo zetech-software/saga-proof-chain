@@ -76,7 +76,11 @@ function DocumentosPage() {
     );
   }
 
-  const { data: docs, isLoading, isError } = useQuery({
+  const {
+    data: docs,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["documents"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -152,7 +156,10 @@ function DocumentosPage() {
 
         const baseTitle = title.trim() || checked.displayName;
         const { error } = await supabase.from("documents").insert({
-          title: (files.length > 1 && title.trim() ? `${baseTitle} (${index + 1})` : baseTitle).slice(0, 160),
+          title: (files.length > 1 && title.trim()
+            ? `${baseTitle} (${index + 1})`
+            : baseTitle
+          ).slice(0, 160),
           description: description.trim() || null,
           storage_path: path,
           file_name: checked.displayName,
@@ -235,8 +242,8 @@ function DocumentosPage() {
       <div>
         <h1 className="font-display text-3xl text-gold">Documentos</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Envie os documentos necessários para iniciarmos o registro. Acompanhe o andamento e
-          receba seu certificado por aqui.
+          Envie os documentos necessários para iniciarmos o registro. Acompanhe o andamento e receba
+          seu certificado por aqui.
         </p>
       </div>
 
@@ -341,7 +348,9 @@ function DocumentosPage() {
                         <span className="min-w-0 flex-1 truncate" title={f.name}>
                           {f.name}
                         </span>
-                        <span className="shrink-0 text-muted-foreground">{formatBytes(f.size)}</span>
+                        <span className="shrink-0 text-muted-foreground">
+                          {formatBytes(f.size)}
+                        </span>
                         <Button
                           type="button"
                           variant="ghost"
@@ -417,7 +426,9 @@ function DocumentosPage() {
                     />
                   </div>
                   {d.description && (
-                    <p className="mt-3 break-words text-sm text-muted-foreground">{d.description}</p>
+                    <p className="mt-3 break-words text-sm text-muted-foreground">
+                      {d.description}
+                    </p>
                   )}
                   {d.admin_notes && (
                     <p className="mt-3 break-words rounded-lg border border-brand-hover/30 bg-brand-hover/5 p-3 text-sm">

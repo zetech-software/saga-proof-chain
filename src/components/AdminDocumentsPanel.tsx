@@ -295,7 +295,7 @@ export function AdminDocumentsPanel({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos os status</SelectItem>
-{DOCUMENT_STATUS_GROUPS.map((g) => (
+              {DOCUMENT_STATUS_GROUPS.map((g) => (
                 <SelectGroup key={g.label}>
                   <SelectLabel>{g.label}</SelectLabel>
                   {g.statuses.map((s) => (
@@ -310,12 +310,26 @@ export function AdminDocumentsPanel({
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1">
-            <Label htmlFor="docs-from" className="text-xs">Enviados a partir de</Label>
-            <Input id="docs-from" type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+            <Label htmlFor="docs-from" className="text-xs">
+              Enviados a partir de
+            </Label>
+            <Input
+              id="docs-from"
+              type="date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+            />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="docs-to" className="text-xs">Enviados até</Label>
-            <Input id="docs-to" type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
+            <Label htmlFor="docs-to" className="text-xs">
+              Enviados até
+            </Label>
+            <Input
+              id="docs-to"
+              type="date"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+            />
           </div>
         </div>
       </CardHeader>
@@ -347,7 +361,8 @@ export function AdminDocumentsPanel({
                     {d.related_document_id && (
                       <p className="mt-1 break-words text-xs text-muted-foreground">
                         Referente a:{" "}
-                        {docs.find((x) => x.id === d.related_document_id)?.title ?? "processo relacionado"}
+                        {docs.find((x) => x.id === d.related_document_id)?.title ??
+                          "processo relacionado"}
                       </p>
                     )}
                     <p className="mt-1 break-all text-xs text-muted-foreground">
@@ -464,22 +479,49 @@ export function AdminDocumentsPanel({
                     <p className="text-sm font-medium">Enviar certificado para este documento</p>
                     <div className="space-y-2">
                       <Label htmlFor={`ctitle-${d.id}`}>Título</Label>
-                      <Input id={`ctitle-${d.id}`} value={certTitle} maxLength={160} onChange={(e) => setCertTitle(e.target.value)} />
+                      <Input
+                        id={`ctitle-${d.id}`}
+                        value={certTitle}
+                        maxLength={160}
+                        onChange={(e) => setCertTitle(e.target.value)}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor={`chash-${d.id}`}>Hash (opcional)</Label>
-                      <Input id={`chash-${d.id}`} value={certHash} maxLength={200} onChange={(e) => setCertHash(e.target.value)} />
+                      <Input
+                        id={`chash-${d.id}`}
+                        value={certHash}
+                        maxLength={200}
+                        onChange={(e) => setCertHash(e.target.value)}
+                      />
                     </div>
-                    <FileDropzone id={`cfile-${d.id}`} describedById={`chelp-${d.id}`} file={certFile} onSelect={setCertFile} disabled={busy} />
+                    <FileDropzone
+                      id={`cfile-${d.id}`}
+                      describedById={`chelp-${d.id}`}
+                      file={certFile}
+                      onSelect={setCertFile}
+                      disabled={busy}
+                    />
                     <label className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" checked={certConclude} onChange={(e) => setCertConclude(e.target.checked)} />
+                      <input
+                        type="checkbox"
+                        checked={certConclude}
+                        onChange={(e) => setCertConclude(e.target.checked)}
+                      />
                       Marcar processo como “Concluído”
                     </label>
                     <div className="flex flex-wrap gap-2">
-                      <Button size="sm" onClick={() => handleSendCertificate(d)} disabled={busy || !certFile} aria-busy={busy}>
+                      <Button
+                        size="sm"
+                        onClick={() => handleSendCertificate(d)}
+                        disabled={busy || !certFile}
+                        aria-busy={busy}
+                      >
                         {busy ? "Enviando..." : "Publicar certificado"}
                       </Button>
-                      <Button size="sm" variant="ghost" onClick={() => setCertForId(null)}>Cancelar</Button>
+                      <Button size="sm" variant="ghost" onClick={() => setCertForId(null)}>
+                        Cancelar
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -515,16 +557,16 @@ export function AdminDocumentsPanel({
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-{DOCUMENT_STATUS_GROUPS.map((g) => (
-                <SelectGroup key={g.label}>
-                  <SelectLabel>{g.label}</SelectLabel>
-                  {g.statuses.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {DOCUMENT_STATUS_LABEL[s]}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              ))}
+                            {DOCUMENT_STATUS_GROUPS.map((g) => (
+                              <SelectGroup key={g.label}>
+                                <SelectLabel>{g.label}</SelectLabel>
+                                {g.statuses.map((s) => (
+                                  <SelectItem key={s} value={s}>
+                                    {DOCUMENT_STATUS_LABEL[s]}
+                                  </SelectItem>
+                                ))}
+                              </SelectGroup>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>

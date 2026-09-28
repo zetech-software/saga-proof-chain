@@ -258,7 +258,9 @@ const MAGIC: Record<string, number[][]> = {
  * Validação completa: nome, extensão, MIME informado e conteúdo real (bytes iniciais).
  * Nunca confia apenas no nome do arquivo.
  */
-export async function validateUploadFileDeep(file: File | null | undefined): Promise<UploadValidation> {
+export async function validateUploadFileDeep(
+  file: File | null | undefined,
+): Promise<UploadValidation> {
   const base = validateUploadFile(file);
   if (!base.ok) return base;
   const ext = base.storageName.split(".").pop() ?? "";
