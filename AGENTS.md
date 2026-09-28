@@ -16,3 +16,5 @@
 - Limite do assistente IA: consumido só pela função `consume_ai_question` (trava por usuário, grava detalhe + agregado `ai_usage_daily` na mesma transação), executável apenas pelo servidor com o id da sessão — sem corrida e sem o navegador escolher usuário.
 - Histórico de uso da IA: detalhe por 2 dias (janelas móveis) + agregado diário user_id/dia/quantidade por 90 dias — guarda o mínimo necessário para 7/30 dias.
 - Gerenciamento de documentos (editar/substituir/arquivar/restaurar/excluir) só por `src/lib/document-management.functions.ts`, com permissão decidida no servidor pela sessão e registro mínimo em `document_events` — o navegador nunca decide o que pode apagar.
+
+- Limpeza de dados de teste: suspensa. Qualquer exclusão futura exige dry-run com lista explícita de IDs, separação "confirmado teste" x "incerto" (incertos nunca apagados) e confirmação individual do usuário; a rotina automática de pendências só roda com CLEANUP_ENABLED=true — dados reais já foram perdidos por limpeza por conta.
