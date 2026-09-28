@@ -29,7 +29,7 @@ export const Route = createFileRoute("/api/public/cron/cleanup-pending")({
             const prefix = `${owner.name}/pending`;
             const { data: items } = await store.list(prefix, { limit: 1000 });
             const stale = (items ?? [])
-              .filter((i) => i.id && new Date(i.created_at).getTime() < cutoff)
+              .filter((i) => i.id && new Date(i.created_at ?? 0).getTime() < cutoff)
               .map((i) => `${prefix}/${i.name}`);
             if (stale.length) {
               await store.remove(stale);

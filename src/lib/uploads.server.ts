@@ -66,7 +66,7 @@ async function readZipEntry(
   const raw = b.subarray(start, start + e.compSize);
   if (e.method === 0) return raw;
   if (e.method !== 8) return null;
-  const stream = new Blob([raw]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  const stream = new Blob([raw.slice() as Uint8Array<ArrayBuffer>]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 
