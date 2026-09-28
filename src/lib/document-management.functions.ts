@@ -102,7 +102,18 @@ export const replaceDocumentFile = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin, doc, isAdmin } = await loadCaller(context, data.id);
+    let loaded: Awaited<ReturnType<typeof loadCaller>>;
+    try {
+      loaded = await loadCaller(context, data.id);
+    } catch (e) {
+      // Sem permissão: descarta o arquivo em espera do próprio usuário.
+      if (data.pendingPath.startsWith(`${context.userId}/pending/`)) {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        await supabaseAdmin.storage.from("documentos").remove([data.pendingPath]);
+      }
+      throw e;
+    }
+    const { supabaseAdmin, doc, isAdmin } = loaded;
     const store = supabaseAdmin.storage.from("documentos");
     const discard = () => store.remove([data.pendingPath]);
     if (!data.pendingPath.startsWith(`${context.userId}/pending/`)) {
