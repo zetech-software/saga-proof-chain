@@ -44,8 +44,8 @@ export function AdminAiUsagePanel({ enabled }: { enabled: boolean }) {
   const totals = useMemo(
     () =>
       (q.data ?? []).reduce(
-        (a, r) => ({ d1: a.d1 + r.last_24h, d7: a.d7 + r.last_7d, d30: a.d30 + r.last_30d, all: a.all + r.total_90d }),
-        { d1: 0, d7: 0, d30: 0, all: 0 },
+        (a, r) => ({ d1: a.d1 + r.last_24h, d7: a.d7 + r.last_7d, d30: a.d30 + r.last_30d, all: a.all + r.total_90d, tin: a.tin + Number(r.input_tokens_30d ?? 0), tout: a.tout + Number(r.output_tokens_30d ?? 0) }),
+        { d1: 0, d7: 0, d30: 0, all: 0, tin: 0, tout: 0 },
       ),
     [q.data],
   );
@@ -80,6 +80,11 @@ export function AdminAiUsagePanel({ enabled }: { enabled: boolean }) {
           Custo estimado com o modelo atual (30 dias): {fmtCost(totals.d30)}. Aproximação pela média observada por
           pergunta; não é histórico financeiro e muda com o modelo e o tamanho das respostas.
         </p>
+        <p className="text-xs text-muted-foreground">
+          Tokens registrados (30 dias, informados pelo provedor): {totals.tin.toLocaleString("pt-BR")} de entrada ·{" "}
+          {totals.tout.toLocaleString("pt-BR")} de saída. Custo real não é informado pelo provedor em cada resposta, por
+          isso não há "Custo real registrado".
+        </p>
         <Input placeholder="Buscar cliente por nome ou e-mail" value={search} onChange={(e) => setSearch(e.target.value)} />
         {q.isLoading ? (
           <ListSkeleton />
@@ -93,13 +98,14 @@ export function AdminAiUsagePanel({ enabled }: { enabled: boolean }) {
               <li key={r.user_id} className="min-w-0 rounded-lg border border-border/60 p-3">
                 <p className="truncate text-sm font-medium">{r.full_name}</p>
                 <p className="truncate text-xs text-muted-foreground">{r.email}</p>
-                <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs sm:grid-cols-3 lg:grid-cols-6">
+                <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs sm:grid-cols-3 lg:grid-cols-7">
                   <div><dt className="text-muted-foreground">24h</dt><dd>{r.last_24h}</dd></div>
                   <div><dt className="text-muted-foreground">7 dias</dt><dd>{r.last_7d}</dd></div>
                   <div><dt className="text-muted-foreground">30 dias</dt><dd>{r.last_30d}</dd></div>
                   <div><dt className="text-muted-foreground">Total (90 dias)</dt><dd>{r.total_90d}</dd></div>
                   <div><dt className="text-muted-foreground">Último dia de uso</dt><dd>{fmtDay(r.last_day)}</dd></div>
                   <div><dt className="text-muted-foreground">Custo estimado (30 dias)</dt><dd className="whitespace-nowrap">{fmtCost(r.last_30d)}</dd></div>
+                  <div><dt className="text-muted-foreground">Tokens registrados (30 dias)</dt><dd className="whitespace-nowrap">{Number(r.input_tokens_30d ?? 0).toLocaleString("pt-BR")} / {Number(r.output_tokens_30d ?? 0).toLocaleString("pt-BR")}</dd></div>
                 </dl>
               </li>
             ))}
