@@ -59,6 +59,8 @@ export type Database = {
       certificates: {
         Row: {
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           document_id: string | null
           file_name: string | null
           id: string
@@ -74,6 +76,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           document_id?: string | null
           file_name?: string | null
           id?: string
@@ -89,6 +93,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           document_id?: string | null
           file_name?: string | null
           id?: string
@@ -153,6 +159,8 @@ export type Database = {
           archived_by: string | null
           created_at: string
           created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           description: string | null
           estimated_completion: string | null
           file_name: string
@@ -178,6 +186,8 @@ export type Database = {
           archived_by?: string | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           estimated_completion?: string | null
           file_name: string
@@ -203,6 +213,8 @@ export type Database = {
           archived_by?: string | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string | null
           estimated_completion?: string | null
           file_name?: string
@@ -371,6 +383,36 @@ export type Database = {
         }
         Relationships: []
       }
+      resource_lifecycle_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          details: Json
+          id: string
+          resource_id: string
+          resource_type: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          resource_id: string
+          resource_type: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          resource_id?: string
+          resource_type?: string
+        }
+        Relationships: []
+      }
       resource_shares: {
         Row: {
           created_at: string
@@ -425,6 +467,66 @@ export type Database = {
           resource_type?: Database["public"]["Enums"]["shared_resource_type"]
           user_id?: string
           viewed_at?: string
+        }
+        Relationships: []
+      }
+      restoration_candidates: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision: string
+          decision_note: string | null
+          dependencies: Json
+          file_bucket: string | null
+          file_path: string | null
+          id: string
+          organization_label: string | null
+          original_date: string | null
+          owner_label: string | null
+          payload: Json
+          previous_id: string | null
+          resource_type: string
+          source_label: string
+          title: string | null
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: string
+          decision_note?: string | null
+          dependencies?: Json
+          file_bucket?: string | null
+          file_path?: string | null
+          id?: string
+          organization_label?: string | null
+          original_date?: string | null
+          owner_label?: string | null
+          payload?: Json
+          previous_id?: string | null
+          resource_type: string
+          source_label: string
+          title?: string | null
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: string
+          decision_note?: string | null
+          dependencies?: Json
+          file_bucket?: string | null
+          file_path?: string | null
+          id?: string
+          organization_label?: string | null
+          original_date?: string | null
+          owner_label?: string | null
+          payload?: Json
+          previous_id?: string | null
+          resource_type?: string
+          source_label?: string
+          title?: string | null
         }
         Relationships: []
       }
@@ -516,11 +618,40 @@ export type Database = {
         }
         Relationships: []
       }
+      test_markers: {
+        Row: {
+          created_at: string
+          id: string
+          marked_by: string
+          note: string | null
+          resource_id: string
+          resource_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          marked_by: string
+          note?: string | null
+          resource_id: string
+          resource_type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          marked_by?: string
+          note?: string | null
+          resource_id?: string
+          resource_type?: string
+        }
+        Relationships: []
+      }
       trademarks: {
         Row: {
           admin_notes: string | null
           created_at: string
           created_by: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           holder: string | null
           id: string
           name: string
@@ -537,6 +668,8 @@ export type Database = {
           admin_notes?: string | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           holder?: string | null
           id?: string
           name: string
@@ -553,6 +686,8 @@ export type Database = {
           admin_notes?: string | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           holder?: string | null
           id?: string
           name?: string
@@ -729,6 +864,10 @@ export type Database = {
       record_ai_tokens: {
         Args: { _input: number; _output: number; _user: string }
         Returns: undefined
+      }
+      restore_candidate: {
+        Args: { _actor: string; _candidate: string }
+        Returns: string
       }
       trademark_viewer_ids: { Args: { _tm: string }; Returns: string[] }
     }
