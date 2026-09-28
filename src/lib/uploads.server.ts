@@ -20,7 +20,9 @@ function startsWith(b: Uint8Array, sig: number[]) {
 const td = new TextDecoder("utf-8", { fatal: false });
 
 /** Parses the ZIP End Of Central Directory + central directory entries. */
-function zipEntries(b: Uint8Array): { name: string; method: number; compSize: number; localOffset: number }[] | null {
+function zipEntries(
+  b: Uint8Array,
+): { name: string; method: number; compSize: number; localOffset: number }[] | null {
   const dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
   const minEocd = 22;
   if (b.length < minEocd) return null;
@@ -48,7 +50,12 @@ function zipEntries(b: Uint8Array): { name: string; method: number; compSize: nu
     const commentLen = dv.getUint16(p + 32, true);
     const localOffset = dv.getUint32(p + 42, true);
     if (p + 46 + nameLen > b.length) return null;
-    out.push({ name: td.decode(b.subarray(p + 46, p + 46 + nameLen)), method, compSize, localOffset });
+    out.push({
+      name: td.decode(b.subarray(p + 46, p + 46 + nameLen)),
+      method,
+      compSize,
+      localOffset,
+    });
     p += 46 + nameLen + extraLen + commentLen;
   }
   return out;
@@ -66,7 +73,9 @@ async function readZipEntry(
   const raw = b.subarray(start, start + e.compSize);
   if (e.method === 0) return raw;
   if (e.method !== 8) return null;
-  const stream = new Blob([raw.slice() as Uint8Array<ArrayBuffer>]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  const stream = new Blob([raw.slice() as Uint8Array<ArrayBuffer>])
+    .stream()
+    .pipeThrough(new DecompressionStream("deflate-raw"));
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 

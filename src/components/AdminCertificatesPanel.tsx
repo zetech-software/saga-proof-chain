@@ -157,8 +157,15 @@ export function AdminCertificatesPanel({
     }
     setBusyId(c.id);
     try {
-      const pending = await stagePendingUpload("certificados", validation.file, validation.storageName, validation.contentType);
-      const { path } = await finalizeAdminUpload({ data: { bucket: "certificados", pendingPath: pending } });
+      const pending = await stagePendingUpload(
+        "certificados",
+        validation.file,
+        validation.storageName,
+        validation.contentType,
+      );
+      const { path } = await finalizeAdminUpload({
+        data: { bucket: "certificados", pendingPath: pending },
+      });
 
       const { error } = await supabase
         .from("certificates")
@@ -474,7 +481,11 @@ export function AdminCertificatesPanel({
                         onClick={() => handleUpload(c)}
                       >
                         <RefreshCw className="h-4 w-4" aria-hidden />
-                        {busy ? "Enviando..." : c.storage_path ? "Substituir arquivo" : "Anexar arquivo"}
+                        {busy
+                          ? "Enviando..."
+                          : c.storage_path
+                            ? "Substituir arquivo"
+                            : "Anexar arquivo"}
                       </Button>
                       {c.storage_path && (
                         <p className="text-xs text-muted-foreground">

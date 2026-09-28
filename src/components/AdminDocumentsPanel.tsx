@@ -156,8 +156,15 @@ export function AdminDocumentsPanel({
     }
     setBusyId(doc.id);
     try {
-      const pending = await stagePendingUpload("documentos", validation.file, validation.storageName, validation.contentType);
-      const { path } = await finalizeAdminUpload({ data: { bucket: "documentos", pendingPath: pending } });
+      const pending = await stagePendingUpload(
+        "documentos",
+        validation.file,
+        validation.storageName,
+        validation.contentType,
+      );
+      const { path } = await finalizeAdminUpload({
+        data: { bucket: "documentos", pendingPath: pending },
+      });
 
       const { error } = await supabase
         .from("documents")
@@ -232,8 +239,15 @@ export function AdminDocumentsPanel({
     }
     setBusyId(doc.id);
     try {
-      const pending = await stagePendingUpload("certificados", checked.file, checked.storageName, checked.contentType);
-      const { path } = await finalizeAdminUpload({ data: { bucket: "certificados", pendingPath: pending } });
+      const pending = await stagePendingUpload(
+        "certificados",
+        checked.file,
+        checked.storageName,
+        checked.contentType,
+      );
+      const { path } = await finalizeAdminUpload({
+        data: { bucket: "certificados", pendingPath: pending },
+      });
       const { error } = await supabase.from("certificates").insert({
         title: certTitle.trim(),
         document_id: doc.id,

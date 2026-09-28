@@ -20,11 +20,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { EmptyState } from "@/components/EmptyState";
 import { useOwnership } from "@/hooks/useOwnership";
 import { useUserActivity } from "@/hooks/useUserActivity";
-import {
-  TRADEMARK_STATUSES,
-  TRADEMARK_STATUS_LABEL,
-  formatDateTime,
-} from "@/lib/portal";
+import { TRADEMARK_STATUSES, TRADEMARK_STATUS_LABEL, formatDateTime } from "@/lib/portal";
 
 export type AdminTrademark = {
   id: string;
@@ -323,7 +319,11 @@ export function AdminTrademarksPanel({
                       />
                     </div>
                     <div className="flex flex-wrap gap-2 sm:col-span-2">
-                      <Button type="submit" disabled={update.isPending} aria-busy={update.isPending}>
+                      <Button
+                        type="submit"
+                        disabled={update.isPending}
+                        aria-busy={update.isPending}
+                      >
                         {update.isPending ? "Salvando..." : "Salvar alterações"}
                       </Button>
                       <Button
