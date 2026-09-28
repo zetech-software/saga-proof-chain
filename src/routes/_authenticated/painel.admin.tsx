@@ -23,8 +23,6 @@ import { useSupportNotifications } from "@/hooks/useSupportNotifications";
 import {
   DOCUMENT_STATUSES,
   DOCUMENT_STATUS_LABEL,
-  SUPPORT_STATUSES,
-  SUPPORT_STATUS_LABEL,
   TRADEMARK_STATUSES,
   TRADEMARK_STATUS_LABEL,
   formatDateTime,
@@ -73,7 +71,7 @@ function AdminPage() {
   const { data: session, isLoading } = usePortalSession();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { adminCount, unreadIdFor, markRead, markAllRead } = useSupportNotifications();
+  const { adminCount } = useSupportNotifications();
   const certFileRef = useRef<HTMLInputElement>(null);
 
   const isAdmin = !!session?.isAdmin;
@@ -243,20 +241,6 @@ function AdminPage() {
     },
     onError: (e: unknown) =>
       toast.error(e instanceof Error ? e.message : "Erro ao cadastrar marca"),
-  });
-
-  const updateSupport = useMutation({
-    mutationFn: async (input: { id: string; status?: string; admin_reply?: string }) => {
-      const { id, ...patch } = input;
-      const { error } = await supabase.from("support_requests").update(patch).eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Solicitação atualizada");
-      queryClient.invalidateQueries({ queryKey: ["admin-data"] });
-      queryClient.invalidateQueries({ queryKey: ["support-requests"] });
-    },
-    onError: () => toast.error("Erro ao atualizar solicitação"),
   });
 
   const updateDoc = useMutation({

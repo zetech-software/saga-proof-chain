@@ -129,9 +129,11 @@ function Overview() {
       <div>
         <h1 className="font-display text-3xl text-gold">Visão geral</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Acompanhamento em tempo real dos registros da Saga Mitologia Cósmica.
+          Acompanhamento em tempo real dos seus registros.
         </p>
       </div>
+
+      {session && !isAdmin && <ProcessAssistant />}
 
       <div className="grid gap-4 sm:grid-cols-3">
         {cards.map((c) => (
@@ -175,8 +177,6 @@ function Overview() {
           </span>
         </CardContent>
       </Card>
-
-      {session && !isAdmin && <ProcessAssistant />}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="bg-card/70">
