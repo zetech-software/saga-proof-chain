@@ -43,7 +43,8 @@ export function PortalLayout({
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { adminCount, clientCount } = useSupportNotifications();
+  const { adminCount, clientCount, adminDocumentCount, clientDocumentCount, certificateCount } =
+    useSupportNotifications();
   usePageVisitTracker();
 
 
@@ -102,7 +103,13 @@ export function PortalLayout({
                   : 0
                 : item.to === "/painel/suporte"
                   ? clientCount
-                  : 0;
+                  : item.to === "/painel/documentos"
+                    ? isAdmin
+                      ? adminDocumentCount
+                      : clientDocumentCount
+                    : item.to === "/painel/certificados" && !isAdmin
+                      ? certificateCount
+                      : 0;
             return (
               <Link
                 key={item.to}
@@ -129,7 +136,9 @@ export function PortalLayout({
                   <span className="sr-only">
                     {item.to === "/painel/admin"
                       ? `${count} ${count === 1 ? "chamado novo não visualizado" : "chamados novos não visualizados"}`
-                      : `${count} ${count === 1 ? "resposta não lida" : "respostas não lidas"}`}
+                      : item.to === "/painel/suporte"
+                        ? `${count} ${count === 1 ? "resposta não lida" : "respostas não lidas"}`
+                        : `${count} ${count === 1 ? "novidade não lida" : "novidades não lidas"}`}
                   </span>
                 )}
               </Link>

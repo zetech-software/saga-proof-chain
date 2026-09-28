@@ -4,11 +4,20 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { usePortalSession } from "@/hooks/usePortalSession";
 
-export type SupportNotificationType = "new_support_request" | "support_response";
+export type SupportNotificationType =
+  | "new_support_request"
+  | "support_response"
+  | "new_document"
+  | "additional_document"
+  | "document_status"
+  | "documents_requested"
+  | "certificate_available";
 
 export type SupportNotification = {
   id: string;
-  support_request_id: string;
+  support_request_id: string | null;
+  document_id: string | null;
+  certificate_id: string | null;
   type: SupportNotificationType;
   created_at: string;
   read_at: string | null;
@@ -35,7 +44,7 @@ export function useSupportNotifications() {
     queryFn: async (): Promise<SupportNotification[]> => {
       const { data, error } = await supabase
         .from("support_notifications")
-        .select("id, support_request_id, type, created_at, read_at")
+        .select("id, support_request_id, document_id, certificate_id, type, created_at, read_at")
         .is("read_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -68,6 +77,8 @@ export function useSupportNotifications() {
             queryClient.invalidateQueries({ queryKey: ["support-notifications", key] });
             queryClient.invalidateQueries({ queryKey: ["admin-data"] });
             queryClient.invalidateQueries({ queryKey: ["support-requests"] });
+            queryClient.invalidateQueries({ queryKey: ["documents"] });
+            queryClient.invalidateQueries({ queryKey: ["certificates"] });
           },
         )
         .subscribe();
@@ -123,6 +134,11 @@ export function useSupportNotifications() {
     unreadIdFor,
     adminCount: unreadOfType("new_support_request").length,
     clientCount: unreadOfType("support_response").length,
+    adminDocumentCount:
+      unreadOfType("new_document").length + unreadOfType("additional_document").length,
+    clientDocumentCount:
+      unreadOfType("document_status").length + unreadOfType("documents_requested").length,
+    certificateCount: unreadOfType("certificate_available").length,
     markRead,
     markAllRead,
     isLoading: query.isLoading,

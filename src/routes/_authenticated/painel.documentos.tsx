@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMyOrganization } from "@/hooks/useMyOrganization";
 import { usePortalSession } from "@/hooks/usePortalSession";
 import { logResourceView } from "@/hooks/useResourceViews";
+import { useSupportNotifications } from "@/hooks/useSupportNotifications";
 import { Button } from "@/components/ui/button";
 import { ListSkeleton } from "@/components/ListSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -117,6 +118,17 @@ function DocumentosPage() {
   }, [queryClient]);
 
   const { data: myOrgId } = useMyOrganization();
+  const notifications = useSupportNotifications();
+  const docTypes = isAdmin
+    ? (["new_document", "additional_document"] as const)
+    : (["document_status", "documents_requested"] as const);
+  const unreadDocCount = docTypes.reduce((n, t) => n + notifications.unreadOfType(t).length, 0);
+  const markAllMutate = notifications.markAllRead.mutate;
+  useEffect(() => {
+    if (!docs || unreadDocCount === 0) return;
+    for (const t of docTypes) markAllMutate(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [docs, unreadDocCount, isAdmin]);
 
   const upload = useMutation({
     mutationFn: async () => {
