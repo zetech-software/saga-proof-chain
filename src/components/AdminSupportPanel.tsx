@@ -151,7 +151,7 @@ export function AdminSupportPanel({
                 className="mt-3 space-y-2"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  if (draft.trim().length < 2) return toast.error("Escreva a resposta");
+                  if (draft.trim().length < 2) { toast.error("Escreva a resposta"); return; }
                   update.mutate({ id: s.id, admin_reply: draft.trim(), status: "respondida" });
                 }}
               >
