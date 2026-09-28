@@ -2,8 +2,10 @@
 // IMPORTANTE: esta validação melhora segurança e experiência, mas NÃO substitui
 // validação no servidor/Storage. Ver nota em UPLOAD_SERVER_VALIDATION_NOTE.
 
-export const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
-export const MAX_UPLOAD_LABEL = "50 MB";
+/** Configuração central do limite por arquivo — altere apenas aqui. */
+export const UPLOAD_LIMIT_MB = 50;
+export const MAX_UPLOAD_BYTES = UPLOAD_LIMIT_MB * 1024 * 1024;
+export const MAX_UPLOAD_LABEL = `${UPLOAD_LIMIT_MB} MB`;
 
 export const UPLOAD_SERVER_VALIDATION_NOTE =
   "Validação equivalente no backend/Storage não existe hoje: exigiria política de Storage ou função no servidor.";
@@ -27,18 +29,10 @@ const ALLOWED_TYPES: AllowedType[] = [
   { ext: "jpg", contentType: "image/jpeg", mimes: ["image/jpeg", "image/jpg", "image/pjpeg"] },
   { ext: "jpeg", contentType: "image/jpeg", mimes: ["image/jpeg", "image/jpg", "image/pjpeg"] },
   { ext: "png", contentType: "image/png", mimes: ["image/png", "image/x-png"] },
-  { ext: "webp", contentType: "image/webp", mimes: ["image/webp"] },
   {
-    ext: "zip",
-    contentType: "application/zip",
-    mimes: [
-      // variantes legítimas devolvidas por navegadores/SOs diferentes
-      "application/zip",
-      "application/x-zip",
-      "application/x-zip-compressed",
-      "application/zip-compressed",
-      "multipart/x-zip",
-    ],
+    ext: "doc",
+    contentType: "application/msword",
+    mimes: ["application/msword", "application/vnd.ms-word"],
   },
 ];
 
@@ -98,9 +92,9 @@ const DANGEROUS_EXTS = new Set([
 ]);
 
 export const ACCEPT_ATTRIBUTE =
-  ".pdf,.docx,.jpg,.jpeg,.png,.webp,.zip,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png,image/webp,application/zip";
+  ".pdf,.doc,.docx,.jpg,.jpeg,.png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png";
 
-export const ALLOWED_FORMATS_LABEL = "PDF, DOCX, JPG, JPEG, PNG, WEBP ou ZIP";
+export const ALLOWED_FORMATS_LABEL = "PDF, JPG, JPEG, PNG, DOC ou DOCX";
 
 export const UPLOAD_HELP_TEXT = `Formatos aceitos: ${ALLOWED_FORMATS_LABEL}. Tamanho máximo: ${MAX_UPLOAD_LABEL}.`;
 
@@ -188,7 +182,7 @@ export function validateUploadFile(file: File | null | undefined): UploadValidat
   if (file.size > MAX_UPLOAD_BYTES) {
     return {
       ok: false,
-      message: `Arquivo maior que ${MAX_UPLOAD_LABEL}. Reduza o tamanho ou envie compactado em ZIP.`,
+      message: `Arquivo maior que ${MAX_UPLOAD_LABEL}. Reduza o tamanho e tente novamente.`,
     };
   }
 
@@ -248,4 +242,42 @@ export function describeUploadError(error: unknown): string {
     }
   }
   return "Não foi possível concluir o envio. Tente novamente em alguns instantes.";
+}
+
+/** Assinaturas reais (primeiros bytes) por extensão. */
+const MAGIC: Record<string, number[][]> = {
+  pdf: [[0x25, 0x50, 0x44, 0x46]],
+  jpg: [[0xff, 0xd8, 0xff]],
+  jpeg: [[0xff, 0xd8, 0xff]],
+  png: [[0x89, 0x50, 0x4e, 0x47]],
+  doc: [[0xd0, 0xcf, 0x11, 0xe0]],
+  docx: [[0x50, 0x4b, 0x03, 0x04]],
+};
+
+/**
+ * Validação completa: nome, extensão, MIME informado e conteúdo real (bytes iniciais).
+ * Nunca confia apenas no nome do arquivo.
+ */
+export async function validateUploadFileDeep(
+  file: File | null | undefined,
+): Promise<UploadValidation> {
+  const base = validateUploadFile(file);
+  if (!base.ok) return base;
+  const ext = base.storageName.split(".").pop() ?? "";
+  const signatures = MAGIC[ext];
+  if (!signatures) return { ok: false, message: `Formato não permitido. ${UPLOAD_HELP_TEXT}` };
+  let head: Uint8Array;
+  try {
+    head = new Uint8Array(await base.file.slice(0, 8).arrayBuffer());
+  } catch {
+    return { ok: false, message: "Não foi possível ler o arquivo. Tente novamente." };
+  }
+  const match = signatures.some((sig) => sig.every((b, i) => head[i] === b));
+  if (!match) {
+    return {
+      ok: false,
+      message: `O conteúdo do arquivo não corresponde a um .${ext} válido. ${UPLOAD_HELP_TEXT}`,
+    };
+  }
+  return base;
 }

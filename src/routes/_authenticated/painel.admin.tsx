@@ -33,6 +33,7 @@ import {
   UPLOAD_HELP_TEXT,
   describeUploadError,
   validateUploadFile,
+  validateUploadFileDeep,
 } from "@/lib/uploads";
 
 import { RouteErrorState } from "@/components/RouteErrorState";
@@ -169,7 +170,7 @@ function AdminPage() {
   const createDoc = useMutation({
     mutationFn: async () => {
       if (newDoc.title.trim().length < 2) throw new Error("Informe o título do documento");
-      const checked = validateUploadFile(newDocFile);
+      const checked = await validateUploadFileDeep(newDocFile);
       if (!checked.ok) throw new Error(checked.message);
 
       const { data: userData } = await supabase.auth.getUser();
@@ -284,7 +285,7 @@ function AdminPage() {
       let storage_path: string | null = null;
       let file_name: string | null = null;
       if (certFile) {
-        const checked = validateUploadFile(certFile);
+        const checked = await validateUploadFileDeep(certFile);
         if (!checked.ok) throw new Error(checked.message);
         const path = `certificados/${checked.storageName}`;
         const { error: upErr } = await supabase.storage

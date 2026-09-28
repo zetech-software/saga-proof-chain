@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+- Document-flow notifications reuse `support_notifications` (document_id/certificate_id columns) with recipients from `document_viewer_ids`/`trademark_viewer_ids` — one notification system, access-accurate recipients.
+- Client document inserts are normalized by the `documents_before_insert` trigger (status forced to `recebido`, `is_additional` only via a visible `related_document_id` in `aguardando_documentacao`) — security never depends on the UI.

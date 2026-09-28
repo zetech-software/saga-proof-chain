@@ -19,7 +19,6 @@ import { SagaLogo } from "@/components/SagaLogo";
 import { formatBadgeCount, useSupportNotifications } from "@/hooks/useSupportNotifications";
 import { usePageVisitTracker } from "@/hooks/usePageVisitTracker";
 
-
 import { Button } from "@/components/ui/button";
 
 const navItems = [
@@ -43,9 +42,9 @@ export function PortalLayout({
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { adminCount, clientCount } = useSupportNotifications();
+  const { adminCount, clientCount, adminDocumentCount, clientDocumentCount, certificateCount } =
+    useSupportNotifications();
   usePageVisitTracker();
-
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -83,7 +82,6 @@ export function PortalLayout({
           aria-label="Navegação do portal"
           className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-3 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] sm:px-5 [&::-webkit-scrollbar]:hidden"
         >
-
           {[
             ...navItems.filter((item) => !(isAdmin && item.to === "/painel/suporte")),
             ...(isAdmin
@@ -102,7 +100,13 @@ export function PortalLayout({
                   : 0
                 : item.to === "/painel/suporte"
                   ? clientCount
-                  : 0;
+                  : item.to === "/painel/documentos"
+                    ? isAdmin
+                      ? adminDocumentCount
+                      : clientDocumentCount
+                    : item.to === "/painel/certificados" && !isAdmin
+                      ? certificateCount
+                      : 0;
             return (
               <Link
                 key={item.to}
@@ -121,7 +125,6 @@ export function PortalLayout({
                     className="inline-flex min-w-5 items-center justify-center rounded-full border border-brand-hover/40 bg-brand-hover/20 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-brand-hover"
                     aria-hidden="true"
                   >
-
                     {formatBadgeCount(count)}
                   </span>
                 )}
@@ -129,7 +132,9 @@ export function PortalLayout({
                   <span className="sr-only">
                     {item.to === "/painel/admin"
                       ? `${count} ${count === 1 ? "chamado novo não visualizado" : "chamados novos não visualizados"}`
-                      : `${count} ${count === 1 ? "resposta não lida" : "respostas não lidas"}`}
+                      : item.to === "/painel/suporte"
+                        ? `${count} ${count === 1 ? "resposta não lida" : "respostas não lidas"}`
+                        : `${count} ${count === 1 ? "novidade não lida" : "novidades não lidas"}`}
                   </span>
                 )}
               </Link>

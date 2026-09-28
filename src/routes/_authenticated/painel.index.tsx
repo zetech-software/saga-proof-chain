@@ -92,10 +92,12 @@ function Overview() {
       to: "/painel/marcas" as const,
     },
     {
-      label: "Documentos na esteira",
+      label: "Documentos",
       value: naEsteira,
       icon: FileText,
       to: "/painel/documentos" as const,
+      description:
+        "Envie os documentos necessários para iniciarmos o registro. Acompanhe o andamento e receba seu certificado por aqui.",
     },
     {
       label: "Certificados emitidos",
@@ -151,6 +153,11 @@ function Overview() {
                   <p className="text-xs uppercase tracking-widest text-muted-foreground">
                     {c.label}
                   </p>
+                  {"description" in c && c.description && (
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                      {c.description}
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>

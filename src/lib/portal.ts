@@ -9,20 +9,40 @@ export const DOCUMENT_STATUSES = [
   "registrado",
   "certificado_emitido",
   "pendencia",
+  "aguardando_documentacao",
+  "em_andamento",
+  "concluido",
 ] as const;
 
 export type DocumentStatus = (typeof DOCUMENT_STATUSES)[number];
 
 export const DOCUMENT_STATUS_LABEL: Record<string, string> = {
   documento: "Documento",
-  recebido: "Recebido",
+  recebido: "Documentos enviados",
   em_analise: "Em análise documental",
   protocolado_inpi: "Protocolado no INPI",
   em_registro: "Na esteira blockchain",
   registrado: "Registrado em blockchain",
   certificado_emitido: "Certificado emitido",
   pendencia: "Pendência",
+  aguardando_documentacao: "Aguardando documentação",
+  em_andamento: "Em andamento",
+  concluido: "Concluído",
 };
+
+/**
+ * Status agrupados por natureza. NÃO formam uma sequência única:
+ * processo de envio, INPI e blockchain são trilhas distintas.
+ */
+export const DOCUMENT_STATUS_GROUPS: { label: string; statuses: string[] }[] = [
+  {
+    label: "Processo de envio",
+    statuses: ["recebido", "em_analise", "aguardando_documentacao", "em_andamento", "concluido"],
+  },
+  { label: "INPI", statuses: ["protocolado_inpi"] },
+  { label: "Blockchain", statuses: ["em_registro", "registrado", "certificado_emitido"] },
+  { label: "Informativo", statuses: ["documento", "pendencia"] },
+];
 
 export const TRADEMARK_STATUSES = [
   "submetida",
@@ -54,6 +74,7 @@ export function statusTone(status: string): "gold" | "violet" | "green" | "red" 
   switch (status) {
     case "registrado":
     case "certificado_emitido":
+    case "concluido":
     case "deferida":
     case "respondida":
       return "green";
@@ -65,9 +86,11 @@ export function statusTone(status: string): "gold" | "violet" | "green" | "red" 
     case "publicada":
       return "violet";
     case "pendencia":
+    case "aguardando_documentacao":
     case "indeferida":
       return "red";
     case "em_analise":
+    case "em_andamento":
       return "gold";
     default:
       return "muted";

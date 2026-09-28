@@ -15,6 +15,13 @@
       "when": 1789492350383,
       "tag": "0001_restrict_definer_helpers_to_self",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790601415366,
+      "tag": "0002_document_flow_notifications",
+      "breakpoints": true
     }
   ]
 }
