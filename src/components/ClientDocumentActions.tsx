@@ -75,7 +75,10 @@ export function ClientDocumentActions({ doc, hasCertificate }: { doc: Doc; hasCe
 
   async function replace() {
     const checked = await validateUploadFileDeep(file);
-    if (!checked.ok) return toast.error(checked.message);
+    if (!checked.ok) {
+      toast.error(checked.message);
+      return;
+    }
     await run(
       "replace",
       async () => {
@@ -152,7 +155,10 @@ export function ClientDocumentActions({ doc, hasCertificate }: { doc: Doc; hasCe
           className="space-y-3 rounded-lg border border-border/60 p-3"
           onSubmit={(e) => {
             e.preventDefault();
-            if (title.trim().length < 2) return toast.error("Informe o título.");
+            if (title.trim().length < 2) {
+              toast.error("Informe o título.");
+              return;
+            }
             void run(
               "edit",
               () => editDocument({ data: { id: doc.id, title: title.trim(), description: description.trim() || null } }),

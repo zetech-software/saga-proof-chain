@@ -39,10 +39,10 @@ export function DocumentHistory({ documentId }: { documentId: string }) {
           return (
             <li key={e.id} className="break-words">
               {formatDateTime(e.created_at)} · {LABEL[e.action] ?? e.action} · {e.actor}
-              {e.action === "arquivo_substituido" && d.previous_file_name
-                ? ` · ${d.previous_file_name} → ${d.new_file_name}`
+              {e.action === "arquivo_substituido" && d['previous_file_name']
+                ? ` · ${d['previous_file_name']} → ${d['new_file_name']}`
                 : ""}
-              {d.reason ? ` · Motivo: ${d.reason}` : ""}
+              {d['reason'] ? ` · Motivo: ${d['reason']}` : ""}
             </li>
           );
         })}
