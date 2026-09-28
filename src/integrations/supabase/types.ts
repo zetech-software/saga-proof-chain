@@ -87,8 +87,10 @@ export type Database = {
           file_name: string
           file_size: number | null
           id: string
+          is_additional: boolean
           mime_type: string | null
           organization_id: string | null
+          related_document_id: string | null
           status: string
           storage_path: string
           submitted_at: string
@@ -105,8 +107,10 @@ export type Database = {
           file_name: string
           file_size?: number | null
           id?: string
+          is_additional?: boolean
           mime_type?: string | null
           organization_id?: string | null
+          related_document_id?: string | null
           status?: string
           storage_path: string
           submitted_at?: string
@@ -123,8 +127,10 @@ export type Database = {
           file_name?: string
           file_size?: number | null
           id?: string
+          is_additional?: boolean
           mime_type?: string | null
           organization_id?: string | null
+          related_document_id?: string | null
           status?: string
           storage_path?: string
           submitted_at?: string
@@ -138,6 +144,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_related_document_id_fkey"
+            columns: ["related_document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
             referencedColumns: ["id"]
           },
           {
@@ -315,30 +328,50 @@ export type Database = {
       }
       support_notifications: {
         Row: {
+          certificate_id: string | null
           created_at: string
+          document_id: string | null
           id: string
           read_at: string | null
           recipient_id: string
-          support_request_id: string
+          support_request_id: string | null
           type: Database["public"]["Enums"]["support_notification_type"]
         }
         Insert: {
+          certificate_id?: string | null
           created_at?: string
+          document_id?: string | null
           id?: string
           read_at?: string | null
           recipient_id: string
-          support_request_id: string
+          support_request_id?: string | null
           type: Database["public"]["Enums"]["support_notification_type"]
         }
         Update: {
+          certificate_id?: string | null
           created_at?: string
+          document_id?: string | null
           id?: string
           read_at?: string | null
           recipient_id?: string
-          support_request_id?: string
+          support_request_id?: string | null
           type?: Database["public"]["Enums"]["support_notification_type"]
         }
         Relationships: [
+          {
+            foreignKeyName: "support_notifications_certificate_id_fkey"
+            columns: ["certificate_id"]
+            isOneToOne: false
+            referencedRelation: "certificates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_notifications_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "support_notifications_support_request_id_fkey"
             columns: ["support_request_id"]
@@ -514,6 +547,7 @@ export type Database = {
         Args: { _trademark_id: string; _user_id: string }
         Returns: boolean
       }
+      document_viewer_ids: { Args: { _doc: string }; Returns: string[] }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -555,11 +589,19 @@ export type Database = {
           user_id: string
         }[]
       }
+      trademark_viewer_ids: { Args: { _tm: string }; Returns: string[] }
     }
     Enums: {
       app_role: "admin" | "cliente"
       shared_resource_type: "trademark" | "document" | "certificate"
-      support_notification_type: "new_support_request" | "support_response"
+      support_notification_type:
+        | "new_support_request"
+        | "support_response"
+        | "new_document"
+        | "additional_document"
+        | "document_status"
+        | "documents_requested"
+        | "certificate_available"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -689,7 +731,15 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "cliente"],
       shared_resource_type: ["trademark", "document", "certificate"],
-      support_notification_type: ["new_support_request", "support_response"],
+      support_notification_type: [
+        "new_support_request",
+        "support_response",
+        "new_document",
+        "additional_document",
+        "document_status",
+        "documents_requested",
+        "certificate_available",
+      ],
     },
   },
 } as const
