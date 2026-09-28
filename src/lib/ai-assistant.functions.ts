@@ -89,7 +89,12 @@ export const askProcessAssistant = createServerFn({ method: "POST" })
     if (!c.allowed) return { ok: false, code: c.reason === "rate_day" ? "rate_day" : "rate_hour", usage };
 
     try {
-      const raw = await m.askModel(ctx.text, question);
+      const { text: raw, tokens } = await m.askModel(ctx.text, question);
+      // Só números agregados por usuário/dia (tokens reais do provedor); nenhum conteúdo é guardado.
+      if (tokens) {
+        const { error: tokErr } = await supabaseAdmin.rpc("record_ai_tokens", { _user: userId, _input: tokens.input, _output: tokens.output });
+        if (tokErr) console.error("[ai-assistant] tokens", tokErr.code);
+      }
       const { answer, links } = m.extractRefs(raw, ctx.refs);
       return { ok: true, answer, links, usage };
     } catch (e: any) {
@@ -107,4 +112,6 @@ export type AdminAiUsageRow = {
   last_30d: number;
   total_90d: number;
   last_day: string | null;
+  input_tokens_30d: number;
+  output_tokens_30d: number;
 };
