@@ -421,7 +421,11 @@ function DocumentosPage() {
                       <h3 className="break-words font-serif text-xl leading-snug">{d.title}</h3>
                       <p className="mt-1 break-all text-xs text-muted-foreground">
                         {d.file_name} · {fileExtension(d.file_name)} · {formatBytes(d.file_size)}
-                        {showDate ? ` · enviado em ${formatDateTime(d.submitted_at)}` : ""}
+                        {showDate && (
+                          <span className="whitespace-nowrap">
+                            {` · enviado em ${formatDateTime(d.submitted_at)}`}
+                          </span>
+                        )}
                       </p>
                       {d.is_additional && (
                         <span className="mt-2 inline-flex rounded-full border border-gold/40 bg-gold/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-gold-light">
