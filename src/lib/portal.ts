@@ -147,6 +147,8 @@ export const PRAZO_MIN_DIAS_UTEIS = 7;
 export const PRAZO_MAX_DIAS_UTEIS = 25;
 
 function spCalendarDate(iso: string): Date | null {
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (dateOnly) return new Date(Date.UTC(+dateOnly[1]!, +dateOnly[2]! - 1, +dateOnly[3]!));
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -186,4 +188,20 @@ export function estimateBusinessWindow(startIso: string | null | undefined) {
     min: fmt(addBusinessDays(start, PRAZO_MIN_DIAS_UTEIS)),
     max: fmt(addBusinessDays(start, PRAZO_MAX_DIAS_UTEIS)),
   };
+}
+
+/** Data de início confiável: data confirmada por admin ou o envio registrado pelo próprio cliente. */
+export function reliableProcessStart(doc: {
+  process_started_at?: string | null;
+  submitted_at?: string | null;
+  sentByClient: boolean;
+}): string | null {
+  if (doc.process_started_at) return doc.process_started_at;
+  if (doc.sentByClient && doc.submitted_at) return doc.submitted_at;
+  return null;
+}
+
+export function formatDateOnly(date: string): string {
+  const [y, m, d] = date.split("-");
+  return `${d}/${m}/${y}`;
 }
