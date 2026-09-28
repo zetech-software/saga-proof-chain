@@ -1,4 +1,5 @@
 import { finalizeAdminUpload } from "@/lib/uploads.functions";
+import { attachCertificateFile, softDeleteResource } from "@/lib/resource-lifecycle.functions";
 import { stagePendingUpload } from "@/lib/secure-upload";
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -334,14 +335,14 @@ export function AdminCertificatesPanel({
                         <AlertDialogHeader>
                           <AlertDialogTitle>Excluir “{c.title}”?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            O certificado e o arquivo serão removidos definitivamente e deixarão de
-                            aparecer para o cliente. Esta ação não pode ser desfeita.
+                            O certificado deixa de aparecer para o cliente e vai para a aba Excluídos,
+                            com o arquivo preservado. Pode ser restaurado por 30 dias.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancelar</AlertDialogCancel>
                           <AlertDialogAction onClick={() => handleDelete(c)}>
-                            Excluir certificado
+                            Mover para Excluídos
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
