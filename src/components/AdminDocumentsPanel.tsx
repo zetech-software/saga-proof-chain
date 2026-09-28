@@ -536,7 +536,7 @@ export function AdminDocumentsPanel({
                           disabled={busy || !certFile}
                           aria-busy={busy}
                         >
-                          {busy ? "Enviando..." : "Publicar certificado"}
+                          {busy ? "Enviando certificado…" : "Publicar certificado"}
                         </Button>
                         <Button size="sm" variant="ghost" onClick={() => setCertForId(null)}>
                           Cancelar
