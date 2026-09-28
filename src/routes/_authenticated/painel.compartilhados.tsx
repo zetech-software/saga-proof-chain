@@ -84,11 +84,11 @@ function SharedResourcesPage() {
     staleTime: 30_000,
     queryFn: async (): Promise<Item[]> => {
       const [marcas, docs, certs] = await Promise.all([
-        supabase.from("trademarks").select("id, name, organization_id").order("name"),
-        supabase.from("documents").select("id, title, organization_id").order("title"),
+        supabase.from("trademarks").select("id, name, organization_id").is("deleted_at", null).order("name"),
+        supabase.from("documents").select("id, title, organization_id").is("deleted_at", null).order("title"),
         supabase
           .from("certificates")
-          .select("id, title, document_id, trademark_id")
+          .select("id, title, document_id, trademark_id").is("deleted_at", null)
           .order("title"),
       ]);
       if (marcas.error) throw marcas.error;

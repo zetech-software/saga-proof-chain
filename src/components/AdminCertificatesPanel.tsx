@@ -1,4 +1,5 @@
 import { finalizeAdminUpload } from "@/lib/uploads.functions";
+import { attachCertificateFile, softDeleteResource } from "@/lib/resource-lifecycle.functions";
 import { stagePendingUpload } from "@/lib/secure-upload";
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -167,15 +168,9 @@ export function AdminCertificatesPanel({
         data: { bucket: "certificados", pendingPath: pending },
       });
 
-      const { error } = await supabase
-        .from("certificates")
-        .update({ storage_path: path, file_name: validation.displayName })
-        .eq("id", c.id);
-      if (error) {
-        await supabase.storage.from("certificados").remove([path]);
-        throw error;
-      }
-      if (c.storage_path) await supabase.storage.from("certificados").remove([c.storage_path]);
+      await attachCertificateFile({
+        data: { id: c.id, path, fileName: validation.displayName },
+      });
       toast.success(c.storage_path ? "Arquivo substituído" : "Arquivo anexado");
       setFile(null);
       refresh();
@@ -189,10 +184,8 @@ export function AdminCertificatesPanel({
   async function handleDelete(c: AdminCertificate) {
     setBusyId(c.id);
     try {
-      const { error } = await supabase.from("certificates").delete().eq("id", c.id);
-      if (error) throw error;
-      if (c.storage_path) await supabase.storage.from("certificados").remove([c.storage_path]);
-      toast.success("Certificado excluído");
+      await softDeleteResource({ data: { type: "certificate", id: c.id } });
+      toast.success("Certificado movido para Excluídos");
       if (openId === c.id) {
         setOpenId(null);
         setForm(null);
@@ -342,14 +335,14 @@ export function AdminCertificatesPanel({
                         <AlertDialogHeader>
                           <AlertDialogTitle>Excluir “{c.title}”?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            O certificado e o arquivo serão removidos definitivamente e deixarão de
-                            aparecer para o cliente. Esta ação não pode ser desfeita.
+                            O certificado deixa de aparecer para o cliente e vai para a aba Excluídos,
+                            com o arquivo preservado. Pode ser restaurado por 30 dias.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancelar</AlertDialogCancel>
                           <AlertDialogAction onClick={() => handleDelete(c)}>
-                            Excluir certificado
+                            Mover para Excluídos
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>

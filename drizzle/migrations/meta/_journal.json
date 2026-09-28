@@ -85,6 +85,13 @@
       "when": 1790616497682,
       "tag": "0011_document_management",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1790622096342,
+      "tag": "0012_recoverable_deletion_and_restore_review",
+      "breakpoints": true
     }
   ]
 }

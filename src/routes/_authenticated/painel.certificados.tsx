@@ -48,7 +48,7 @@ function CertificadosPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("certificates")
-        .select("*")
+        .select("*").is("deleted_at", null)
         .order("issued_at", { ascending: false });
       if (error) throw error;
       return data;

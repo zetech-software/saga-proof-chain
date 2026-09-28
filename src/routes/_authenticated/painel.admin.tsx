@@ -47,6 +47,9 @@ import { AdminTrademarksPanel } from "@/components/AdminTrademarksPanel";
 import { AdminCertificatesPanel } from "@/components/AdminCertificatesPanel";
 import { AdminSupportPanel } from "@/components/AdminSupportPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DeletedItemsPanel } from "@/components/DeletedItemsPanel";
+import { RestorationReviewPanel } from "@/components/RestorationReviewPanel";
+import { TestCleanupPanel } from "@/components/TestCleanupPanel";
 
 export const Route = createFileRoute("/_authenticated/painel/admin")({
   head: () => ({
@@ -155,10 +158,10 @@ function AdminPage() {
     queryKey: ["admin-data"],
     queryFn: async () => {
       const [marcas, docs, suporte, certs, profiles] = await Promise.all([
-        supabase.from("trademarks").select("*").order("submitted_at", { ascending: false }),
-        supabase.from("documents").select("*").order("submitted_at", { ascending: false }),
+        supabase.from("trademarks").select("*").is("deleted_at", null).order("submitted_at", { ascending: false }),
+        supabase.from("documents").select("*").is("deleted_at", null).order("submitted_at", { ascending: false }),
         supabase.from("support_requests").select("*").order("created_at", { ascending: false }),
-        supabase.from("certificates").select("*").order("issued_at", { ascending: false }),
+        supabase.from("certificates").select("*").is("deleted_at", null).order("issued_at", { ascending: false }),
         supabase.from("profiles").select("id, full_name, email"),
       ]);
       return {
@@ -373,6 +376,8 @@ function AdminPage() {
           <TabsTrigger value="processos">Processos</TabsTrigger>
           <TabsTrigger value="clientes">Clientes</TabsTrigger>
           <TabsTrigger value="controle">Controle</TabsTrigger>
+          <TabsTrigger value="excluidos">Excluídos</TabsTrigger>
+          <TabsTrigger value="recuperacao">Recuperação</TabsTrigger>
         </TabsList>
 
         <TabsContent value="visao" className="space-y-4">
@@ -670,6 +675,15 @@ function AdminPage() {
           <AdminAiUsagePanel enabled={isAdmin} />
           <PageVisitsHistory enabled={isAdmin} />
           <PrivacyOverview enabled={isAdmin} />
+        </TabsContent>
+
+        <TabsContent value="excluidos" className="space-y-6">
+          <DeletedItemsPanel enabled={isAdmin} />
+        </TabsContent>
+
+        <TabsContent value="recuperacao" className="space-y-6">
+          <RestorationReviewPanel enabled={isAdmin} />
+          <TestCleanupPanel enabled={isAdmin} />
         </TabsContent>
       </Tabs>
     </div>

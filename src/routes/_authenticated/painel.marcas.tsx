@@ -63,7 +63,7 @@ function MarcasPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("trademarks")
-        .select("*")
+        .select("*").is("deleted_at", null)
         .order("submitted_at", { ascending: false });
       if (error) throw error;
       return data;

@@ -29,13 +29,14 @@ async function loadCaller(ctx: Ctx, documentId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: doc } = await supabaseAdmin
     .from("documents")
-    .select("id,created_by,status,storage_path,file_name,archived_at,title")
+    .select("id,created_by,status,storage_path,file_name,archived_at,title,deleted_at")
     .eq("id", documentId)
     .maybeSingle();
   if (!doc) throw new Error("Documento não encontrado.");
   const isAdmin = admin === true;
   const isOwner = doc.created_by === ctx.userId;
   if (!isAdmin && !isOwner) throw new Error("Sem permissão.");
+  if (!isAdmin && doc.deleted_at) throw new Error("Documento não encontrado.");
   return { supabaseAdmin, doc, isAdmin };
 }
 
@@ -205,6 +206,8 @@ export const purgeDocument = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabaseAdmin, doc, isAdmin } = await loadCaller(context, data.id);
     if (!isAdmin) throw new Error("Sem permissão.");
+    // Exclusão definitiva só a partir de "Excluídos" (ver resource-lifecycle.functions.ts).
+    if (!doc.deleted_at) throw new Error("Primeiro exclua o documento (ele vai para Excluídos).");
     const [certs, children, shares] = await Promise.all([
       countCerts(supabaseAdmin, doc.id),
       supabaseAdmin

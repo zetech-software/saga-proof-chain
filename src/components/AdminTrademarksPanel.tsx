@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Pencil, Search } from "lucide-react";
+import { Pencil, Search, Trash2 } from "lucide-react";
+import { softDeleteResource } from "@/lib/resource-lifecycle.functions";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -118,6 +119,19 @@ export function AdminTrademarksPanel({
       setForm(null);
     },
     onError: () => toast.error("Não foi possível salvar as alterações da marca"),
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => softDeleteResource({ data: { type: "trademark", id } }),
+    onSuccess: () => {
+      toast.success("Marca movida para Excluídos");
+      queryClient.invalidateQueries({ queryKey: ["admin-data"] });
+      queryClient.invalidateQueries({ queryKey: ["trademarks"] });
+      queryClient.invalidateQueries({ queryKey: ["deleted-resources"] });
+      setOpenId(null);
+      setForm(null);
+    },
+    onError: () => toast.error("Não foi possível excluir a marca"),
   });
 
   const filtered = useMemo(() => {
@@ -335,6 +349,24 @@ export function AdminTrademarksPanel({
                         }}
                       >
                         Cancelar
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="text-destructive hover:text-destructive"
+                        disabled={remove.isPending}
+                        onClick={() => {
+                          if (
+                            window.confirm(
+                              `Mover “${m.name}” para Excluídos? A marca some das listas e para o cliente, mas pode ser restaurada por 30 dias.`,
+                            )
+                          ) {
+                            remove.mutate(m.id);
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" aria-hidden />
+                        Excluir
                       </Button>
                       <p className="w-full text-xs text-muted-foreground">
                         A titularidade e os compartilhamentos não mudam nesta edição — use a seção
