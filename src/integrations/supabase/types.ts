@@ -90,6 +90,9 @@ export type Database = {
           is_additional: boolean
           mime_type: string | null
           organization_id: string | null
+          process_start_confirmed_at: string | null
+          process_start_confirmed_by: string | null
+          process_started_at: string | null
           related_document_id: string | null
           status: string
           storage_path: string
@@ -110,6 +113,9 @@ export type Database = {
           is_additional?: boolean
           mime_type?: string | null
           organization_id?: string | null
+          process_start_confirmed_at?: string | null
+          process_start_confirmed_by?: string | null
+          process_started_at?: string | null
           related_document_id?: string | null
           status?: string
           storage_path: string
@@ -130,6 +136,9 @@ export type Database = {
           is_additional?: boolean
           mime_type?: string | null
           organization_id?: string | null
+          process_start_confirmed_at?: string | null
+          process_start_confirmed_by?: string | null
+          process_started_at?: string | null
           related_document_id?: string | null
           status?: string
           storage_path?: string
