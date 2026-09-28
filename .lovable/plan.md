@@ -66,3 +66,16 @@ Admin, Mariana, Léo, outro cliente temporário (removido ao final) e visitante.
   - `uploads.ts` recebe a lista de formatos e o DOC.
   - `portal.ts` recebe os status.
   - Alterados `painel.documentos.tsx`, `painel.index.tsx`, `AdminDocumentsPanel.tsx`, `AdminCertificatesPanel.tsx` (vínculo pré-preenchido), `useSupportNotifications.ts` e `PortalLayout.tsx`.
+
+## Ajustes obrigatórios (aprovados)
+- **Envio adicional ligado ao processo:** o cliente responde a um pedido específico ("Enviar arquivo faltante" dentro do documento em "Aguardando documentação"). Nova coluna `documents.related_document_id` (nula, referencia documents). Só é "Envio adicional" quando aponta para um documento que o cliente pode ver e que está em `aguardando_documentacao`; isso é validado por trigger no banco. Um envio avulso nunca vira adicional.
+- **Auditoria dos status antes de exibir:** os status são agrupados por natureza e não formam uma sequência única:
+  - Processo de envio: Documentos enviados, Em análise, Aguardando documentação, Em andamento, Concluído.
+  - INPI: Protocolado no INPI.
+  - Blockchain: Na esteira blockchain, Registrado em blockchain, Certificado emitido.
+  - Informativo: Documento, Pendência.
+  O seletor do admin mostra os grupos separados. `certificado_emitido` mantém o rótulo atual. "Concluído" vira um status próprio (`concluido`), para não mudar a semântica do blockchain.
+- **Notificação só para quem tem acesso:** os destinatários são calculados por usuário com as mesmas regras do acesso (`can_view_document` / `can_view_trademark` / `has_share`, avaliadas para cada candidato no trigger), nunca "todos da organização" às cegas.
+- **DOC/DOCX:** a extensão e o tipo informado precisam bater, e os primeiros bytes são conferidos (DOC = assinatura OLE `D0 CF 11 E0`; DOCX = ZIP `PK`; PDF `%PDF`; JPG `FF D8 FF`; PNG `89 50 4E 47`). O bucket continua privado.
+- **Limite de 50 MB** em uma única constante central de configuração, usada no formulário, nas mensagens e no admin.
+- **Conta de teste temporária:** criada só para os testes de isolamento, sem acesso à organização Saga nem a dados reais. Os arquivos, registros, avisos e acessos dela são apagados ao final e depois a própria conta é removida; a remoção é conferida por consulta.
