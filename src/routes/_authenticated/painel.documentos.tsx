@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Clock, Download, FileText, UploadCloud } from "lucide-react";
+import { AlertCircle, Award, Clock, Download, FileText, UploadCloud, X } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useMyOrganization } from "@/hooks/useMyOrganization";
@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
 import { DOCUMENT_STATUS_LABEL, PRAZO_TEXTO, formatDateTime, formatBytes } from "@/lib/portal";
-import { UPLOAD_HELP_TEXT, describeUploadError, validateUploadFile } from "@/lib/uploads";
+import { UPLOAD_HELP_TEXT, describeUploadError, validateUploadFileDeep } from "@/lib/uploads";
 import { FileDropzone } from "@/components/FileDropzone";
 import { EmptyState } from "@/components/EmptyState";
 import { downloadFromBucket } from "@/lib/downloads";
@@ -43,29 +43,39 @@ export const Route = createFileRoute("/_authenticated/painel/documentos")({
   component: DocumentosPage,
 });
 
+type RelatedDoc = { id: string; title: string };
+
+function fileExtension(name: string) {
+  return name.includes(".") ? (name.split(".").pop() ?? "").toUpperCase() : "—";
+}
+
 function DocumentosPage() {
   const queryClient = useQueryClient();
   const { data: session } = usePortalSession();
   const isAdmin = session?.isAdmin ?? false;
+  const myUserId = session?.user?.id ?? null;
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const [related, setRelated] = useState<RelatedDoc | null>(null);
+  const [progress, setProgress] = useState<string | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
 
-  function handleFileChange(selected: File | null) {
-    if (!selected) {
-      setFile(null);
-      return;
-    }
-    const result = validateUploadFile(selected);
+  async function handleFileChange(selected: File | null) {
+    if (!selected) return;
+    const result = await validateUploadFileDeep(selected);
     if (!result.ok) {
       toast.error(result.message);
-      setFile(null);
       return;
     }
-    setFile(selected);
+    setFiles((prev) =>
+      prev.some((f) => f.name === selected.name && f.size === selected.size)
+        ? prev
+        : [...prev, selected].slice(0, 10),
+    );
   }
 
-  const { data: docs, isLoading } = useQuery({
+  const { data: docs, isLoading, isError } = useQuery({
     queryKey: ["documents"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -77,11 +87,28 @@ function DocumentosPage() {
     },
   });
 
+  const docIds = (docs ?? []).map((d) => d.id);
+  const { data: certs } = useQuery({
+    queryKey: ["certificates", "by-document", docIds.join(",")],
+    enabled: docIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("certificates")
+        .select("id, title, storage_path, file_name, document_id")
+        .in("document_id", docIds);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   useEffect(() => {
     const channel = supabase
       .channel("documents-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "documents" }, () =>
         queryClient.invalidateQueries({ queryKey: ["documents"] }),
+      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "certificates" }, () =>
+        queryClient.invalidateQueries({ queryKey: ["certificates"] }),
       )
       .subscribe();
     return () => {
@@ -93,41 +120,67 @@ function DocumentosPage() {
 
   const upload = useMutation({
     mutationFn: async () => {
-      if (title.trim().length < 2) throw new Error("Informe um título para o documento");
-      // Revalidação imediatamente antes do envio.
-      const checked = validateUploadFile(file);
-      if (!checked.ok) throw new Error(checked.message);
-
+      if (files.length === 0) throw new Error("Selecione pelo menos um arquivo");
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
       if (!userId) throw new Error("Sessão expirada");
 
-      const path = `${userId}/${checked.storageName}`;
-      const { error: upErr } = await supabase.storage
-        .from("documentos")
-        .upload(path, checked.file, { contentType: checked.contentType, upsert: false });
-      if (upErr) throw upErr;
+      let sent = 0;
+      for (const [index, f] of files.entries()) {
+        // Revalidação (nome, MIME e conteúdo real) imediatamente antes do envio.
+        const checked = await validateUploadFileDeep(f);
+        if (!checked.ok) throw new Error(`${f.name}: ${checked.message}`);
+        setProgress(`Enviando ${index + 1} de ${files.length}...`);
 
-      const { error } = await supabase.from("documents").insert({
-        title: title.trim(),
-        description: description.trim() || null,
-        storage_path: path,
-        file_name: checked.displayName,
-        file_size: checked.file.size,
-        mime_type: checked.contentType,
-        created_by: userId,
-        organization_id: myOrgId ?? null,
-      });
-      if (error) throw error;
+        const path = `${userId}/${checked.storageName}`;
+        const { error: upErr } = await supabase.storage
+          .from("documentos")
+          .upload(path, checked.file, { contentType: checked.contentType, upsert: false });
+        if (upErr) throw upErr;
+
+        const baseTitle = title.trim() || checked.displayName;
+        const { error } = await supabase.from("documents").insert({
+          title: (files.length > 1 && title.trim() ? `${baseTitle} (${index + 1})` : baseTitle).slice(0, 160),
+          description: description.trim() || null,
+          storage_path: path,
+          file_name: checked.displayName,
+          file_size: checked.file.size,
+          mime_type: checked.contentType,
+          created_by: userId,
+          organization_id: myOrgId ?? null,
+          related_document_id: related?.id ?? null,
+        });
+        if (error) {
+          await supabase.storage.from("documentos").remove([path]);
+          throw error;
+        }
+        sent += 1;
+      }
+      return sent;
     },
-    onSuccess: () => {
-      toast.success("Documento enviado! Ele entrou na esteira de registro.");
+    onSuccess: (sent) => {
+      toast.success(
+        sent === 1
+          ? "Documento enviado! Nossa equipe já foi avisada."
+          : `${sent} documentos enviados! Nossa equipe já foi avisada.`,
+      );
       setTitle("");
       setDescription("");
-      setFile(null);
+      setFiles([]);
+      setRelated(null);
+    },
+    onError: (e: unknown) => {
+      const msg = e instanceof Error ? e.message : "";
+      toast.error(
+        msg.includes("aguardando documentacao")
+          ? "Este processo não está mais aguardando documentação."
+          : describeUploadError(e),
+      );
+    },
+    onSettled: () => {
+      setProgress(null);
       queryClient.invalidateQueries({ queryKey: ["documents"] });
     },
-    onError: (e: unknown) => toast.error(describeUploadError(e)),
   });
 
   // Registra o acesso do cliente aos documentos visíveis (histórico para o admin).
@@ -142,12 +195,36 @@ function DocumentosPage() {
     if (!result.ok) toast.error(result.message);
   }
 
+  async function downloadCert(id: string, path: string | null, name: string | null) {
+    if (!path) {
+      toast.error("O certificado ainda não está disponível para download.");
+      return;
+    }
+    if (!isAdmin) void logResourceView("certificate", id, "download");
+    const result = await downloadFromBucket("certificados", path, name);
+    if (!result.ok) toast.error(result.message);
+  }
+
+  function startAdditional(d: RelatedDoc) {
+    setRelated(d);
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  const pending = (docs ?? []).filter((d) => d.status === "aguardando_documentacao");
+  const current = (docs ?? []).find((d) => !d.is_additional);
+  const certByDoc = new Map<string, NonNullable<typeof certs>>();
+  for (const c of certs ?? []) {
+    if (!c.document_id) continue;
+    certByDoc.set(c.document_id, [...(certByDoc.get(c.document_id) ?? []), c]);
+  }
+
   return (
     <div className="space-y-8">
       <div>
         <h1 className="font-display text-3xl text-gold">Documentos</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Envie os documentos que devem ser registrados em blockchain e acompanhe cada etapa.
+          Envie os documentos necessários para iniciarmos o registro. Acompanhe o andamento e
+          receba seu certificado por aqui.
         </p>
       </div>
 
@@ -155,16 +232,41 @@ function DocumentosPage() {
         <CardContent className="flex flex-wrap items-center gap-3 pt-6 text-sm">
           <Clock className="h-4 w-4 text-brand-hover" />
           <span>
-            O registro em blockchain leva em média <strong>{PRAZO_TEXTO}</strong> por documento, em
-            razão do prazo documental e da disponibilidade da plataforma.
+            Prazo médio de registro: <strong>{PRAZO_TEXTO}</strong> por documento.
           </span>
+          {current && (
+            <span className="flex flex-wrap items-center gap-2 sm:ml-auto">
+              <span className="text-muted-foreground">Status atual:</span>
+              <StatusBadge
+                status={current.status}
+                label={DOCUMENT_STATUS_LABEL[current.status] ?? current.status}
+              />
+            </span>
+          )}
         </CardContent>
       </Card>
 
+      {!isAdmin &&
+        pending.map((d) => (
+          <Card key={d.id} className="border-destructive/35 bg-destructive/5">
+            <CardContent className="flex flex-wrap items-center gap-3 pt-6 text-sm">
+              <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />
+              <span className="min-w-0 flex-1 break-words">
+                <strong>Aguardando documentação</strong> em “{d.title}” — envie o arquivo faltante.
+              </span>
+              <Button size="sm" onClick={() => startAdditional({ id: d.id, title: d.title })}>
+                Enviar arquivo faltante
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
+
       <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
-        <Card className="bg-card/70">
+        <Card className="bg-card/70" ref={formRef}>
           <CardHeader>
-            <CardTitle className="text-lg">Enviar documento</CardTitle>
+            <CardTitle className="text-lg">
+              {related ? "Enviar arquivo faltante" : "Enviar documentos"}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <form
@@ -174,14 +276,28 @@ function DocumentosPage() {
                 upload.mutate();
               }}
             >
+              {related && (
+                <div className="flex items-start gap-2 rounded-lg border border-gold/40 bg-gold/10 p-3 text-xs">
+                  <span className="min-w-0 flex-1 break-words">
+                    Envio adicional referente a <strong>{related.title}</strong>
+                  </span>
+                  <button
+                    type="button"
+                    className="shrink-0 underline"
+                    onClick={() => setRelated(null)}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              )}
               <div className="space-y-2">
-                <Label htmlFor="title">Título *</Label>
+                <Label htmlFor="title">Título (opcional)</Label>
                 <Input
                   id="title"
                   value={title}
                   maxLength={160}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Ex.: Roteiro - Capítulo I"
+                  placeholder="Se vazio, usamos o nome do arquivo"
                 />
               </div>
               <div className="space-y-2">
@@ -195,87 +311,161 @@ function DocumentosPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="file">Arquivo *</Label>
+                <Label htmlFor="file">Arquivos *</Label>
                 <FileDropzone
                   id="file"
-                  file={file}
-                  disabled={upload.isPending}
-                  onSelect={handleFileChange}
+                  file={null}
+                  disabled={upload.isPending || files.length >= 10}
+                  onSelect={(f) => void handleFileChange(f)}
                 />
+                {files.length > 0 && (
+                  <ul className="space-y-2" aria-label="Arquivos selecionados">
+                    {files.map((f, i) => (
+                      <li
+                        key={`${f.name}-${i}`}
+                        className="flex items-center gap-2 rounded-lg border border-border/70 bg-background/50 p-2 text-xs"
+                      >
+                        <FileText className="h-4 w-4 shrink-0 text-brand-hover" />
+                        <span className="min-w-0 flex-1 truncate" title={f.name}>
+                          {f.name}
+                        </span>
+                        <span className="shrink-0 text-muted-foreground">{formatBytes(f.size)}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 shrink-0"
+                          aria-label={`Remover ${f.name}`}
+                          disabled={upload.isPending}
+                          onClick={() => setFiles((prev) => prev.filter((_, j) => j !== i))}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 <p id="file-help" className="text-xs leading-relaxed text-muted-foreground">
-                  {UPLOAD_HELP_TEXT}
+                  {UPLOAD_HELP_TEXT} Até 10 arquivos por envio.
                 </p>
               </div>
               <Button
                 type="submit"
                 size="lg"
                 className="w-full"
-                disabled={upload.isPending || !file}
+                disabled={upload.isPending || files.length === 0}
                 aria-busy={upload.isPending}
               >
                 <UploadCloud className="h-4 w-4" />
-                {upload.isPending ? "Enviando arquivo..." : "Enviar para registro"}
+                {upload.isPending
+                  ? (progress ?? "Enviando...")
+                  : files.length > 1
+                    ? `Enviar ${files.length} documentos`
+                    : "Enviar documentos"}
               </Button>
               {upload.isPending && (
                 <p className="text-xs text-muted-foreground" role="status">
                   Envio em andamento — não feche esta página.
                 </p>
               )}
-
             </form>
           </CardContent>
         </Card>
 
         <div className="space-y-4">
-          {(docs ?? []).map((d) => (
-            <Card key={d.id} className="bg-card/70">
-              <CardContent className="pt-6">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h3 className="break-words font-serif text-xl leading-snug">{d.title}</h3>
-                    <p className="mt-1 break-words text-xs text-muted-foreground">
-                      {d.file_name} · {formatBytes(d.file_size)}
-                      {isAdmin ? ` · enviado em ${formatDateTime(d.submitted_at)}` : ""}
-                    </p>
+          {isError && (
+            <EmptyState
+              icon={AlertCircle}
+              title="Não foi possível carregar seus documentos"
+              description="Verifique sua conexão e recarregue a página em alguns instantes."
+            />
+          )}
+          {(docs ?? []).map((d) => {
+            const showDate = isAdmin || (myUserId !== null && d.created_by === myUserId);
+            const docCerts = certByDoc.get(d.id) ?? [];
+            return (
+              <Card key={d.id} className="bg-card/70">
+                <CardContent className="pt-6">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="break-words font-serif text-xl leading-snug">{d.title}</h3>
+                      <p className="mt-1 break-all text-xs text-muted-foreground">
+                        {d.file_name} · {fileExtension(d.file_name)} · {formatBytes(d.file_size)}
+                        {showDate ? ` · enviado em ${formatDateTime(d.submitted_at)}` : ""}
+                      </p>
+                      {d.is_additional && (
+                        <span className="mt-2 inline-flex rounded-full border border-gold/40 bg-gold/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-gold-light">
+                          Envio adicional
+                        </span>
+                      )}
+                    </div>
+                    <StatusBadge
+                      status={d.status}
+                      label={DOCUMENT_STATUS_LABEL[d.status] ?? d.status}
+                    />
                   </div>
-                  <StatusBadge
-                    status={d.status}
-                    label={DOCUMENT_STATUS_LABEL[d.status] ?? d.status}
-                  />
-                </div>
-                {d.description && (
-                  <p className="mt-3 text-sm text-muted-foreground">{d.description}</p>
-                )}
-                {d.admin_notes && (
-                  <p className="mt-3 rounded-lg border border-brand-hover/30 bg-brand-hover/5 p-3 text-sm">
-                    <span className="text-brand-hover">Zé Registra: </span>
-                    {d.admin_notes}
-                  </p>
-                )}
-                <div className="mt-4 flex flex-wrap items-center gap-3">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => download(d.id, d.storage_path, d.file_name)}
-                  >
-                    <Download className="h-4 w-4" />
-                    Baixar arquivo
-                  </Button>
-                  {isAdmin && (
-                    <span className="text-xs text-muted-foreground">
-                      Última atualização: {formatDateTime(d.updated_at)}
-                    </span>
+                  {d.description && (
+                    <p className="mt-3 break-words text-sm text-muted-foreground">{d.description}</p>
                   )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  {d.admin_notes && (
+                    <p className="mt-3 break-words rounded-lg border border-brand-hover/30 bg-brand-hover/5 p-3 text-sm">
+                      <span className="text-brand-hover">Zé Registra: </span>
+                      {d.admin_notes}
+                    </p>
+                  )}
+                  {docCerts.map((c) => (
+                    <div
+                      key={c.id}
+                      className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-success/35 bg-success/10 p-3 text-sm"
+                    >
+                      <Award className="h-4 w-4 shrink-0 text-success" />
+                      <span className="min-w-0 flex-1 break-words">
+                        Seu certificado está disponível.
+                      </span>
+                      <Button
+                        size="sm"
+                        onClick={() => downloadCert(c.id, c.storage_path, c.file_name)}
+                      >
+                        <Download className="h-4 w-4" />
+                        Baixar certificado
+                      </Button>
+                    </div>
+                  ))}
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => download(d.id, d.storage_path, d.file_name)}
+                    >
+                      <Download className="h-4 w-4" />
+                      Baixar arquivo
+                    </Button>
+                    {!isAdmin && d.status === "aguardando_documentacao" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => startAdditional({ id: d.id, title: d.title })}
+                      >
+                        <UploadCloud className="h-4 w-4" />
+                        Enviar arquivo faltante
+                      </Button>
+                    )}
+                    {isAdmin && (
+                      <span className="text-xs text-muted-foreground">
+                        Última atualização: {formatDateTime(d.updated_at)}
+                      </span>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
           {isLoading && <ListSkeleton />}
-          {!isLoading && !docs?.length && (
+          {!isLoading && !isError && !docs?.length && (
             <EmptyState
               icon={FileText}
               title="Nenhum documento enviado ainda"
-              description="Envie o primeiro arquivo pelo formulário ao lado para iniciar a esteira de registro em blockchain."
+              description="Envie os primeiros arquivos pelo formulário ao lado para iniciarmos o registro."
             />
           )}
         </div>
