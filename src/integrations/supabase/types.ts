@@ -36,16 +36,22 @@ export type Database = {
         Row: {
           count: number
           day: string
+          input_tokens: number
+          output_tokens: number
           user_id: string
         }
         Insert: {
           count?: number
           day: string
+          input_tokens?: number
+          output_tokens?: number
           user_id: string
         }
         Update: {
           count?: number
           day?: string
+          input_tokens?: number
+          output_tokens?: number
           user_id?: string
         }
         Relationships: []
@@ -567,10 +573,12 @@ export type Database = {
         Returns: {
           email: string
           full_name: string
+          input_tokens_30d: number
           last_24h: number
           last_30d: number
           last_7d: number
           last_day: string
+          output_tokens_30d: number
           total_90d: number
           user_id: string
         }[]
@@ -684,6 +692,10 @@ export type Database = {
           roles: string[]
           user_id: string
         }[]
+      }
+      record_ai_tokens: {
+        Args: { _input: number; _output: number; _user: string }
+        Returns: undefined
       }
       trademark_viewer_ids: { Args: { _tm: string }; Returns: string[] }
     }
