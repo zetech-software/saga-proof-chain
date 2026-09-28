@@ -8,7 +8,7 @@ import {
   reliableProcessStart,
 } from "./portal";
 
-export const AI_MODEL = "openai/modelo-inexistente-teste";
+export const AI_MODEL = "openai/gpt-6-astra";
 export const AI_MAX_CHARS = 500;
 export const AI_LIMIT_HOUR = 20;
 export const AI_LIMIT_DAY = 100;
