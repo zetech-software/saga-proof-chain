@@ -71,6 +71,13 @@
       "when": 1790606832805,
       "tag": "0009_ai_usage_daily_and_consume",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790611527932,
+      "tag": "0010_ai_usage_daily_tokens",
+      "breakpoints": true
     }
   ]
 }
