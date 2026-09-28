@@ -77,6 +77,17 @@ type EditState = {
  * Painel administrativo de documentos: busca, filtro, download seguro,
  * substituição de arquivo e exclusão. Titularidade permanece intocada.
  */
+const SP_DAY = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "America/Sao_Paulo",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+function spDayKey(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? iso.slice(0, 10) : SP_DAY.format(d);
+}
+
 export function AdminDocumentsPanel({
   docs,
   enabled,
@@ -112,6 +123,12 @@ export function AdminDocumentsPanel({
   const userName = useMemo(() => {
     const map = new Map<string, string>();
     for (const u of users.data ?? []) map.set(u.user_id, u.full_name || u.email || u.user_id);
+    return map;
+  }, [users.data]);
+  // Busca também pelo e-mail do cliente, além do nome exibido.
+  const userSearch = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const u of users.data ?? []) map.set(u.user_id, `${u.full_name ?? ""} ${u.email ?? ""}`);
     return map;
   }, [users.data]);
 
@@ -216,18 +233,19 @@ export function AdminDocumentsPanel({
     const q = term.trim().toLowerCase();
     return docs.filter((d) => {
       if (status !== "todos" && d.status !== status) return false;
-      const day = d.submitted_at.slice(0, 10);
+      // Dia do envio no fuso de São Paulo (evita trocar de dia após 21h).
+      const day = spDayKey(d.submitted_at);
       if (fromDate && day < fromDate) return false;
       if (toDate && day > toDate) return false;
       if (!q) return true;
-      const owner = d.created_by ? (userName.get(d.created_by) ?? "") : "";
+      const owner = d.created_by ? (userSearch.get(d.created_by) ?? "") : "";
       const org = d.organization_id ? (orgName.get(d.organization_id) ?? "") : "";
       return [d.title, d.file_name, d.description ?? "", owner, org]
         .join(" ")
         .toLowerCase()
         .includes(q);
     });
-  }, [docs, term, status, fromDate, toDate, userName, orgName]);
+  }, [docs, term, status, fromDate, toDate, userSearch, orgName]);
 
   async function handleSendCertificate(doc: AdminDocument) {
     if (!adminUserId) return;
