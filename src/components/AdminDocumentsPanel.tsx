@@ -33,7 +33,7 @@ import { FileDropzone } from "@/components/FileDropzone";
 import { useOwnership } from "@/hooks/useOwnership";
 import { useUserActivity } from "@/hooks/useUserActivity";
 import { downloadFromBucket } from "@/lib/downloads";
-import { validateUploadFile } from "@/lib/uploads";
+import { validateUploadFileDeep } from "@/lib/uploads";
 import {
   DOCUMENT_STATUSES,
   DOCUMENT_STATUS_LABEL,
@@ -136,7 +136,7 @@ export function AdminDocumentsPanel({
 
   async function handleReplace(doc: AdminDocument) {
     if (!replaceFile || !adminUserId) return;
-    const validation = validateUploadFile(replaceFile);
+    const validation = await validateUploadFileDeep(replaceFile);
     if (!validation.ok) {
       toast.error(validation.message);
       return;
