@@ -488,7 +488,7 @@ function DocumentosPage() {
             <EmptyState
               icon={FileText}
               title="Nenhum documento enviado ainda"
-              description="Envie os primeiros arquivos pelo formulário ao lado para iniciarmos o registro."
+              description="Envie os primeiros arquivos pelo formulário de envio para iniciarmos o registro."
             />
           )}
         </div>
