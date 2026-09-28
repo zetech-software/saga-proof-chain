@@ -375,7 +375,7 @@ export function AdminDocumentsPanel({
                           "processo relacionado"}
                       </p>
                     )}
-                    <p className="mt-1 break-all text-xs text-muted-foreground">
+                    <p className="mt-1 break-words text-xs text-muted-foreground">
                       {d.file_name}
                       {d.file_size ? ` · ${formatBytes(d.file_size)}` : ""}
                       {" · enviado em "}
