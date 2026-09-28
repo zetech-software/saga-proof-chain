@@ -4,15 +4,23 @@ Nenhuma IA de análise nem página pública será implementada. Os itens 6A e 6B
 
 ## 1. Validação dos uploads no servidor (solução mínima segura)
 
-Três camadas, mantendo os arquivos privados e os links temporários atuais:
+Os arquivos continuam privados e os links continuam temporários.
 
-1. **Regras no próprio armazenamento:** nos repositórios `documentos` e `certificados`, definir o limite de 50 MB e a lista de tipos permitidos (PDF, JPEG, PNG, DOC, DOCX). Qualquer envio fora disso é recusado pelo armazenamento, mesmo que alguém ignore a tela.
-2. **Conferência do conteúdo no servidor:** uma função segura roda depois do upload e antes de criar o registro. Ela:
-   - lê os primeiros bytes do arquivo já armazenado, usando o login do próprio usuário;
-   - confere se a assinatura real bate com a extensão (PDF `%PDF`, JPEG `FFD8FF`, PNG `89504E47`, DOC `D0CF11E0`, DOCX `504B0304` com `[Content_Types].xml` e `word/`);
-   - confere se o tamanho armazenado é de até 50 MB;
-   - se o arquivo for inválido, apaga-o e recusa; se for válido, cria o registro do documento com as permissões do próprio usuário.
-3. **Proteção contra atalhos:** os clientes deixam de poder criar registros de documento diretamente. Eles passam só pela função da camada 2, e o admin segue o mesmo caminho. Esta é a única mudança nas regras de acesso, e será reportada. As demais regras de visibilidade ficam iguais.
+1. **Área de espera:** o navegador só consegue enviar arquivos para uma pasta temporária do próprio usuário. Um arquivo nessa pasta não é documento:
+   - não aparece em nenhuma lista;
+   - não tem registro;
+   - ninguém além do sistema consegue abri-lo.
+2. **Validação final no servidor:** uma função do servidor confirma quem está logado e recusa pastas de outra pessoa. Depois ela baixa o arquivo inteiro (até 50 MB) e confere o conteúdo real:
+   - PDF, JPEG, PNG e DOC pela assinatura interna do arquivo;
+   - DOCX pela estrutura completa: o índice do ZIP é lido e o arquivo precisa ter `[Content_Types].xml` declarando um documento Word, além de `word/document.xml`. Um ZIP comum renomeado para .docx é recusado.
+3. **Se o arquivo for inválido:** ele é apagado na hora e o envio é recusado.
+4. **Se o arquivo for válido:**
+   - o servidor move o arquivo para o local definitivo;
+   - cria o registro com dono, organização, status e caminho decididos pelo próprio servidor;
+   - a organização só é aceita se o usuário for membro dela ou admin, e o processo relacionado só se estiver visível para ele e aguardando documentação.
+5. **Sem atalho para o cliente:** o cliente perde a permissão de criar registros de documento diretamente. Não existe nenhuma marca de "verificado" que ele possa preencher, nem uma função genérica que ele possa chamar para isso. Esta é a única mudança nas regras de acesso, e será reportada.
+6. **Limpeza de arquivos abandonados:** uma rotina periódica protegida apaga arquivos da área de espera com mais de 24 horas.
+7. **Camada extra:** o limite de 50 MB e os tipos permitidos também ficam configurados no armazenamento. Isso é só uma proteção adicional, porque o tipo informado pelo navegador pode ser falsificado. A decisão final é sempre da validação no servidor.
 
 O limite de 50 MB e a lista de formatos continuam em um único ponto, usado pela tela e pelo servidor.
 
@@ -35,10 +43,10 @@ O limite de 50 MB e a lista de formatos continuam em um único ponto, usado pela
 
 ## 4. Revalidação da limpeza
 
-Conferir antes e depois dos testes, com contagem nominal de cada item:
-
-- usuários, documentos, certificados, notificações, compartilhamentos, vínculos de organização e arquivos temporários;
-- os dados reais: 5 documentos, 4 certificados e 3 usuários.
+- Cada registro criado pelos testes tem seu identificador guardado no momento da criação: usuários, documentos, certificados, notificações, compartilhamentos, vínculos de organização, visualizações e arquivos.
+- A limpeza apaga somente esses identificadores e o que depende deles.
+- Nada é apagado por diferença de contagem. As contagens servem apenas para conferência.
+- Antes e depois, os identificadores dos dados reais são comparados para provar que nada real foi removido.
 
 ## 5. Teste final do fluxo completo
 
@@ -55,7 +63,10 @@ Tentativas diretas, que devem ser bloqueadas:
 - criar certificado;
 - acessar arquivo alheio;
 - usar `related_document_id` inválido;
-- enviar um executável renomeado como .pdf ou .docx, direto ao armazenamento e pela função, sem passar pela tela.
+- criar registro de documento direto no banco;
+- chamar a função do servidor forjando usuário, organização, caminho de outro usuário, "verificado" ou arquivo alheio;
+- enviar um executável renomeado como .pdf ou .docx e um ZIP comum renomeado como .docx;
+- abrir um arquivo que ainda está na área de espera.
 
 Todas as contas e dados temporários serão removidos no final.
 
@@ -74,15 +85,29 @@ Conteúdo:
 
 ## Detalhes técnicos
 
-- Repositórios: `storage.buckets.file_size_limit = 52428800` e `allowed_mime_types` com os 5 tipos, aplicados pela ferramenta de configuração de armazenamento.
-- Arquivo novo `src/lib/uploads.functions.ts`:
-  - `registerDocumentUpload` e `registerCertificateUpload` usam `createServerFn` com `requireSupabaseAuth`;
-  - lêem os primeiros bytes com `download` e range sobre o client do usuário; para DOCX, lêem até 64 KB para achar as entradas ZIP;
-  - validam com zod e depois inserem o registro com o client do usuário, então o RLS e o trigger `documents_before_insert` continuam valendo;
-  - se `src/start.ts` ainda não enviar o token do usuário ao servidor, registrar `attachSupabaseAuth` ali.
-- Migração:
-  - trocar a policy de INSERT dos clientes em `documents` por um caminho restrito, com uma coluna `upload_verified boolean default false`;
-  - a policy de INSERT passa a exigir `upload_verified = true`, preenchido só pela função do servidor por meio de uma RPC `SECURITY DEFINER` que confirma o objeto no armazenamento;
-  - as regras de ownership e organização ficam intactas.
-- `painel.documentos.tsx`, `AdminDocumentsPanel.tsx`, `AdminCertificatesPanel.tsx` e `painel.admin.tsx` passam a chamar as funções novas em vez de inserir direto.
-- Testes: Playwright com capturas em 1280 e 390 px, e scripts REST com tokens temporários.
+- **Buckets:** `file_size_limit = 52428800` e `allowed_mime_types` com os 5 tipos, como camada extra.
+- **Storage policies:**
+  - o INSERT do cliente fica restrito a `<uid>/pending/*`;
+  - `can_view_storage_object` passa a negar qualquer caminho com `/pending/`, inclusive para o dono;
+  - os caminhos definitivos continuam como hoje.
+- **`src/lib/uploads.functions.ts`**, com a lógica em `uploads.server.ts`:
+  - `finalizeDocumentUpload` e `finalizeCertificateUpload` usam `createServerFn` com `requireSupabaseAuth`, entrada validada por zod e nenhum campo de dono ou verificação aceito;
+  - o caminho precisa começar com `<userId>/pending/`;
+  - o tamanho vem dos metadados do objeto e é conferido de novo no download;
+  - DOCX: localizar o EOCD, percorrer o central directory, exigir `[Content_Types].xml` com o tipo `wordprocessingml.document.main` e a entrada `word/document.xml`;
+  - DOC: assinatura OLE `D0CF11E0A1B11AE1`;
+  - em caso de sucesso: `move` para `<userId>/<rand>.<ext>` e INSERT com `supabaseAdmin`, carregado dentro do handler depois das checagens de ownership e organização, feitas com o client do usuário (`is_org_member`, `has_role`, visibilidade do documento relacionado via RLS);
+  - em caso de falha: `remove` do objeto pendente;
+  - certificados: só admin, confirmado com `has_role` pelo client do usuário.
+- **Migração:**
+  - `REVOKE INSERT ON documents FROM authenticated` e remoção das policies de INSERT de clientes em documents e certificates;
+  - `documents_before_insert` mantém a normalização para inserts sem `auth.uid()`, usando os valores passados pelo servidor;
+  - nenhuma nova RPC `SECURITY DEFINER` será exposta a anon, PUBLIC ou authenticated;
+  - revisão dos grants existentes.
+- **Arquivos órfãos:** `src/routes/api/public/cron/cleanup-pending.ts`:
+  - exige um segredo no cabeçalho;
+  - lista `*/pending/*` com mais de 24 h e apaga;
+  - é agendado por `pg_cron` com `pg_net`.
+- **Telas:** `painel.documentos.tsx`, `AdminDocumentsPanel.tsx`, `AdminCertificatesPanel.tsx` e `painel.admin.tsx` enviam para a área de espera e chamam a função de finalização; a mensagem de erro fica amigável.
+- `src/start.ts` recebe `attachSupabaseAuth` se ainda não houver algo equivalente.
+- **Testes:** Playwright em 1280 e 390 px, scripts REST com tokens temporários e limpeza pelos IDs registrados.
