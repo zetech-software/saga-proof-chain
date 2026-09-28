@@ -3,16 +3,16 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type AskResult =
-  | { ok: true; answer: string }
-  | { ok: false; code: "too_long" | "empty" | "rate_hour" | "rate_day" | "no_process" | "unavailable" | "busy" | "ai_failed" | "not_client" };
+  | { ok: true; answer: string; links: { kind: "document" | "certificate" | "trademark"; id: string; label: string }[] }
+  | { ok: false; code: "invalid_input" | "too_long" | "empty" | "rate_hour" | "rate_day" | "no_process" | "unavailable" | "busy" | "ai_failed" | "not_client" };
 
-/**
- * Assistente somente leitura. Aceita APENAS { question }; qualquer outro campo
- * (ids, organização, usuário) é descartado pela validação.
- */
+/** Entrada permitida: exatamente { question: string }. Qualquer campo extra é REJEITADO. */
+export const askInputSchema = z.object({ question: z.string() }).strict();
+
+/** Assistente somente leitura; contexto montado só a partir da sessão autenticada. */
 export const askProcessAssistant = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ question: z.string() }).parse(input))
+  .inputValidator((input: unknown) => askInputSchema.parse(input))
   .handler(async ({ data, context }): Promise<AskResult> => {
     const { supabase, userId } = context;
     const m = await import("./ai-assistant.server");
@@ -45,8 +45,9 @@ export const askProcessAssistant = createServerFn({ method: "POST" })
       }
       const { error: usageErr } = await supabase.from("ai_question_usage").insert({ user_id: userId });
       if (usageErr) return { ok: false, code: "unavailable" };
-      const answer = await m.askModel(ctx.text, question);
-      return { ok: true, answer };
+      const raw = await m.askModel(ctx.text, question);
+      const { answer, links } = m.extractRefs(raw, ctx.refs);
+      return { ok: true, answer, links };
     } catch (e: any) {
       console.error("[ai-assistant] falha", e?.code ?? e?.message);
       return { ok: false, code: e?.code ?? "ai_failed" };
