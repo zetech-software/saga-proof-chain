@@ -34,6 +34,18 @@ import { downloadFromBucket } from "@/lib/downloads";
 
 import { RouteErrorState } from "@/components/RouteErrorState";
 
+type FileStage =
+  | { kind: "preparando" | "enviando" | "validando" | "concluido" }
+  | { kind: "falhou"; message: string };
+
+const STAGE_LABEL: Record<FileStage["kind"], string> = {
+  preparando: "Preparando arquivo…",
+  enviando: "Enviando…",
+  validando: "Validando arquivo…",
+  concluido: "Concluído",
+  falhou: "Falhou",
+};
+
 export const Route = createFileRoute("/_authenticated/painel/documentos")({
   head: () => ({
     meta: [
@@ -70,6 +82,7 @@ function DocumentosPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [related, setRelated] = useState<RelatedDoc | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
+  const [fileStages, setFileStages] = useState<Record<number, FileStage>>({});
   const formRef = useRef<HTMLDivElement>(null);
 
   async function handleFileChange(selected: File | null) {
@@ -220,7 +233,6 @@ function DocumentosPage() {
         setFileStages((prev) => {
           const next: Record<number, FileStage> = {};
           let j = 0;
-          Object.keys(prev).forEach(() => undefined);
           files.forEach((_, i) => {
             if (!sentIdx.includes(i)) {
               if (prev[i]) next[j] = prev[i];
@@ -392,9 +404,24 @@ function DocumentosPage() {
                         <span className="min-w-0 flex-1 truncate" title={f.name}>
                           {f.name}
                         </span>
-                        <span className="shrink-0 text-muted-foreground">
+                        <span className="shrink-0 whitespace-nowrap text-muted-foreground">
                           {formatBytes(f.size)}
                         </span>
+                        {fileStages[i] && (
+                          <span
+                            role="status"
+                            title={fileStages[i].kind === "falhou" ? (fileStages[i] as { message: string }).message : undefined}
+                            className={`shrink-0 whitespace-nowrap ${
+                              fileStages[i].kind === "falhou"
+                                ? "text-destructive"
+                                : fileStages[i].kind === "concluido"
+                                  ? "text-brand-hover"
+                                  : "text-muted-foreground"
+                            }`}
+                          >
+                            {STAGE_LABEL[fileStages[i].kind]}
+                          </span>
+                        )}
                         <Button
                           type="button"
                           variant="ghost"
@@ -402,7 +429,10 @@ function DocumentosPage() {
                           className="h-7 w-7 shrink-0"
                           aria-label={`Remover ${f.name}`}
                           disabled={upload.isPending}
-                          onClick={() => setFiles((prev) => prev.filter((_, j) => j !== i))}
+                          onClick={() => {
+                            setFiles((prev) => prev.filter((_, j) => j !== i));
+                            setFileStages({});
+                          }}
                         >
                           <X className="h-3.5 w-3.5" />
                         </Button>
