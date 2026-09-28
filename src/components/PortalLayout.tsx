@@ -46,7 +46,10 @@ export function PortalLayout({
     useSupportNotifications();
   usePageVisitTracker();
 
+  const [signingOut, setSigningOut] = useState(false);
   async function signOut() {
+    if (signingOut) return;
+    setSigningOut(true);
     await queryClient.cancelQueries();
     queryClient.clear();
     await supabase.auth.signOut();
@@ -73,8 +76,8 @@ export function PortalLayout({
                 {email}
               </span>
             )}
-            <Button variant="outline" size="sm" onClick={signOut}>
-              <LogOut className="h-4 w-4" /> Sair
+            <Button variant="outline" size="sm" onClick={signOut} disabled={signingOut} aria-busy={signingOut}>
+              <LogOut className="h-4 w-4" /> {signingOut ? "Saindo…" : "Sair"}
             </Button>
           </div>
         </div>

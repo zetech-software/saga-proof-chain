@@ -166,7 +166,7 @@ export function AdminSupportPanel({
                 />
                 <div className="flex flex-wrap gap-2">
                   <Button type="submit" size="sm" disabled={update.isPending || draft.trim().length < 2}>
-                    <Send className="h-4 w-4" /> Enviar resposta
+                    <Send className="h-4 w-4" /> {update.isPending ? "Enviando resposta…" : "Enviar resposta"}
                   </Button>
                   {s.status !== "fechada" ? (
                     <Button type="button" size="sm" variant="outline" disabled={update.isPending} onClick={() => update.mutate({ id: s.id, status: "fechada" })}>

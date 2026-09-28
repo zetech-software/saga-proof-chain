@@ -92,6 +92,7 @@ function DocumentosPage() {
       toast.error(result.message);
       return;
     }
+    setFileStages({});
     setFiles((prev) =>
       prev.some((f) => f.name === selected.name && f.size === selected.size)
         ? prev

@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -36,6 +37,8 @@ const schema = z.object({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [checking, setChecking] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -44,6 +47,7 @@ function AuthPage() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/painel", replace: true });
+      else setChecking(false);
     });
   }, [navigate]);
 
@@ -54,7 +58,11 @@ function AuthPage() {
       toast.error(parsed.error.issues[0]?.message ?? "Dados inválidos");
       return;
     }
+    if (loading) return;
     setLoading(true);
+    // Nada da conta anterior pode aparecer na próxima sessão.
+    await queryClient.cancelQueries();
+    queryClient.clear();
     const { error } = await supabase.auth.signInWithPassword(parsed.data);
     setLoading(false);
     if (error) {
@@ -62,7 +70,7 @@ function AuthPage() {
       return;
     }
     toast.success("Bem-vindo de volta!");
-    navigate({ to: "/painel", replace: true });
+    await navigate({ to: "/painel", replace: true });
   }
 
   async function onForgotPassword() {
