@@ -22,7 +22,6 @@ import { Route as AuthenticatedPainelContaRouteImport } from './routes/_authenti
 import { Route as AuthenticatedPainelDocumentosRouteImport } from './routes/_authenticated/painel.documentos'
 import { Route as AuthenticatedPainelMarcasRouteImport } from './routes/_authenticated/painel.marcas'
 import { Route as AuthenticatedPainelSuporteRouteImport } from './routes/_authenticated/painel.suporte'
-import { Route as ApiPublicTmpCleanupX9RouteImport } from './routes/api/public/tmp-cleanup-x9'
 import { Route as ApiPublicCronCleanupPendingRouteImport } from './routes/api/public/cron/cleanup-pending'
 
 const IndexRoute = IndexRouteImport.update({
@@ -97,11 +96,6 @@ const AuthenticatedPainelSuporteRoute =
     path: '/suporte',
     getParentRoute: () => AuthenticatedPainelRoute,
   } as any)
-const ApiPublicTmpCleanupX9Route = ApiPublicTmpCleanupX9RouteImport.update({
-  id: '/api/public/tmp-cleanup-x9',
-  path: '/api/public/tmp-cleanup-x9',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicCronCleanupPendingRoute =
   ApiPublicCronCleanupPendingRouteImport.update({
     id: '/api/public/cron/cleanup-pending',
@@ -121,7 +115,6 @@ export interface FileRoutesByFullPath {
   '/painel/documentos': typeof AuthenticatedPainelDocumentosRoute
   '/painel/marcas': typeof AuthenticatedPainelMarcasRoute
   '/painel/suporte': typeof AuthenticatedPainelSuporteRoute
-  '/api/public/tmp-cleanup-x9': typeof ApiPublicTmpCleanupX9Route
   '/painel/': typeof AuthenticatedPainelIndexRoute
   '/api/public/cron/cleanup-pending': typeof ApiPublicCronCleanupPendingRoute
 }
@@ -136,7 +129,6 @@ export interface FileRoutesByTo {
   '/painel/documentos': typeof AuthenticatedPainelDocumentosRoute
   '/painel/marcas': typeof AuthenticatedPainelMarcasRoute
   '/painel/suporte': typeof AuthenticatedPainelSuporteRoute
-  '/api/public/tmp-cleanup-x9': typeof ApiPublicTmpCleanupX9Route
   '/painel': typeof AuthenticatedPainelIndexRoute
   '/api/public/cron/cleanup-pending': typeof ApiPublicCronCleanupPendingRoute
 }
@@ -154,7 +146,6 @@ export interface FileRoutesById {
   '/_authenticated/painel/documentos': typeof AuthenticatedPainelDocumentosRoute
   '/_authenticated/painel/marcas': typeof AuthenticatedPainelMarcasRoute
   '/_authenticated/painel/suporte': typeof AuthenticatedPainelSuporteRoute
-  '/api/public/tmp-cleanup-x9': typeof ApiPublicTmpCleanupX9Route
   '/_authenticated/painel/': typeof AuthenticatedPainelIndexRoute
   '/api/public/cron/cleanup-pending': typeof ApiPublicCronCleanupPendingRoute
 }
@@ -172,7 +163,6 @@ export interface FileRouteTypes {
     | '/painel/documentos'
     | '/painel/marcas'
     | '/painel/suporte'
-    | '/api/public/tmp-cleanup-x9'
     | '/painel/'
     | '/api/public/cron/cleanup-pending'
   fileRoutesByTo: FileRoutesByTo
@@ -187,7 +177,6 @@ export interface FileRouteTypes {
     | '/painel/documentos'
     | '/painel/marcas'
     | '/painel/suporte'
-    | '/api/public/tmp-cleanup-x9'
     | '/painel'
     | '/api/public/cron/cleanup-pending'
   id:
@@ -204,7 +193,6 @@ export interface FileRouteTypes {
     | '/_authenticated/painel/documentos'
     | '/_authenticated/painel/marcas'
     | '/_authenticated/painel/suporte'
-    | '/api/public/tmp-cleanup-x9'
     | '/_authenticated/painel/'
     | '/api/public/cron/cleanup-pending'
   fileRoutesById: FileRoutesById
@@ -214,7 +202,6 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   RedefinirSenhaRoute: typeof RedefinirSenhaRoute
-  ApiPublicTmpCleanupX9Route: typeof ApiPublicTmpCleanupX9Route
   ApiPublicCronCleanupPendingRoute: typeof ApiPublicCronCleanupPendingRoute
 }
 
@@ -311,13 +298,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelSuporteRouteImport
       parentRoute: typeof AuthenticatedPainelRoute
     }
-    '/api/public/tmp-cleanup-x9': {
-      id: '/api/public/tmp-cleanup-x9'
-      path: '/api/public/tmp-cleanup-x9'
-      fullPath: '/api/public/tmp-cleanup-x9'
-      preLoaderRoute: typeof ApiPublicTmpCleanupX9RouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/cron/cleanup-pending': {
       id: '/api/public/cron/cleanup-pending'
       path: '/api/public/cron/cleanup-pending'
@@ -370,7 +350,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   RedefinirSenhaRoute: RedefinirSenhaRoute,
-  ApiPublicTmpCleanupX9Route: ApiPublicTmpCleanupX9Route,
   ApiPublicCronCleanupPendingRoute: ApiPublicCronCleanupPendingRoute,
 }
 export const routeTree = rootRouteImport
