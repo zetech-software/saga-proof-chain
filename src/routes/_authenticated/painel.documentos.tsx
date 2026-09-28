@@ -153,55 +153,92 @@ function DocumentosPage() {
       const userId = userData.user?.id;
       if (!userId) throw new Error("Sessão expirada");
 
-      let sent = 0;
+      // Cada arquivo segue sozinho: uma falha não interrompe nem reenvia os demais.
+      const sentIdx: number[] = [];
+      const failed: string[] = [];
+      setFileStages({});
       for (const [index, f] of files.entries()) {
-        // Revalidação (nome, MIME e conteúdo real) imediatamente antes do envio.
-        const checked = await validateUploadFileDeep(f);
-        if (!checked.ok) throw new Error(`${f.name}: ${checked.message}`);
-        setProgress(`Enviando ${index + 1} de ${files.length}...`);
-
-        const pendingPath = await stagePendingUpload(
-          "documentos",
-          checked.file,
-          checked.storageName,
-          checked.contentType,
-        );
-        const baseTitle = title.trim() || checked.displayName;
-        await submitClientDocument({
-          data: {
-            pendingPath,
-            fileName: checked.displayName,
-            title: (files.length > 1 && title.trim()
-              ? `${baseTitle} (${index + 1})`
-              : baseTitle
-            ).slice(0, 160),
-            description: description.trim() || null,
-            organizationId: myOrgId ?? null,
-            relatedDocumentId: related?.id ?? null,
-          },
-        });
-        sent += 1;
+        const stage = (s: FileStage) => setFileStages((prev) => ({ ...prev, [index]: s }));
+        setProgress(`Arquivo ${index + 1} de ${files.length}…`);
+        try {
+          stage({ kind: "preparando" });
+          // Revalidação (nome, MIME e conteúdo real) imediatamente antes do envio.
+          const checked = await validateUploadFileDeep(f);
+          if (!checked.ok) throw new Error(checked.message);
+          stage({ kind: "enviando" });
+          const pendingPath = await stagePendingUpload(
+            "documentos",
+            checked.file,
+            checked.storageName,
+            checked.contentType,
+          );
+          stage({ kind: "validando" });
+          const baseTitle = title.trim() || checked.displayName;
+          await submitClientDocument({
+            data: {
+              pendingPath,
+              fileName: checked.displayName,
+              title: (files.length > 1 && title.trim()
+                ? `${baseTitle} (${index + 1})`
+                : baseTitle
+              ).slice(0, 160),
+              description: description.trim() || null,
+              organizationId: myOrgId ?? null,
+              relatedDocumentId: related?.id ?? null,
+            },
+          });
+          stage({ kind: "concluido" });
+          sentIdx.push(index);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : "";
+          const friendly = msg.includes("aguardando documenta")
+            ? "Este processo não está mais aguardando documentação."
+            : describeUploadError(e);
+          stage({ kind: "falhou", message: friendly });
+          failed.push(`${f.name}: ${friendly}`);
+        }
       }
-      return sent;
+      return { sentIdx, failed };
     },
-    onSuccess: (sent) => {
-      toast.success(
-        sent === 1
-          ? "Documento enviado! Nossa equipe já foi avisada."
-          : `${sent} documentos enviados! Nossa equipe já foi avisada.`,
-      );
+    onSuccess: ({ sentIdx, failed }) => {
+      const sent = sentIdx.length;
+      if (sent > 0) {
+        toast.success(
+          sent === 1
+            ? "Documento enviado! Nossa equipe já foi avisada."
+            : `${sent} documentos enviados! Nossa equipe já foi avisada.`,
+        );
+      }
+      if (failed.length > 0) {
+        toast.error(
+          failed.length === 1
+            ? `Não foi possível enviar ${failed[0]}`
+            : `${failed.length} arquivos não foram enviados. Veja a lista.`,
+        );
+        // Mantém só os que falharam, para nunca reenviar os que já foram.
+        setFiles((prev) => prev.filter((_, i) => !sentIdx.includes(i)));
+        setFileStages((prev) => {
+          const next: Record<number, FileStage> = {};
+          let j = 0;
+          Object.keys(prev).forEach(() => undefined);
+          files.forEach((_, i) => {
+            if (!sentIdx.includes(i)) {
+              if (prev[i]) next[j] = prev[i];
+              j += 1;
+            }
+          });
+          return next;
+        });
+        return;
+      }
       setTitle("");
       setDescription("");
       setFiles([]);
+      setFileStages({});
       setRelated(null);
     },
     onError: (e: unknown) => {
-      const msg = e instanceof Error ? e.message : "";
-      toast.error(
-        msg.includes("aguardando documentacao")
-          ? "Este processo não está mais aguardando documentação."
-          : describeUploadError(e),
-      );
+      toast.error(describeUploadError(e));
     },
     onSettled: () => {
       setProgress(null);
