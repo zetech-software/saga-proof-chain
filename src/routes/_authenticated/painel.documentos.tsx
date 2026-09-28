@@ -23,6 +23,7 @@ import {
   formatDateTime,
   formatBytes,
 } from "@/lib/portal";
+import { useScrollToHash } from "@/hooks/useScrollToHash";
 import { ProcessEstimate } from "@/components/ProcessEstimate";
 import { UPLOAD_HELP_TEXT, describeUploadError, validateUploadFileDeep } from "@/lib/uploads";
 import { submitClientDocument } from "@/lib/uploads.functions";
@@ -100,6 +101,8 @@ function DocumentosPage() {
       return data;
     },
   });
+
+  useScrollToHash(!isLoading && !!docs);
 
   const docIds = (docs ?? []).map((d) => d.id);
   const { data: certs } = useQuery({
@@ -414,7 +417,7 @@ function DocumentosPage() {
               sentByClient: !isAdmin && myUserId !== null && d.created_by === myUserId,
             });
             return (
-              <Card key={d.id} className="bg-card/70">
+              <Card key={d.id} id={`doc-${d.id}`} className="scroll-mt-24 bg-card/70 target:ring-2 target:ring-brand-hover/60">
                 <CardContent className="pt-6">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">

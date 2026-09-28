@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Bot, Loader2, Send } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Bot, FileText, Loader2, Send, ShieldCheck, Stamp } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,16 @@ const SUGGESTIONS = [
   "Qual é meu prazo estimado?",
 ];
 
+type AssistantLink = Extract<AskResult, { ok: true }>["links"][number];
+
+const LINK_META = {
+  document: { to: "/painel/documentos", prefix: "doc", verb: "Ver documento", Icon: FileText },
+  certificate: { to: "/painel/certificados", prefix: "cert", verb: "Ver certificado", Icon: ShieldCheck },
+  trademark: { to: "/painel/marcas", prefix: "marca", verb: "Ver marca", Icon: Stamp },
+} as const;
+
 const ERRORS: Record<Exclude<AskResult, { ok: true }>["code"] | "session", string> = {
+  invalid_input: "Pergunta inválida.",
   too_long: `Sua pergunta passou de ${MAX} caracteres. Tente resumir.`,
   empty: "Escreva uma pergunta.",
   rate_hour: "Você atingiu o limite de 20 perguntas por hora. Tente novamente mais tarde.",
@@ -33,6 +43,7 @@ export function ProcessAssistant() {
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(false);
   const [answer, setAnswer] = useState<string | null>(null);
+  const [links, setLinks] = useState<AssistantLink[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [asked, setAsked] = useState<string | null>(null);
 
@@ -43,11 +54,13 @@ export function ProcessAssistant() {
     setLoading(true);
     setError(null);
     setAnswer(null);
+    setLinks([]);
     setAsked(question);
     try {
       const r = await ask({ data: { question } });
       if (r.ok) {
         setAnswer(r.answer);
+        setLinks(r.links);
         setQ("");
       } else setError(ERRORS[r.code] ?? ERRORS.ai_failed);
     } catch (e) {
@@ -118,6 +131,26 @@ export function ProcessAssistant() {
             {answer && (
               <>
                 <p className="whitespace-pre-line break-words">{answer}</p>
+                {links.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {links.map((l) => {
+                      const meta = LINK_META[l.kind];
+                      return (
+                        <Link
+                          key={l.kind + l.id}
+                          to={meta.to}
+                          hash={`${meta.prefix}-${l.id}`}
+                          title={l.label}
+                          className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full border border-border/70 px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-brand-hover/50 hover:text-foreground"
+                        >
+                          <meta.Icon className="h-3.5 w-3.5 shrink-0 text-brand-hover" aria-hidden />
+                          <span className="shrink-0">{meta.verb}</span>
+                          {links.length > 1 && <span className="min-w-0 truncate">· {l.label}</span>}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
                 <p className="mt-2 text-[11px] text-muted-foreground">
                   Resposta gerada por IA com base nas informações disponíveis no seu painel.
                 </p>

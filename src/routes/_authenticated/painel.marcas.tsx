@@ -7,6 +7,7 @@ import { Stamp } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useMyOrganization } from "@/hooks/useMyOrganization";
+import { useScrollToHash } from "@/hooks/useScrollToHash";
 import { usePortalSession } from "@/hooks/usePortalSession";
 import { logResourceView } from "@/hooks/useResourceViews";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,8 @@ function MarcasPage() {
     if (isAdmin) return;
     for (const m of marcas ?? []) void logResourceView("trademark", m.id);
   }, [marcas, isAdmin]);
+
+  useScrollToHash(!isLoading && !!marcas);
 
   const { data: myOrgId } = useMyOrganization();
 
@@ -194,7 +197,7 @@ function MarcasPage() {
 
         <div className="space-y-4">
           {(marcas ?? []).map((m) => (
-            <Card key={m.id} className="bg-card/70">
+            <Card key={m.id} id={`marca-${m.id}`} className="scroll-mt-24 bg-card/70 target:ring-2 target:ring-brand-hover/60">
               <CardContent className="pt-6">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">

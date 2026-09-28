@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Download, ExternalLink, ShieldCheck } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { useScrollToHash } from "@/hooks/useScrollToHash";
 import { usePortalSession } from "@/hooks/usePortalSession";
 import { logResourceView } from "@/hooks/useResourceViews";
 import { useSupportNotifications } from "@/hooks/useSupportNotifications";
@@ -54,6 +55,8 @@ function CertificadosPage() {
     },
   });
 
+  useScrollToHash(!isLoading && !!certs);
+
   useEffect(() => {
     const channel = supabase
       .channel("certificates-realtime")
@@ -96,7 +99,7 @@ function CertificadosPage() {
 
       <div className="grid gap-4">
         {(certs ?? []).map((c) => (
-          <Card key={c.id} className="border-brand-hover/25 bg-card/70">
+          <Card key={c.id} id={`cert-${c.id}`} className="scroll-mt-24 border-brand-hover/25 bg-card/70 target:ring-2 target:ring-brand-hover/60">
             <CardContent className="pt-6">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex min-w-0 items-start gap-3">
