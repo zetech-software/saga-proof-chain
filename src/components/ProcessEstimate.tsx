@@ -22,7 +22,6 @@ export function ProcessEstimate({
   startDate: string | null;
 }) {
   if (DONE_STATUSES.includes(status)) {
-    if (!startDate) return null;
     return (
       <div className="mt-3 flex items-start gap-2 rounded-lg border border-success/35 bg-success/10 p-3 text-sm">
         <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden />
