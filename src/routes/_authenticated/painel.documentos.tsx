@@ -19,11 +19,11 @@ import { StatusBadge } from "@/components/StatusBadge";
 import {
   DOCUMENT_STATUS_LABEL,
   PRAZO_TEXTO,
-  estimateBusinessWindow,
+  reliableProcessStart,
   formatDateTime,
   formatBytes,
 } from "@/lib/portal";
-import { CalendarClock, CheckCircle2 } from "lucide-react";
+import { ProcessEstimate } from "@/components/ProcessEstimate";
 import { UPLOAD_HELP_TEXT, describeUploadError, validateUploadFileDeep } from "@/lib/uploads";
 import { submitClientDocument } from "@/lib/uploads.functions";
 import { stagePendingUpload } from "@/lib/secure-upload";
@@ -408,12 +408,11 @@ function DocumentosPage() {
           {(docs ?? []).map((d) => {
             const showDate = isAdmin || (myUserId !== null && d.created_by === myUserId);
             const docCerts = certByDoc.get(d.id) ?? [];
-            const isDone = d.status === "concluido" || d.status === "certificado_emitido";
-            const PROCESS = ["recebido", "em_andamento", "aguardando_documentacao", "em_analise"];
-            const est =
-              showDate && !isDone && PROCESS.includes(d.status)
-                ? estimateBusinessWindow(d.submitted_at)
-                : null;
+            const startDate = reliableProcessStart({
+              process_started_at: d.process_started_at,
+              submitted_at: d.submitted_at,
+              sentByClient: !isAdmin && myUserId !== null && d.created_by === myUserId,
+            });
             return (
               <Card key={d.id} className="bg-card/70">
                 <CardContent className="pt-6">
@@ -422,7 +421,11 @@ function DocumentosPage() {
                       <h3 className="break-words font-serif text-xl leading-snug">{d.title}</h3>
                       <p className="mt-1 break-all text-xs text-muted-foreground">
                         {d.file_name} · {fileExtension(d.file_name)} · {formatBytes(d.file_size)}
-                        {showDate ? ` · enviado em ${formatDateTime(d.submitted_at)}` : ""}
+                        {showDate && (
+                          <span className="whitespace-nowrap">
+                            {` · enviado em ${formatDateTime(d.submitted_at)}`}
+                          </span>
+                        )}
                       </p>
                       {d.is_additional && (
                         <span className="mt-2 inline-flex rounded-full border border-gold/40 bg-gold/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-gold-light">
@@ -440,39 +443,7 @@ function DocumentosPage() {
                       {d.description}
                     </p>
                   )}
-                  {showDate && isDone && (
-                    <div className="mt-3 flex items-start gap-2 rounded-lg border border-success/35 bg-success/10 p-3 text-sm">
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                      <span>Processo concluído.</span>
-                    </div>
-                  )}
-                  {est && (
-                    <div
-                      className="mt-3 rounded-lg border border-dashed border-border bg-muted/30 p-3 text-sm"
-                      aria-label="Prazo estimado, não é garantia de conclusão"
-                    >
-                      <p className="flex items-center gap-2 font-medium">
-                        <CalendarClock className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        Prazo estimado
-                        <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
-                          Estimativa
-                        </span>
-                      </p>
-                      <p className="mt-1 text-muted-foreground">
-                        Entre {est.min} e {est.max}, considerando de 7 a 25 dias úteis.
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Referência aproximada, não é data garantida de conclusão.
-                      </p>
-                      {d.status === "aguardando_documentacao" && (
-                        <p className="mt-2 flex items-start gap-2 text-xs text-gold-light">
-                          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                          Há documentação pendente. A estimativa pode ser impactada até o envio do
-                          arquivo faltante.
-                        </p>
-                      )}
-                    </div>
-                  )}
+                  <ProcessEstimate status={d.status} startDate={startDate} />
                   {d.admin_notes && (
                     <p className="mt-3 break-words rounded-lg border border-brand-hover/30 bg-brand-hover/5 p-3 text-sm">
                       <span className="text-brand-hover">Zé Registra: </span>
