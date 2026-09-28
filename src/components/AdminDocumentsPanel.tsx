@@ -459,6 +459,30 @@ export function AdminDocumentsPanel({
                   </div>
                 </div>
 
+                {certForId === d.id && (
+                  <div className="mt-4 space-y-3 rounded-xl border border-brand-hover/30 bg-brand-hover/5 p-4">
+                    <p className="text-sm font-medium">Enviar certificado para este documento</p>
+                    <div className="space-y-2">
+                      <Label htmlFor={`ctitle-${d.id}`}>Título</Label>
+                      <Input id={`ctitle-${d.id}`} value={certTitle} maxLength={160} onChange={(e) => setCertTitle(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`chash-${d.id}`}>Hash (opcional)</Label>
+                      <Input id={`chash-${d.id}`} value={certHash} maxLength={200} onChange={(e) => setCertHash(e.target.value)} />
+                    </div>
+                    <FileDropzone id={`cfile-${d.id}`} describedById={`chelp-${d.id}`} file={certFile} onSelect={setCertFile} disabled={busy} />
+                    <label className="flex items-center gap-2 text-sm">
+                      <input type="checkbox" checked={certConclude} onChange={(e) => setCertConclude(e.target.checked)} />
+                      Marcar processo como “Concluído”
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      <Button size="sm" onClick={() => handleSendCertificate(d)} disabled={busy || !certFile} aria-busy={busy}>
+                        {busy ? "Enviando..." : "Publicar certificado"}
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setCertForId(null)}>Cancelar</Button>
+                    </div>
+                  </div>
+                )}
                 {isOpen && form && (
                   <div className="mt-4 space-y-4">
                     <form
