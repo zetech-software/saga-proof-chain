@@ -11,7 +11,7 @@ import {
   Share2,
   UserCog,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { PoweredBy } from "@/components/PoweredBy";

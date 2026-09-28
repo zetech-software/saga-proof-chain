@@ -64,8 +64,8 @@ function AuthPage() {
     await queryClient.cancelQueries();
     queryClient.clear();
     const { error } = await supabase.auth.signInWithPassword(parsed.data);
-    setLoading(false);
     if (error) {
+      setLoading(false);
       toast.error("E-mail ou senha incorretos.");
       return;
     }
@@ -96,6 +96,14 @@ function AuthPage() {
     }
     // Resposta neutra: não revela se o e-mail existe.
     toast.success("Se este e-mail estiver cadastrado, enviamos um link de redefinição.");
+  }
+
+  if (checking) {
+    return (
+      <div className="starfield flex min-h-screen items-center justify-center px-4" role="status" aria-live="polite">
+        <p className="text-sm text-muted-foreground">Verificando sua sessão…</p>
+      </div>
+    );
   }
 
   return (
@@ -132,7 +140,7 @@ function AuthPage() {
             />
           </div>
           <Button type="submit" className="w-full" disabled={loading} aria-busy={loading}>
-            {loading ? "Entrando..." : "Entrar na torre"}
+            {loading ? "Entrando…" : "Entrar na torre"}
           </Button>
         </form>
 
