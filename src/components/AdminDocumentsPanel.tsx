@@ -383,7 +383,7 @@ export function AdminDocumentsPanel({
                       <p className="mt-1 break-words text-xs text-muted-foreground">
                         {d.file_name}
                         {d.file_size ? (
-                          <span className="whitespace-nowrap">{` · ${formatBytes(d.file_size)}`}</span>
+                          <span className="whitespace-nowrap break-normal">{` · ${formatBytes(d.file_size)}`}</span>
                         ) : (
                           ""
                         )}

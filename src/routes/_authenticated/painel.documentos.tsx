@@ -421,7 +421,7 @@ function DocumentosPage() {
                       <h3 className="break-words font-serif text-xl leading-snug">{d.title}</h3>
                       <p className="mt-1 break-all text-xs text-muted-foreground">
                         {d.file_name} · {fileExtension(d.file_name)} ·{" "}
-                        <span className="whitespace-nowrap">{formatBytes(d.file_size)}</span>
+                        <span className="whitespace-nowrap break-normal">{formatBytes(d.file_size)}</span>
                         {showDate && (
                           <span className="whitespace-nowrap">
                             {` · enviado em ${formatDateTime(d.submitted_at)}`}
