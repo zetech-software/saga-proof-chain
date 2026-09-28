@@ -21,6 +21,7 @@ import {
 } from "@/lib/portal";
 
 import { RouteErrorState } from "@/components/RouteErrorState";
+import { ProcessAssistant } from "@/components/ProcessAssistant";
 
 export const Route = createFileRoute("/_authenticated/painel/")({
   head: () => ({
@@ -174,6 +175,8 @@ function Overview() {
           </span>
         </CardContent>
       </Card>
+
+      {session && !isAdmin && <ProcessAssistant />}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="bg-card/70">

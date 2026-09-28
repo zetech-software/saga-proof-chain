@@ -50,6 +50,13 @@
       "when": 1790603814114,
       "tag": "0006_document_process_started_at",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790605157028,
+      "tag": "0007_ai_question_usage",
+      "breakpoints": true
     }
   ]
 }
