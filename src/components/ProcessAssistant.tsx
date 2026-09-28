@@ -6,7 +6,28 @@ import { Bot, FileText, Loader2, Send, ShieldCheck, Stamp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { askProcessAssistant, type AskResult } from "@/lib/ai-assistant.functions";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  askProcessAssistant,
+  getMyAssistantUsage,
+  type AskResult,
+  type AssistantUsage,
+} from "@/lib/ai-assistant.functions";
+
+function spTime(iso: string) {
+  const d = new Date(iso);
+  const sameDay =
+    d.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }) ===
+    new Date().toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
+  const hm = d.toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" });
+  if (sameDay) return hm;
+  return `${d.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit" })} às ${hm}`;
+}
+
+function limitMessage(u: AssistantUsage | undefined) {
+  if (!u?.retryAt) return "Limite de perguntas atingido. Tente novamente mais tarde.";
+  return `Limite atingido. Você poderá perguntar novamente por volta das ${spTime(u.retryAt)}.`;
+}
 
 const MAX = 500;
 const SUGGESTIONS = [
@@ -40,6 +61,11 @@ const ERRORS: Record<Exclude<AskResult, { ok: true }>["code"] | "session", strin
 
 export function ProcessAssistant() {
   const ask = useServerFn(askProcessAssistant);
+  const fetchUsage = useServerFn(getMyAssistantUsage);
+  const qc = useQueryClient();
+  const usageQ = useQuery({ queryKey: ["assistant-usage"], queryFn: () => fetchUsage(), refetchOnWindowFocus: true, staleTime: 10_000 });
+  const usage = usageQ.data;
+  const exhausted = !!usage && (usage.hourLeft === 0 || usage.dayLeft === 0);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(false);
   const [answer, setAnswer] = useState<string | null>(null);
@@ -58,16 +84,19 @@ export function ProcessAssistant() {
     setAsked(question);
     try {
       const r = await ask({ data: { question } });
+      if (r.usage) qc.setQueryData(["assistant-usage"], r.usage);
       if (r.ok) {
         setAnswer(r.answer);
         setLinks(r.links);
         setQ("");
-      } else setError(ERRORS[r.code] ?? ERRORS.ai_failed);
+      } else if (r.code === "rate_hour" || r.code === "rate_day") setError(limitMessage(r.usage));
+      else setError((ERRORS[r.code] ?? ERRORS.ai_failed) + (r.counted ? " Esta tentativa contou no seu limite." : ""));
     } catch (e) {
       const msg = e instanceof Error ? e.message : "";
       setError(/unauthorized|jwt|session/i.test(msg) ? ERRORS.session : ERRORS.unavailable);
     } finally {
       setLoading(false);
+      qc.invalidateQueries({ queryKey: ["assistant-usage"] });
     }
   }
 
@@ -83,7 +112,7 @@ export function ProcessAssistant() {
             <button
               key={s}
               type="button"
-              disabled={loading}
+              disabled={loading || exhausted}
               onClick={() => submit(s)}
               className="rounded-full border border-border/70 px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-brand-hover/50 hover:text-foreground disabled:opacity-50"
             >
@@ -117,12 +146,25 @@ export function ProcessAssistant() {
             <span className="text-xs text-muted-foreground">
               {q.length}/{MAX}
             </span>
-            <Button type="submit" size="sm" disabled={loading || !q.trim()}>
+            <Button type="submit" size="sm" disabled={loading || !q.trim() || exhausted}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               Perguntar
             </Button>
           </div>
         </form>
+        {usage && (
+          <p className="text-[11px] leading-relaxed text-muted-foreground" aria-live="polite">
+            {exhausted ? (
+              <span className="text-destructive">{limitMessage(usage)}</span>
+            ) : (
+              <>
+                <span className="whitespace-nowrap">{usage.hourLeft} de {usage.hourLimit} disponíveis nesta hora</span>
+                {" · "}
+                <span className="whitespace-nowrap">{usage.dayLeft} de {usage.dayLimit} disponíveis nas últimas 24h</span>
+              </>
+            )}
+          </p>
+        )}
         {(answer || error || loading) && (
           <div className="rounded-lg border border-border/60 bg-background/50 p-3 text-sm" aria-live="polite">
             {asked && <p className="mb-2 break-words text-xs text-muted-foreground">Pergunta: {asked}</p>}

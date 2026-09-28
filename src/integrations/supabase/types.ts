@@ -32,6 +32,24 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_usage_daily: {
+        Row: {
+          count: number
+          day: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          day: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          day?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       certificates: {
         Row: {
           created_at: string
@@ -544,6 +562,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_ai_usage_summary: {
+        Args: never
+        Returns: {
+          email: string
+          full_name: string
+          last_24h: number
+          last_30d: number
+          last_7d: number
+          last_day: string
+          total_90d: number
+          user_id: string
+        }[]
+      }
       admin_list_user_activity: {
         Args: never
         Returns: {
@@ -580,6 +611,15 @@ export type Database = {
           using_expression: string
         }[]
       }
+      ai_usage_status: {
+        Args: { _user: string }
+        Returns: {
+          day_retry_at: string
+          day_used: number
+          hour_retry_at: string
+          hour_used: number
+        }[]
+      }
       can_view_document: {
         Args: { _document_id: string; _user_id: string }
         Returns: boolean
@@ -591,6 +631,17 @@ export type Database = {
       can_view_trademark: {
         Args: { _trademark_id: string; _user_id: string }
         Returns: boolean
+      }
+      consume_ai_question: {
+        Args: { _limit_day?: number; _limit_hour?: number; _user: string }
+        Returns: {
+          allowed: boolean
+          day_retry_at: string
+          day_used: number
+          hour_retry_at: string
+          hour_used: number
+          reason: string
+        }[]
       }
       document_viewer_ids: { Args: { _doc: string }; Returns: string[] }
       has_role: {
