@@ -41,6 +41,7 @@ import {
 import { RouteErrorState } from "@/components/RouteErrorState";
 import { UserAccessActivity } from "@/components/UserAccessActivity";
 import { PageVisitsHistory } from "@/components/PageVisitsHistory";
+import { AdminAiUsagePanel } from "@/components/AdminAiUsagePanel";
 import { PrivacyOverview } from "@/components/PrivacyOverview";
 import { OwnershipManager } from "@/components/OwnershipManager";
 import { AdminDocumentsPanel } from "@/components/AdminDocumentsPanel";
@@ -365,6 +366,7 @@ function AdminPage() {
           suporte={data?.suporte}
         />
         <PageVisitsHistory enabled={isAdmin} />
+        <AdminAiUsagePanel enabled={isAdmin} />
         <OwnershipManager enabled={isAdmin} />
 
         <PrivacyOverview enabled={isAdmin} />
