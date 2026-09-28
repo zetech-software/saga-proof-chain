@@ -11,7 +11,7 @@ import { ListSkeleton } from "@/components/ListSkeleton";
 import type { AdminAiUsageRow } from "@/lib/ai-assistant.functions";
 
 /** Média observada por pergunta com o modelo atual (aproximação, em créditos Lovable). */
-const AVG_CREDITS_PER_QUESTION = 0.015;
+const AVG_CREDITS_PER_QUESTION = 0.0165;
 
 function fmtDay(d: string | null) {
   if (!d) return "—";
