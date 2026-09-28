@@ -33,6 +33,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { downloadFromBucket } from "@/lib/downloads";
 
 import { RouteErrorState } from "@/components/RouteErrorState";
+import { ClientDocumentActions } from "@/components/ClientDocumentActions";
 
 type FileStage =
   | { kind: "preparando" | "enviando" | "validando" | "concluido" }
@@ -82,6 +83,7 @@ function DocumentosPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [related, setRelated] = useState<RelatedDoc | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
   const [fileStages, setFileStages] = useState<Record<number, FileStage>>({});
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -286,8 +288,11 @@ function DocumentosPage() {
     formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  const pending = (docs ?? []).filter((d) => d.status === "aguardando_documentacao");
-  const current = (docs ?? []).find((d) => !d.is_additional);
+  const activeDocs = (docs ?? []).filter((d) => !d.archived_at);
+  const archivedDocs = (docs ?? []).filter((d) => d.archived_at);
+  const listed = showArchived ? archivedDocs : activeDocs;
+  const pending = activeDocs.filter((d) => d.status === "aguardando_documentacao");
+  const current = activeDocs.find((d) => !d.is_additional);
   const certByDoc = new Map<string, NonNullable<typeof certs>>();
   for (const c of certs ?? []) {
     if (!c.document_id) continue;
@@ -476,7 +481,17 @@ function DocumentosPage() {
               description="Verifique sua conexão e recarregue a página em alguns instantes."
             />
           )}
-          {(docs ?? []).map((d) => {
+          {(archivedDocs.length > 0 || showArchived) && (
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Mostrar documentos">
+              <Button size="sm" variant={showArchived ? "outline" : "default"} aria-pressed={!showArchived} onClick={() => setShowArchived(false)}>
+                Ativos
+              </Button>
+              <Button size="sm" variant={showArchived ? "default" : "outline"} aria-pressed={showArchived} onClick={() => setShowArchived(true)}>
+                Arquivados ({archivedDocs.length})
+              </Button>
+            </div>
+          )}
+          {listed.map((d) => {
             const showDate = isAdmin || (myUserId !== null && d.created_by === myUserId);
             const docCerts = certByDoc.get(d.id) ?? [];
             const startDate = reliableProcessStart({
@@ -559,6 +574,9 @@ function DocumentosPage() {
                         Enviar arquivo faltante
                       </Button>
                     )}
+                    {!isAdmin && myUserId !== null && d.created_by === myUserId && (
+                      <ClientDocumentActions doc={d} hasCertificate={docCerts.length > 0} />
+                    )}
                     {isAdmin && (
                       <span className="text-xs text-muted-foreground">
                         Última atualização: {formatDateTime(d.updated_at)}
@@ -570,7 +588,7 @@ function DocumentosPage() {
             );
           })}
           {isLoading && <ListSkeleton />}
-          {!isLoading && !isError && !docs?.length && (
+          {!isLoading && !isError && !listed.length && !showArchived && (
             <EmptyState
               icon={FileText}
               title="Nenhum documento enviado ainda"
