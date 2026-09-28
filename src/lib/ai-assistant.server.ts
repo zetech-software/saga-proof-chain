@@ -63,7 +63,7 @@ export async function buildContext(
   ]);
   if (docsR.error || certsR.error || marcasR.error) throw new Error("context_query_failed");
 
-  const docs = (docsR.data ?? []) as Array<Record<string, any>>;
+  const docs = (docsR.data ?? []) as any[];
   const titleById = new Map(docs.map((d) => [d.id as string, d.title as string]));
 
   if (needDocs) {
@@ -94,7 +94,7 @@ export async function buildContext(
   }
 
   if (topics.has("certificados")) {
-    const certs = (certsR.data ?? []) as Array<Record<string, any>>;
+    const certs = (certsR.data ?? []) as any[];
     total += certs.length;
     lines.push(`CERTIFICADOS (${certs.length}):`);
     certs.forEach((c, i) => {
@@ -109,7 +109,7 @@ export async function buildContext(
   }
 
   if (topics.has("marcas")) {
-    const marcas = (marcasR.data ?? []) as Array<Record<string, any>>;
+    const marcas = (marcasR.data ?? []) as any[];
     total += marcas.length;
     lines.push(`MARCAS (${marcas.length}):`);
     marcas.forEach((m, i) => {
