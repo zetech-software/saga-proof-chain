@@ -335,7 +335,8 @@ function AdminPage() {
     );
   }
 
-  const docs = data?.docs ?? [];
+  // Contadores consideram só documentos ativos (arquivados não pedem ação).
+  const docs = (data?.docs ?? []).filter((d) => !d.archived_at);
   const suporte = data?.suporte ?? [];
   const pend = {
     recebidos: docs.filter((d) => d.status === "recebido" && !d.is_additional).length,
