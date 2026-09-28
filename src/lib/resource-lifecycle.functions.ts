@@ -72,10 +72,23 @@ async function loadRow(sa: SA, type: ResType, id: string) {
         : "id,title,document_id,trademark_id,deleted_at,deleted_by,storage_path,file_name";
   const { data } = await sa.from(TABLE[type]).select(cols).eq("id", id).maybeSingle();
   if (!data) throw new Error("Item não encontrado.");
-  return data as Record<string, string | null>;
+  return data as Row;
 }
 
-const label = (type: ResType, row: Record<string, string | null>) =>
+type Row = {
+  id: string;
+  name?: string | null;
+  title?: string | null;
+  created_by?: string | null;
+  organization_id?: string | null;
+  deleted_at: string | null;
+  deleted_by: string | null;
+  storage_path?: string | null;
+  status?: string | null;
+  file_name?: string | null;
+};
+
+const label = (type: ResType, row: Row) =>
   (type === "trademark" ? row.name : row.title) ?? "(sem título)";
 
 /**
@@ -148,7 +161,7 @@ export const restoreResource = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-async function purgeBlockers(sa: SA, type: ResType, row: Record<string, string | null>) {
+async function purgeBlockers(sa: SA, type: ResType, row: Row) {
   const reasons: string[] = [];
   const count = async (q: PromiseLike<{ count: number | null }>) => (await q).count ?? 0;
   const head = { count: "exact", head: true };
@@ -559,7 +572,7 @@ export const listRestorationCandidates = createServerFn({ method: "GET" })
     const sa = await requireAdmin(context);
     const { data } = await sa.from("restoration_candidates").select("*").order("created_at");
     return Promise.all(
-      (data ?? []).map(async (c: Record<string, unknown>) => {
+      (data ?? []).map(async (c: SA) => {
         const type = c.resource_type as string;
         const table = TABLE_BY_CANDIDATE[type];
         const prevId = c.previous_id as string | null;
@@ -573,7 +586,7 @@ export const listRestorationCandidates = createServerFn({ method: "GET" })
                 (r: { id: string }) => r.id !== prevId,
               )
             : false;
-        const deps = (c.dependencies as { type: string; id: string; label?: string }[]) ?? [];
+        const deps: { type: string; id: string; label?: string }[] = c.dependencies ?? [];
         const depStatus = await Promise.all(
           deps.map(async (d) => ({
             ...d,
