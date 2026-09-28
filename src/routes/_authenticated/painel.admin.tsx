@@ -1,3 +1,5 @@
+import { finalizeAdminUpload } from "@/lib/uploads.functions";
+import { stagePendingUpload } from "@/lib/secure-upload";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
@@ -177,11 +179,8 @@ function AdminPage() {
       const userId = userData.user?.id;
       if (!userId) throw new Error("Sessão expirada");
 
-      const path = `${userId}/${checked.storageName}`;
-      const { error: upErr } = await supabase.storage
-        .from("documentos")
-        .upload(path, checked.file, { contentType: checked.contentType, upsert: false });
-      if (upErr) throw upErr;
+      const pending = await stagePendingUpload("documentos", checked.file, checked.storageName, checked.contentType);
+      const { path } = await finalizeAdminUpload({ data: { bucket: "documentos", pendingPath: pending } });
 
       const { error } = await supabase.from("documents").insert({
         title: newDoc.title.trim(),
@@ -287,11 +286,8 @@ function AdminPage() {
       if (certFile) {
         const checked = await validateUploadFileDeep(certFile);
         if (!checked.ok) throw new Error(checked.message);
-        const path = `certificados/${checked.storageName}`;
-        const { error: upErr } = await supabase.storage
-          .from("certificados")
-          .upload(path, checked.file, { contentType: checked.contentType, upsert: false });
-        if (upErr) throw upErr;
+        const pending = await stagePendingUpload("certificados", checked.file, checked.storageName, checked.contentType);
+      const { path } = await finalizeAdminUpload({ data: { bucket: "certificados", pendingPath: pending } });
         storage_path = path;
         file_name = checked.displayName;
       }
