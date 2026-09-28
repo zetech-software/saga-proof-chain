@@ -47,6 +47,8 @@ import { OwnershipManager } from "@/components/OwnershipManager";
 import { AdminDocumentsPanel } from "@/components/AdminDocumentsPanel";
 import { AdminTrademarksPanel } from "@/components/AdminTrademarksPanel";
 import { AdminCertificatesPanel } from "@/components/AdminCertificatesPanel";
+import { AdminSupportPanel } from "@/components/AdminSupportPanel";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/_authenticated/painel/admin")({
   head: () => ({
@@ -75,6 +77,7 @@ function AdminPage() {
   const certFileRef = useRef<HTMLInputElement>(null);
 
   const isAdmin = !!session?.isAdmin;
+  const [tab, setTab] = useState("visao");
 
   // Sem cargo admin: mesmo comportamento da rota de Suporte (redireciona).
   useEffect(() => {
@@ -153,17 +156,19 @@ function AdminPage() {
   const { data } = useQuery({
     queryKey: ["admin-data"],
     queryFn: async () => {
-      const [marcas, docs, suporte, certs] = await Promise.all([
+      const [marcas, docs, suporte, certs, profiles] = await Promise.all([
         supabase.from("trademarks").select("*").order("submitted_at", { ascending: false }),
         supabase.from("documents").select("*").order("submitted_at", { ascending: false }),
         supabase.from("support_requests").select("*").order("created_at", { ascending: false }),
         supabase.from("certificates").select("*").order("issued_at", { ascending: false }),
+        supabase.from("profiles").select("id, full_name, email"),
       ]);
       return {
         marcas: marcas.data ?? [],
         docs: docs.data ?? [],
         suporte: suporte.data ?? [],
         certs: certs.data ?? [],
+        profiles: profiles.data ?? [],
       };
     },
     enabled: !!session?.isAdmin,
@@ -346,32 +351,91 @@ function AdminPage() {
     );
   }
 
+  const docs = data?.docs ?? [];
+  const suporte = data?.suporte ?? [];
+  const pend = {
+    recebidos: docs.filter((d) => d.status === "recebido" && !d.is_additional).length,
+    adicionais: docs.filter((d) => d.status === "recebido" && d.is_additional).length,
+    aguardando: docs.filter((d) => d.status === "aguardando_documentacao").length,
+    semCert: docs.filter(
+      (d) => d.status === "concluido" && !(data?.certs ?? []).some((c) => c.document_id === d.id),
+    ).length,
+    chamados: suporte.filter((s) => s.status === "aberta").length,
+  };
+  const attention = [
+    { label: "Documentos recebidos", value: pend.recebidos, tab: "processos" },
+    { label: "Envios adicionais", value: pend.adicionais, tab: "processos" },
+    { label: "Aguardando documentação do cliente", value: pend.aguardando, tab: "processos" },
+    { label: "Concluídos sem certificado", value: pend.semCert, tab: "processos" },
+    { label: "Chamados aguardando resposta", value: pend.chamados, tab: "atendimento" },
+  ];
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
         <h1 className="font-display text-3xl text-gold">Administração</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Atualize status e publique certificados — os clientes veem em tempo real.
+          O que precisa de atenção hoje, atendimento e gestão dos processos.
         </p>
       </div>
 
-      <section className="space-y-4" aria-labelledby="usuarios-privacidade">
-        <h2 id="usuarios-privacidade" className="font-display text-xl text-gold-light">
-          Usuários e privacidade
-        </h2>
-        <UserAccessActivity
-          enabled={isAdmin}
-          docs={data?.docs}
-          marcas={data?.marcas}
-          suporte={data?.suporte}
-        />
-        <PageVisitsHistory enabled={isAdmin} />
-        <AdminAiUsagePanel enabled={isAdmin} />
-        <OwnershipManager enabled={isAdmin} />
+      <Tabs value={tab} onValueChange={setTab} className="space-y-6">
+        <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
+          <TabsTrigger value="visao">Visão geral</TabsTrigger>
+          <TabsTrigger value="atendimento">
+            Atendimento{adminCount > 0 ? ` (${adminCount})` : ""}
+          </TabsTrigger>
+          <TabsTrigger value="processos">Processos</TabsTrigger>
+          <TabsTrigger value="clientes">Clientes</TabsTrigger>
+          <TabsTrigger value="controle">Controle</TabsTrigger>
+        </TabsList>
 
-        <PrivacyOverview enabled={isAdmin} />
-      </section>
+        <TabsContent value="visao" className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {attention.map((a) => (
+              <button
+                key={a.label}
+                type="button"
+                onClick={() => setTab(a.tab)}
+                className={`rounded-xl border p-4 text-left transition-colors hover:border-brand-hover/50 ${
+                  a.value > 0 ? "border-brand-hover/40 bg-brand-hover/5" : "border-border/60 bg-card/60"
+                }`}
+              >
+                <p className="text-3xl font-semibold">{data ? a.value : "—"}</p>
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">{a.label}</p>
+              </button>
+            ))}
+          </div>
+          {pend.chamados > 0 && (
+            <Button variant="outline" onClick={() => setTab("atendimento")}>
+              Responder chamados pendentes
+            </Button>
+          )}
+        </TabsContent>
 
+        <TabsContent value="atendimento">
+          <AdminSupportPanel requests={suporte as never} profiles={data?.profiles ?? []} />
+        </TabsContent>
+
+        <TabsContent value="processos" className="space-y-6">
+          <AdminDocumentsPanel
+            docs={docs as never}
+            enabled={isAdmin}
+            adminUserId={session?.user?.id ?? null}
+          />
+          <AdminCertificatesPanel
+            certs={(data?.certs ?? []) as never}
+            docs={docs.map((d) => ({ id: d.id, label: d.title }))}
+            marcas={(data?.marcas ?? []).map((m) => ({ id: m.id, label: m.name }))}
+            enabled={isAdmin}
+            adminUserId={session?.user?.id ?? null}
+          />
+          <AdminTrademarksPanel marcas={(data?.marcas ?? []) as never} enabled={isAdmin} />
+          <details className="group rounded-xl border border-border/60 bg-card/40 p-4">
+            <summary className="cursor-pointer text-sm font-medium">
+              Cadastrar documento, marca ou certificado
+            </summary>
+            <div className="mt-4 space-y-6">
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="bg-card/70">
           <CardHeader>
@@ -608,114 +672,21 @@ function AdminPage() {
           </form>
         </CardContent>
       </Card>
-
-      <AdminDocumentsPanel
-        docs={(data?.docs ?? []) as never}
-        enabled={isAdmin}
-        adminUserId={session?.user?.id ?? null}
-      />
-
-      <AdminTrademarksPanel marcas={(data?.marcas ?? []) as never} enabled={isAdmin} />
-
-      <AdminCertificatesPanel
-        certs={(data?.certs ?? []) as never}
-        docs={(data?.docs ?? []).map((d) => ({ id: d.id, label: d.title }))}
-        marcas={(data?.marcas ?? []).map((m) => ({ id: m.id, label: m.name }))}
-        enabled={isAdmin}
-        adminUserId={session?.user?.id ?? null}
-      />
-
-      <Card className="bg-card/70">
-        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
-          <CardTitle className="text-lg">Solicitações de suporte</CardTitle>
-          {adminCount > 0 && (
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-muted-foreground">
-                {adminCount}{" "}
-                {adminCount === 1
-                  ? "chamado novo não visualizado"
-                  : "chamados novos não visualizados"}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => markAllRead.mutate("new_support_request")}
-                disabled={markAllRead.isPending}
-                aria-busy={markAllRead.isPending}
-              >
-                Marcar todas como lidas
-              </Button>
             </div>
-          )}
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {(data?.suporte ?? []).map((s) => {
-            const unreadId = unreadIdFor("new_support_request", s.id);
-            return (
-              <div
-                key={s.id}
-                className={`rounded-lg border p-4 ${
-                  unreadId ? "border-brand-hover/50 bg-brand-hover/5" : "border-border/60"
-                }`}
-              >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="font-medium">{s.subject}</p>
-                  {unreadId && (
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center rounded-full border border-brand-hover/40 bg-brand-hover/10 px-3 py-1 text-xs text-brand-hover">
-                        Não visualizado
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => markRead.mutate(unreadId)}
-                        disabled={markRead.isPending}
-                        aria-label={`Marcar chamado ${s.subject} como visualizado`}
-                      >
-                        Marcar como visualizado
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">{formatDateTime(s.created_at)}</p>
-                <p className="mt-2 whitespace-pre-line text-sm text-muted-foreground">
-                  {s.message}
-                </p>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <Select
-                    value={s.status}
-                    onValueChange={(v) => updateSupport.mutate({ id: s.id, status: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SUPPORT_STATUSES.map((st) => (
-                        <SelectItem key={st} value={st}>
-                          {SUPPORT_STATUS_LABEL[st]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    defaultValue={s.admin_reply ?? ""}
-                    placeholder="Resposta ao cliente"
-                    maxLength={2000}
-                    onFocus={() => unreadId && markRead.mutate(unreadId)}
-                    onBlur={(e) =>
-                      e.target.value !== (s.admin_reply ?? "") &&
-                      updateSupport.mutate({ id: s.id, admin_reply: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-            );
-          })}
-          {!data?.suporte.length && (
-            <p className="text-sm text-muted-foreground">Nenhuma solicitação enviada ainda.</p>
-          )}
-        </CardContent>
-      </Card>
+          </details>
+        </TabsContent>
+
+        <TabsContent value="clientes" className="space-y-6">
+          <UserAccessActivity enabled={isAdmin} docs={data?.docs} marcas={data?.marcas} suporte={data?.suporte} />
+          <OwnershipManager enabled={isAdmin} />
+        </TabsContent>
+
+        <TabsContent value="controle" className="space-y-6">
+          <AdminAiUsagePanel enabled={isAdmin} />
+          <PageVisitsHistory enabled={isAdmin} />
+          <PrivacyOverview enabled={isAdmin} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
