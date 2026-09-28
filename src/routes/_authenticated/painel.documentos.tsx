@@ -411,7 +411,7 @@ function DocumentosPage() {
             const startDate = reliableProcessStart({
               process_started_at: d.process_started_at,
               submitted_at: d.submitted_at,
-              sentByClient: myUserId !== null && d.created_by === myUserId,
+              sentByClient: !isAdmin && myUserId !== null && d.created_by === myUserId,
             });
             return (
               <Card key={d.id} className="bg-card/70">
