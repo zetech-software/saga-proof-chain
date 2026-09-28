@@ -95,7 +95,7 @@ export function RestorationReviewPanel({ enabled }: { enabled: boolean }) {
               {depsOpen === i.id && (
                 <ul className="space-y-1 rounded-lg bg-muted/40 p-3 text-xs">
                   {i.dependencies.length === 0 && <li>Sem dependências.</li>}
-                  {i.dependencies.map((d) => (
+                  {i.dependencies.map((d: { type: string; id: string; label?: string; exists: boolean }) => (
                     <li key={`${d.type}-${d.id}`} className="break-all">
                       {d.type} {d.label ?? ""} ({d.id}) — {d.exists ? "existe" : "ainda não existe"}
                     </li>
