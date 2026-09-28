@@ -176,7 +176,12 @@ export function estimateBusinessWindow(startIso: string | null | undefined) {
   const start = spCalendarDate(startIso);
   if (!start) return null;
   const fmt = (x: Date) =>
-    x.toLocaleDateString("pt-BR", { timeZone: "UTC", day: "2-digit", month: "2-digit", year: "numeric" });
+    x.toLocaleDateString("pt-BR", {
+      timeZone: "UTC",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
   return {
     min: fmt(addBusinessDays(start, PRAZO_MIN_DIAS_UTEIS)),
     max: fmt(addBusinessDays(start, PRAZO_MAX_DIAS_UTEIS)),

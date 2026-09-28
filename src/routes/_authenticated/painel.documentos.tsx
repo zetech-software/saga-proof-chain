@@ -409,7 +409,7 @@ function DocumentosPage() {
             const showDate = isAdmin || (myUserId !== null && d.created_by === myUserId);
             const docCerts = certByDoc.get(d.id) ?? [];
             const isDone = d.status === "concluido" || d.status === "certificado_emitido";
-            const PROCESS = ["recebido", "em_andamento", "aguardando_documentacao", "em_analise", "em_processamento"];
+            const PROCESS = ["recebido", "em_andamento", "aguardando_documentacao", "em_analise"];
             const est =
               showDate && !isDone && PROCESS.includes(d.status)
                 ? estimateBusinessWindow(d.submitted_at)
@@ -467,7 +467,8 @@ function DocumentosPage() {
                       {d.status === "aguardando_documentacao" && (
                         <p className="mt-2 flex items-start gap-2 text-xs text-gold-light">
                           <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                          Há documentação pendente. A estimativa pode ser impactada até o envio do arquivo faltante.
+                          Há documentação pendente. A estimativa pode ser impactada até o envio do
+                          arquivo faltante.
                         </p>
                       )}
                     </div>
