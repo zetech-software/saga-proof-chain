@@ -155,7 +155,7 @@ function spCalendarDate(iso: string): Date | null {
     month: "2-digit",
     day: "2-digit",
   }).format(d);
-  const [y, m, day] = parts.split("-").map(Number);
+  const [y = 0, m = 1, day = 1] = parts.split("-").map(Number);
   return new Date(Date.UTC(y, m - 1, day));
 }
 
