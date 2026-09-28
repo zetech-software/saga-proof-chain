@@ -1,11 +1,10 @@
 import { finalizeAdminUpload } from "@/lib/uploads.functions";
 import {
-  BLOCKED_DELETE_MESSAGE,
   editDocument,
-  purgeDocument,
   replaceDocumentFile,
   setDocumentArchived,
 } from "@/lib/document-management.functions";
+import { softDeleteResource } from "@/lib/resource-lifecycle.functions";
 import { DocumentHistory } from "@/components/DocumentHistory";
 import { stagePendingUpload } from "@/lib/secure-upload";
 import { useMemo, useState } from "react";
@@ -240,12 +239,8 @@ export function AdminDocumentsPanel({
   async function handleDelete(doc: AdminDocument) {
     setBusyId(doc.id);
     try {
-      const r = await purgeDocument({ data: { id: doc.id, confirm: "EXCLUIR" } });
-      if (r.blocked) {
-        toast.error(`${BLOCKED_DELETE_MESSAGE} (${r.reasons.join(", ")}). Você pode arquivá-lo.`);
-        return;
-      }
-      toast.success("Documento excluído definitivamente");
+      await softDeleteResource({ data: { type: "document", id: doc.id } });
+      toast.success("Documento movido para Excluídos");
       setOpenId(null);
       setForm(null);
       refresh();
@@ -253,7 +248,6 @@ export function AdminDocumentsPanel({
       toast.error("Não foi possível excluir o documento.");
     } finally {
       setBusyId(null);
-      setConfirmText("");
     }
   }
 
@@ -748,8 +742,8 @@ export function AdminDocumentsPanel({
                       <DocumentHistory documentId={d.id} />
 
                       <div className="space-y-2 rounded-lg border border-destructive/50 bg-destructive/5 p-4">
-                        <p className="text-sm font-medium text-destructive">Zona de perigo</p>
-                        <AlertDialog onOpenChange={(o) => !o && setConfirmText("")}>
+                        <p className="text-sm font-medium text-destructive">Excluir</p>
+                        <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
                               type="button"
@@ -758,39 +752,28 @@ export function AdminDocumentsPanel({
                               className="border-destructive/60 text-destructive hover:text-destructive"
                             >
                               <Trash2 className="h-4 w-4" aria-hidden />
-                              Excluir definitivamente
+                              Excluir
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Excluir “{d.title}” definitivamente?</AlertDialogTitle>
+                              <AlertDialogTitle>Excluir “{d.title}”?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Esta ação apagará permanentemente o documento e o arquivo. Não será
-                                possível recuperar. Digite EXCLUIR para confirmar.
+                                O documento sai das listas e deixa de aparecer para o cliente, mas vai
+                                para a aba Excluídos, com o arquivo preservado. Pode ser restaurado por
+                                30 dias.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
-                            <Input
-                              value={confirmText}
-                              onChange={(e) => setConfirmText(e.target.value)}
-                              placeholder="EXCLUIR"
-                              aria-label="Digite EXCLUIR para confirmar"
-                              autoComplete="off"
-                            />
                             <AlertDialogFooter>
                               <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                disabled={confirmText !== "EXCLUIR"}
-                                onClick={() => handleDelete(d)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Excluir definitivamente
+                              <AlertDialogAction onClick={() => handleDelete(d)}>
+                                Mover para Excluídos
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
                         <p className="text-xs text-muted-foreground">
-                          Bloqueada quando há certificado, envio adicional, compartilhamento ou
-                          processo concluído. Nesses casos, use Arquivar.
+                          Exclusão definitiva só na aba Excluídos, com confirmação forte.
                         </p>
                       </div>
                     </div>
