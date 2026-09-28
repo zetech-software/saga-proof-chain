@@ -1,10 +1,6 @@
 import { AlertCircle, CalendarClock, CheckCircle2 } from "lucide-react";
 
-import {
-  PRAZO_MAX_DIAS_UTEIS,
-  PRAZO_MIN_DIAS_UTEIS,
-  estimateBusinessWindow,
-} from "@/lib/portal";
+import { PRAZO_MAX_DIAS_UTEIS, PRAZO_MIN_DIAS_UTEIS, estimateBusinessWindow } from "@/lib/portal";
 
 const PROCESS_STATUSES = ["recebido", "em_analise", "em_andamento", "aguardando_documentacao"];
 const DONE_STATUSES = ["concluido", "certificado_emitido"];
@@ -47,8 +43,8 @@ export function ProcessEstimate({
       </p>
       <p className="mt-1 text-muted-foreground">
         Entre <span className="whitespace-nowrap">{est.min}</span> e{" "}
-        <span className="whitespace-nowrap">{est.max}</span>, considerando de{" "}
-        {PRAZO_MIN_DIAS_UTEIS} a {PRAZO_MAX_DIAS_UTEIS} dias úteis.
+        <span className="whitespace-nowrap">{est.max}</span>, considerando de {PRAZO_MIN_DIAS_UTEIS}{" "}
+        a {PRAZO_MAX_DIAS_UTEIS} dias úteis.
       </p>
       <p className="mt-1 text-xs text-muted-foreground">
         Referência aproximada, não é data garantida de conclusão.
@@ -56,8 +52,7 @@ export function ProcessEstimate({
       {status === "aguardando_documentacao" && (
         <p className="mt-2 flex items-start gap-2 text-xs text-gold-light">
           <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-          Há documentação pendente. A estimativa pode ser impactada até o envio do arquivo
-          faltante.
+          Há documentação pendente. A estimativa pode ser impactada até o envio do arquivo faltante.
         </p>
       )}
     </div>
