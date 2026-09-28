@@ -47,6 +47,9 @@ import { AdminTrademarksPanel } from "@/components/AdminTrademarksPanel";
 import { AdminCertificatesPanel } from "@/components/AdminCertificatesPanel";
 import { AdminSupportPanel } from "@/components/AdminSupportPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DeletedItemsPanel } from "@/components/DeletedItemsPanel";
+import { RestorationReviewPanel } from "@/components/RestorationReviewPanel";
+import { TestCleanupPanel } from "@/components/TestCleanupPanel";
 
 export const Route = createFileRoute("/_authenticated/painel/admin")({
   head: () => ({
@@ -373,6 +376,8 @@ function AdminPage() {
           <TabsTrigger value="processos">Processos</TabsTrigger>
           <TabsTrigger value="clientes">Clientes</TabsTrigger>
           <TabsTrigger value="controle">Controle</TabsTrigger>
+          <TabsTrigger value="excluidos">Excluídos</TabsTrigger>
+          <TabsTrigger value="recuperacao">Recuperação</TabsTrigger>
         </TabsList>
 
         <TabsContent value="visao" className="space-y-4">
@@ -670,6 +675,15 @@ function AdminPage() {
           <AdminAiUsagePanel enabled={isAdmin} />
           <PageVisitsHistory enabled={isAdmin} />
           <PrivacyOverview enabled={isAdmin} />
+        </TabsContent>
+
+        <TabsContent value="excluidos" className="space-y-6">
+          <DeletedItemsPanel enabled={isAdmin} />
+        </TabsContent>
+
+        <TabsContent value="recuperacao" className="space-y-6">
+          <RestorationReviewPanel enabled={isAdmin} />
+          <TestCleanupPanel enabled={isAdmin} />
         </TabsContent>
       </Tabs>
     </div>
