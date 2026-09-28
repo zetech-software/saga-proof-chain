@@ -482,7 +482,7 @@ export function AdminCertificatesPanel({
                       >
                         <RefreshCw className="h-4 w-4" aria-hidden />
                         {busy
-                          ? "Enviando..."
+                          ? "Enviando certificado…"
                           : c.storage_path
                             ? "Substituir arquivo"
                             : "Anexar arquivo"}

@@ -148,7 +148,7 @@ export function ProcessAssistant() {
             </span>
             <Button type="submit" size="sm" disabled={loading || !q.trim() || exhausted}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              Perguntar
+              {loading ? "Consultando…" : "Perguntar"}
             </Button>
           </div>
         </form>
@@ -168,7 +168,7 @@ export function ProcessAssistant() {
         {(answer || error || loading) && (
           <div className="rounded-lg border border-border/60 bg-background/50 p-3 text-sm" aria-live="polite">
             {asked && <p className="mb-2 break-words text-xs text-muted-foreground">Pergunta: {asked}</p>}
-            {loading && <p className="text-muted-foreground">Consultando seu painel…</p>}
+            {loading && <p className="text-muted-foreground">Consultando seus processos…</p>}
             {error && <p className="text-destructive">{error}</p>}
             {answer && (
               <>

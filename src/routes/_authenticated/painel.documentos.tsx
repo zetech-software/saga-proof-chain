@@ -34,6 +34,18 @@ import { downloadFromBucket } from "@/lib/downloads";
 
 import { RouteErrorState } from "@/components/RouteErrorState";
 
+type FileStage =
+  | { kind: "preparando" | "enviando" | "validando" | "concluido" }
+  | { kind: "falhou"; message: string };
+
+const STAGE_LABEL: Record<FileStage["kind"], string> = {
+  preparando: "Preparando arquivo…",
+  enviando: "Enviando…",
+  validando: "Validando arquivo…",
+  concluido: "Concluído",
+  falhou: "Falhou",
+};
+
 export const Route = createFileRoute("/_authenticated/painel/documentos")({
   head: () => ({
     meta: [
@@ -70,6 +82,7 @@ function DocumentosPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [related, setRelated] = useState<RelatedDoc | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
+  const [fileStages, setFileStages] = useState<Record<number, FileStage>>({});
   const formRef = useRef<HTMLDivElement>(null);
 
   async function handleFileChange(selected: File | null) {
@@ -79,6 +92,7 @@ function DocumentosPage() {
       toast.error(result.message);
       return;
     }
+    setFileStages({});
     setFiles((prev) =>
       prev.some((f) => f.name === selected.name && f.size === selected.size)
         ? prev
@@ -153,55 +167,91 @@ function DocumentosPage() {
       const userId = userData.user?.id;
       if (!userId) throw new Error("Sessão expirada");
 
-      let sent = 0;
+      // Cada arquivo segue sozinho: uma falha não interrompe nem reenvia os demais.
+      const sentIdx: number[] = [];
+      const failed: string[] = [];
+      setFileStages({});
       for (const [index, f] of files.entries()) {
-        // Revalidação (nome, MIME e conteúdo real) imediatamente antes do envio.
-        const checked = await validateUploadFileDeep(f);
-        if (!checked.ok) throw new Error(`${f.name}: ${checked.message}`);
-        setProgress(`Enviando ${index + 1} de ${files.length}...`);
-
-        const pendingPath = await stagePendingUpload(
-          "documentos",
-          checked.file,
-          checked.storageName,
-          checked.contentType,
-        );
-        const baseTitle = title.trim() || checked.displayName;
-        await submitClientDocument({
-          data: {
-            pendingPath,
-            fileName: checked.displayName,
-            title: (files.length > 1 && title.trim()
-              ? `${baseTitle} (${index + 1})`
-              : baseTitle
-            ).slice(0, 160),
-            description: description.trim() || null,
-            organizationId: myOrgId ?? null,
-            relatedDocumentId: related?.id ?? null,
-          },
-        });
-        sent += 1;
+        const stage = (s: FileStage) => setFileStages((prev) => ({ ...prev, [index]: s }));
+        setProgress(`Arquivo ${index + 1} de ${files.length}…`);
+        try {
+          stage({ kind: "preparando" });
+          // Revalidação (nome, MIME e conteúdo real) imediatamente antes do envio.
+          const checked = await validateUploadFileDeep(f);
+          if (!checked.ok) throw new Error(checked.message);
+          stage({ kind: "enviando" });
+          const pendingPath = await stagePendingUpload(
+            "documentos",
+            checked.file,
+            checked.storageName,
+            checked.contentType,
+          );
+          stage({ kind: "validando" });
+          const baseTitle = title.trim() || checked.displayName;
+          await submitClientDocument({
+            data: {
+              pendingPath,
+              fileName: checked.displayName,
+              title: (files.length > 1 && title.trim()
+                ? `${baseTitle} (${index + 1})`
+                : baseTitle
+              ).slice(0, 160),
+              description: description.trim() || null,
+              organizationId: myOrgId ?? null,
+              relatedDocumentId: related?.id ?? null,
+            },
+          });
+          stage({ kind: "concluido" });
+          sentIdx.push(index);
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : "";
+          const friendly = msg.includes("aguardando documenta")
+            ? "Este processo não está mais aguardando documentação."
+            : describeUploadError(e);
+          stage({ kind: "falhou", message: friendly });
+          failed.push(`${f.name}: ${friendly}`);
+        }
       }
-      return sent;
+      return { sentIdx, failed };
     },
-    onSuccess: (sent) => {
-      toast.success(
-        sent === 1
-          ? "Documento enviado! Nossa equipe já foi avisada."
-          : `${sent} documentos enviados! Nossa equipe já foi avisada.`,
-      );
+    onSuccess: ({ sentIdx, failed }) => {
+      const sent = sentIdx.length;
+      if (sent > 0) {
+        toast.success(
+          sent === 1
+            ? "Documento enviado! Nossa equipe já foi avisada."
+            : `${sent} documentos enviados! Nossa equipe já foi avisada.`,
+        );
+      }
+      if (failed.length > 0) {
+        toast.error(
+          failed.length === 1
+            ? `Não foi possível enviar ${failed[0]}`
+            : `${failed.length} arquivos não foram enviados. Veja a lista.`,
+        );
+        // Mantém só os que falharam, para nunca reenviar os que já foram.
+        setFiles((prev) => prev.filter((_, i) => !sentIdx.includes(i)));
+        setFileStages((prev) => {
+          const next: Record<number, FileStage> = {};
+          let j = 0;
+          files.forEach((_, i) => {
+            if (!sentIdx.includes(i)) {
+              if (prev[i]) next[j] = prev[i];
+              j += 1;
+            }
+          });
+          return next;
+        });
+        return;
+      }
       setTitle("");
       setDescription("");
       setFiles([]);
+      setFileStages({});
       setRelated(null);
     },
     onError: (e: unknown) => {
-      const msg = e instanceof Error ? e.message : "";
-      toast.error(
-        msg.includes("aguardando documentacao")
-          ? "Este processo não está mais aguardando documentação."
-          : describeUploadError(e),
-      );
+      toast.error(describeUploadError(e));
     },
     onSettled: () => {
       setProgress(null);
@@ -355,9 +405,24 @@ function DocumentosPage() {
                         <span className="min-w-0 flex-1 truncate" title={f.name}>
                           {f.name}
                         </span>
-                        <span className="shrink-0 text-muted-foreground">
+                        <span className="shrink-0 whitespace-nowrap text-muted-foreground">
                           {formatBytes(f.size)}
                         </span>
+                        {fileStages[i] && (
+                          <span
+                            role="status"
+                            title={fileStages[i].kind === "falhou" ? (fileStages[i] as { message: string }).message : undefined}
+                            className={`shrink-0 whitespace-nowrap ${
+                              fileStages[i].kind === "falhou"
+                                ? "text-destructive"
+                                : fileStages[i].kind === "concluido"
+                                  ? "text-brand-hover"
+                                  : "text-muted-foreground"
+                            }`}
+                          >
+                            {STAGE_LABEL[fileStages[i].kind]}
+                          </span>
+                        )}
                         <Button
                           type="button"
                           variant="ghost"
@@ -365,7 +430,10 @@ function DocumentosPage() {
                           className="h-7 w-7 shrink-0"
                           aria-label={`Remover ${f.name}`}
                           disabled={upload.isPending}
-                          onClick={() => setFiles((prev) => prev.filter((_, j) => j !== i))}
+                          onClick={() => {
+                            setFiles((prev) => prev.filter((_, j) => j !== i));
+                            setFileStages({});
+                          }}
                         >
                           <X className="h-3.5 w-3.5" />
                         </Button>
