@@ -53,7 +53,7 @@ export function AdminAiUsagePanel({ enabled }: { enabled: boolean }) {
   if (!enabled) return null;
 
   return (
-    <Card>
+    <Card aria-label="Uso do assistente">
       <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
         <CardTitle className="flex items-center gap-2 text-base">
           <Bot className="h-4 w-4 text-brand-hover" aria-hidden /> Uso do assistente
