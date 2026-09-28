@@ -119,9 +119,38 @@ export type Database = {
           },
         ]
       }
+      document_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          details: Json
+          document_id: string
+          id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          document_id: string
+          id?: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          document_id?: string
+          id?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           admin_notes: string | null
+          archived_at: string | null
+          archived_by: string | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -145,6 +174,8 @@ export type Database = {
         }
         Insert: {
           admin_notes?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -168,6 +199,8 @@ export type Database = {
         }
         Update: {
           admin_notes?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
