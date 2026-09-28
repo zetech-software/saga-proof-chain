@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Download, Pencil, RefreshCw, Search, Trash2 } from "lucide-react";
+import { Award, Download, Pencil, RefreshCw, Search, Trash2 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,9 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -35,7 +37,7 @@ import { useUserActivity } from "@/hooks/useUserActivity";
 import { downloadFromBucket } from "@/lib/downloads";
 import { validateUploadFileDeep } from "@/lib/uploads";
 import {
-  DOCUMENT_STATUSES,
+  DOCUMENT_STATUS_GROUPS,
   DOCUMENT_STATUS_LABEL,
   formatBytes,
   formatDateTime,
@@ -55,6 +57,8 @@ export type AdminDocument = {
   created_by: string | null;
   submitted_at: string;
   updated_at: string;
+  is_additional?: boolean;
+  related_document_id?: string | null;
 };
 
 type EditState = {
@@ -86,6 +90,13 @@ export function AdminDocumentsPanel({
   const [form, setForm] = useState<EditState | null>(null);
   const [replaceFile, setReplaceFile] = useState<File | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [certForId, setCertForId] = useState<string | null>(null);
+  const [certTitle, setCertTitle] = useState("");
+  const [certHash, setCertHash] = useState("");
+  const [certFile, setCertFile] = useState<File | null>(null);
+  const [certConclude, setCertConclude] = useState(true);
 
   const orgName = useMemo(() => {
     const map = new Map<string, string>();
@@ -196,14 +207,69 @@ export function AdminDocumentsPanel({
     const q = term.trim().toLowerCase();
     return docs.filter((d) => {
       if (status !== "todos" && d.status !== status) return false;
+      const day = d.submitted_at.slice(0, 10);
+      if (fromDate && day < fromDate) return false;
+      if (toDate && day > toDate) return false;
       if (!q) return true;
-      return (
-        d.title.toLowerCase().includes(q) ||
-        d.file_name.toLowerCase().includes(q) ||
-        (d.description ?? "").toLowerCase().includes(q)
-      );
+      const owner = d.created_by ? (userName.get(d.created_by) ?? "") : "";
+      const org = d.organization_id ? (orgName.get(d.organization_id) ?? "") : "";
+      return [d.title, d.file_name, d.description ?? "", owner, org]
+        .join(" ")
+        .toLowerCase()
+        .includes(q);
     });
-  }, [docs, term, status]);
+  }, [docs, term, status, fromDate, toDate, userName, orgName]);
+
+  async function handleSendCertificate(doc: AdminDocument) {
+    if (!adminUserId) return;
+    if (certTitle.trim().length < 2) {
+      toast.error("Informe o título do certificado");
+      return;
+    }
+    const checked = await validateUploadFileDeep(certFile);
+    if (!checked.ok) {
+      toast.error(checked.message);
+      return;
+    }
+    setBusyId(doc.id);
+    try {
+      const path = `certificados/${checked.storageName}`;
+      const { error: upErr } = await supabase.storage
+        .from("certificados")
+        .upload(path, checked.file, { contentType: checked.contentType, upsert: false });
+      if (upErr) throw upErr;
+      const { error } = await supabase.from("certificates").insert({
+        title: certTitle.trim(),
+        document_id: doc.id,
+        storage_path: path,
+        file_name: checked.displayName,
+        tx_hash: certHash.trim() || null,
+        network: "Ethereum (ETH) via Authora — Homologação Zé Registra",
+      });
+      if (error) {
+        await supabase.storage.from("certificados").remove([path]);
+        throw error;
+      }
+      if (certConclude && doc.status !== "concluido") {
+        const { error: stErr } = await supabase
+          .from("documents")
+          .update({ status: "concluido" })
+          .eq("id", doc.id);
+        if (stErr) throw stErr;
+      }
+      toast.success("Certificado enviado ao cliente");
+      setCertForId(null);
+      setCertTitle("");
+      setCertHash("");
+      setCertFile(null);
+      refresh();
+      queryClient.invalidateQueries({ queryKey: ["certificates"] });
+    } catch {
+      toast.error("Não foi possível enviar o certificado. Tente novamente.");
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   return (
     <Card className="bg-card/70">
@@ -218,7 +284,7 @@ export function AdminDocumentsPanel({
             <Input
               value={term}
               onChange={(e) => setTerm(e.target.value)}
-              placeholder="Buscar por título, arquivo ou descrição"
+              placeholder="Buscar por título, arquivo, cliente ou organização"
               aria-label="Buscar documento"
               className="pl-9"
             />
@@ -229,13 +295,28 @@ export function AdminDocumentsPanel({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos os status</SelectItem>
-              {DOCUMENT_STATUSES.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {DOCUMENT_STATUS_LABEL[s]}
-                </SelectItem>
+{DOCUMENT_STATUS_GROUPS.map((g) => (
+                <SelectGroup key={g.label}>
+                  <SelectLabel>{g.label}</SelectLabel>
+                  {g.statuses.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {DOCUMENT_STATUS_LABEL[s]}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
               ))}
             </SelectContent>
           </Select>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1">
+            <Label htmlFor="docs-from" className="text-xs">Enviados a partir de</Label>
+            <Input id="docs-from" type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="docs-to" className="text-xs">Enviados até</Label>
+            <Input id="docs-to" type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -255,7 +336,20 @@ export function AdminDocumentsPanel({
               <div key={d.id} className="rounded-xl border border-border/60 bg-background/30 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="break-words font-medium">{d.title}</p>
+                    <p className="break-words font-medium">
+                      {d.title}
+                      {d.is_additional && (
+                        <span className="ml-2 inline-flex rounded-full border border-gold/40 bg-gold/10 px-2 py-0.5 align-middle text-[10px] font-medium uppercase tracking-wider text-gold-light">
+                          Envio adicional
+                        </span>
+                      )}
+                    </p>
+                    {d.related_document_id && (
+                      <p className="mt-1 break-words text-xs text-muted-foreground">
+                        Referente a:{" "}
+                        {docs.find((x) => x.id === d.related_document_id)?.title ?? "processo relacionado"}
+                      </p>
+                    )}
                     <p className="mt-1 break-all text-xs text-muted-foreground">
                       {d.file_name}
                       {d.file_size ? ` · ${formatBytes(d.file_size)}` : ""}
@@ -293,6 +387,21 @@ export function AdminDocumentsPanel({
                     >
                       <Download className="h-4 w-4" aria-hidden />
                       Baixar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      aria-expanded={certForId === d.id}
+                      onClick={() => {
+                        setCertForId(certForId === d.id ? null : d.id);
+                        setCertTitle(`Certificado — ${d.title}`.slice(0, 160));
+                        setCertFile(null);
+                        setCertHash("");
+                        setCertConclude(true);
+                      }}
+                    >
+                      <Award className="h-4 w-4" aria-hidden />
+                      Enviar certificado
                     </Button>
                     <Button
                       variant="outline"
@@ -382,11 +491,16 @@ export function AdminDocumentsPanel({
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {DOCUMENT_STATUSES.map((s) => (
-                              <SelectItem key={s} value={s}>
-                                {DOCUMENT_STATUS_LABEL[s]}
-                              </SelectItem>
-                            ))}
+{DOCUMENT_STATUS_GROUPS.map((g) => (
+                <SelectGroup key={g.label}>
+                  <SelectLabel>{g.label}</SelectLabel>
+                  {g.statuses.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {DOCUMENT_STATUS_LABEL[s]}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              ))}
                           </SelectContent>
                         </Select>
                       </div>
