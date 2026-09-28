@@ -18,6 +18,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
 import { DOCUMENT_STATUS_LABEL, PRAZO_TEXTO, formatDateTime, formatBytes } from "@/lib/portal";
 import { UPLOAD_HELP_TEXT, describeUploadError, validateUploadFileDeep } from "@/lib/uploads";
+import { submitClientDocument } from "@/lib/uploads.functions";
+import { stagePendingUpload } from "@/lib/secure-upload";
 import { FileDropzone } from "@/components/FileDropzone";
 import { EmptyState } from "@/components/EmptyState";
 import { downloadFromBucket } from "@/lib/downloads";
@@ -148,31 +150,26 @@ function DocumentosPage() {
         if (!checked.ok) throw new Error(`${f.name}: ${checked.message}`);
         setProgress(`Enviando ${index + 1} de ${files.length}...`);
 
-        const path = `${userId}/${checked.storageName}`;
-        const { error: upErr } = await supabase.storage
-          .from("documentos")
-          .upload(path, checked.file, { contentType: checked.contentType, upsert: false });
-        if (upErr) throw upErr;
-
+        const pendingPath = await stagePendingUpload(
+          "documentos",
+          checked.file,
+          checked.storageName,
+          checked.contentType,
+        );
         const baseTitle = title.trim() || checked.displayName;
-        const { error } = await supabase.from("documents").insert({
-          title: (files.length > 1 && title.trim()
-            ? `${baseTitle} (${index + 1})`
-            : baseTitle
-          ).slice(0, 160),
-          description: description.trim() || null,
-          storage_path: path,
-          file_name: checked.displayName,
-          file_size: checked.file.size,
-          mime_type: checked.contentType,
-          created_by: userId,
-          organization_id: myOrgId ?? null,
-          related_document_id: related?.id ?? null,
+        await submitClientDocument({
+          data: {
+            pendingPath,
+            fileName: checked.displayName,
+            title: (files.length > 1 && title.trim()
+              ? `${baseTitle} (${index + 1})`
+              : baseTitle
+            ).slice(0, 160),
+            description: description.trim() || null,
+            organizationId: myOrgId ?? null,
+            relatedDocumentId: related?.id ?? null,
+          },
         });
-        if (error) {
-          await supabase.storage.from("documentos").remove([path]);
-          throw error;
-        }
         sent += 1;
       }
       return sent;

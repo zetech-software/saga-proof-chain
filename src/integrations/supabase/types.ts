@@ -162,6 +162,24 @@ export type Database = {
           },
         ]
       }
+      internal_config: {
+        Row: {
+          created_at: string
+          key: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          key: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          key?: string
+          value?: string
+        }
+        Relationships: []
+      }
       organization_members: {
         Row: {
           created_at: string

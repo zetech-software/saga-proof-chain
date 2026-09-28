@@ -1,3 +1,5 @@
+import { finalizeAdminUpload } from "@/lib/uploads.functions";
+import { stagePendingUpload } from "@/lib/secure-upload";
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -155,11 +157,15 @@ export function AdminCertificatesPanel({
     }
     setBusyId(c.id);
     try {
-      const path = `${adminUserId}/${validation.storageName}`;
-      const uploaded = await supabase.storage
-        .from("certificados")
-        .upload(path, validation.file, { contentType: validation.contentType, upsert: false });
-      if (uploaded.error) throw uploaded.error;
+      const pending = await stagePendingUpload(
+        "certificados",
+        validation.file,
+        validation.storageName,
+        validation.contentType,
+      );
+      const { path } = await finalizeAdminUpload({
+        data: { bucket: "certificados", pendingPath: pending },
+      });
 
       const { error } = await supabase
         .from("certificates")
@@ -475,7 +481,11 @@ export function AdminCertificatesPanel({
                         onClick={() => handleUpload(c)}
                       >
                         <RefreshCw className="h-4 w-4" aria-hidden />
-                        {busy ? "Enviando..." : c.storage_path ? "Substituir arquivo" : "Anexar arquivo"}
+                        {busy
+                          ? "Enviando..."
+                          : c.storage_path
+                            ? "Substituir arquivo"
+                            : "Anexar arquivo"}
                       </Button>
                       {c.storage_path && (
                         <p className="text-xs text-muted-foreground">

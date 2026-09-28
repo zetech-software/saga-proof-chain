@@ -1,3 +1,5 @@
+import { finalizeAdminUpload } from "@/lib/uploads.functions";
+import { stagePendingUpload } from "@/lib/secure-upload";
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -154,11 +156,15 @@ export function AdminDocumentsPanel({
     }
     setBusyId(doc.id);
     try {
-      const path = `${adminUserId}/${validation.storageName}`;
-      const uploaded = await supabase.storage
-        .from("documentos")
-        .upload(path, validation.file, { contentType: validation.contentType, upsert: false });
-      if (uploaded.error) throw uploaded.error;
+      const pending = await stagePendingUpload(
+        "documentos",
+        validation.file,
+        validation.storageName,
+        validation.contentType,
+      );
+      const { path } = await finalizeAdminUpload({
+        data: { bucket: "documentos", pendingPath: pending },
+      });
 
       const { error } = await supabase
         .from("documents")
@@ -233,11 +239,15 @@ export function AdminDocumentsPanel({
     }
     setBusyId(doc.id);
     try {
-      const path = `certificados/${checked.storageName}`;
-      const { error: upErr } = await supabase.storage
-        .from("certificados")
-        .upload(path, checked.file, { contentType: checked.contentType, upsert: false });
-      if (upErr) throw upErr;
+      const pending = await stagePendingUpload(
+        "certificados",
+        checked.file,
+        checked.storageName,
+        checked.contentType,
+      );
+      const { path } = await finalizeAdminUpload({
+        data: { bucket: "certificados", pendingPath: pending },
+      });
       const { error } = await supabase.from("certificates").insert({
         title: certTitle.trim(),
         document_id: doc.id,
@@ -365,7 +375,7 @@ export function AdminDocumentsPanel({
                           "processo relacionado"}
                       </p>
                     )}
-                    <p className="mt-1 break-all text-xs text-muted-foreground">
+                    <p className="mt-1 break-words text-xs text-muted-foreground">
                       {d.file_name}
                       {d.file_size ? ` · ${formatBytes(d.file_size)}` : ""}
                       {" · enviado em "}

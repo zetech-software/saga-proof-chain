@@ -22,6 +22,7 @@ import { Route as AuthenticatedPainelContaRouteImport } from './routes/_authenti
 import { Route as AuthenticatedPainelDocumentosRouteImport } from './routes/_authenticated/painel.documentos'
 import { Route as AuthenticatedPainelMarcasRouteImport } from './routes/_authenticated/painel.marcas'
 import { Route as AuthenticatedPainelSuporteRouteImport } from './routes/_authenticated/painel.suporte'
+import { Route as ApiPublicCronCleanupPendingRouteImport } from './routes/api/public/cron/cleanup-pending'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -95,6 +96,12 @@ const AuthenticatedPainelSuporteRoute =
     path: '/suporte',
     getParentRoute: () => AuthenticatedPainelRoute,
   } as any)
+const ApiPublicCronCleanupPendingRoute =
+  ApiPublicCronCleanupPendingRouteImport.update({
+    id: '/api/public/cron/cleanup-pending',
+    path: '/api/public/cron/cleanup-pending',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/painel/marcas': typeof AuthenticatedPainelMarcasRoute
   '/painel/suporte': typeof AuthenticatedPainelSuporteRoute
   '/painel/': typeof AuthenticatedPainelIndexRoute
+  '/api/public/cron/cleanup-pending': typeof ApiPublicCronCleanupPendingRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -122,6 +130,7 @@ export interface FileRoutesByTo {
   '/painel/marcas': typeof AuthenticatedPainelMarcasRoute
   '/painel/suporte': typeof AuthenticatedPainelSuporteRoute
   '/painel': typeof AuthenticatedPainelIndexRoute
+  '/api/public/cron/cleanup-pending': typeof ApiPublicCronCleanupPendingRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -138,6 +147,7 @@ export interface FileRoutesById {
   '/_authenticated/painel/marcas': typeof AuthenticatedPainelMarcasRoute
   '/_authenticated/painel/suporte': typeof AuthenticatedPainelSuporteRoute
   '/_authenticated/painel/': typeof AuthenticatedPainelIndexRoute
+  '/api/public/cron/cleanup-pending': typeof ApiPublicCronCleanupPendingRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
     | '/painel/marcas'
     | '/painel/suporte'
     | '/painel/'
+    | '/api/public/cron/cleanup-pending'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -167,6 +178,7 @@ export interface FileRouteTypes {
     | '/painel/marcas'
     | '/painel/suporte'
     | '/painel'
+    | '/api/public/cron/cleanup-pending'
   id:
     | '__root__'
     | '/'
@@ -182,6 +194,7 @@ export interface FileRouteTypes {
     | '/_authenticated/painel/marcas'
     | '/_authenticated/painel/suporte'
     | '/_authenticated/painel/'
+    | '/api/public/cron/cleanup-pending'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -189,6 +202,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   RedefinirSenhaRoute: typeof RedefinirSenhaRoute
+  ApiPublicCronCleanupPendingRoute: typeof ApiPublicCronCleanupPendingRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -284,6 +298,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPainelSuporteRouteImport
       parentRoute: typeof AuthenticatedPainelRoute
     }
+    '/api/public/cron/cleanup-pending': {
+      id: '/api/public/cron/cleanup-pending'
+      path: '/api/public/cron/cleanup-pending'
+      fullPath: '/api/public/cron/cleanup-pending'
+      preLoaderRoute: typeof ApiPublicCronCleanupPendingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -329,6 +350,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   RedefinirSenhaRoute: RedefinirSenhaRoute,
+  ApiPublicCronCleanupPendingRoute: ApiPublicCronCleanupPendingRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
