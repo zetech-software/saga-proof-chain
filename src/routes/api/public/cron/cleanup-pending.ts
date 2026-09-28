@@ -13,6 +13,10 @@ export const Route = createFileRoute("/api/public/cron/cleanup-pending")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        // SUSPENSO a pedido do usuário (28/09/2026): nenhuma limpeza automática até revisão manual.
+        if (process.env["CLEANUP_ENABLED"] !== "true") {
+          return Response.json({ removed: 0, suspended: true });
+        }
         const header = request.headers.get("x-cron-secret");
         if (!header || header.length < 32) return new Response("Unauthorized", { status: 401 });
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
