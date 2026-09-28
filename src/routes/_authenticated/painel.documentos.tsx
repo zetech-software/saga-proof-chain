@@ -16,7 +16,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/StatusBadge";
-import { DOCUMENT_STATUS_LABEL, PRAZO_TEXTO, formatDateTime, formatBytes } from "@/lib/portal";
+import {
+  DOCUMENT_STATUS_LABEL,
+  PRAZO_TEXTO,
+  estimateBusinessWindow,
+  formatDateTime,
+  formatBytes,
+} from "@/lib/portal";
+import { CalendarClock, CheckCircle2 } from "lucide-react";
 import { UPLOAD_HELP_TEXT, describeUploadError, validateUploadFileDeep } from "@/lib/uploads";
 import { submitClientDocument } from "@/lib/uploads.functions";
 import { stagePendingUpload } from "@/lib/secure-upload";
@@ -401,6 +408,12 @@ function DocumentosPage() {
           {(docs ?? []).map((d) => {
             const showDate = isAdmin || (myUserId !== null && d.created_by === myUserId);
             const docCerts = certByDoc.get(d.id) ?? [];
+            const isDone = d.status === "concluido" || d.status === "certificado_emitido";
+            const PROCESS = ["recebido", "em_andamento", "aguardando_documentacao", "em_analise"];
+            const est =
+              showDate && !isDone && PROCESS.includes(d.status)
+                ? estimateBusinessWindow(d.submitted_at)
+                : null;
             return (
               <Card key={d.id} className="bg-card/70">
                 <CardContent className="pt-6">
@@ -426,6 +439,39 @@ function DocumentosPage() {
                     <p className="mt-3 break-words text-sm text-muted-foreground">
                       {d.description}
                     </p>
+                  )}
+                  {showDate && isDone && (
+                    <div className="mt-3 flex items-start gap-2 rounded-lg border border-success/35 bg-success/10 p-3 text-sm">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                      <span>Processo concluído.</span>
+                    </div>
+                  )}
+                  {est && (
+                    <div
+                      className="mt-3 rounded-lg border border-dashed border-border bg-muted/30 p-3 text-sm"
+                      aria-label="Prazo estimado, não é garantia de conclusão"
+                    >
+                      <p className="flex items-center gap-2 font-medium">
+                        <CalendarClock className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        Prazo estimado
+                        <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+                          Estimativa
+                        </span>
+                      </p>
+                      <p className="mt-1 text-muted-foreground">
+                        Entre {est.min} e {est.max}, considerando de 7 a 25 dias úteis.
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Referência aproximada, não é data garantida de conclusão.
+                      </p>
+                      {d.status === "aguardando_documentacao" && (
+                        <p className="mt-2 flex items-start gap-2 text-xs text-gold-light">
+                          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                          Há documentação pendente. A estimativa pode ser impactada até o envio do
+                          arquivo faltante.
+                        </p>
+                      )}
+                    </div>
                   )}
                   {d.admin_notes && (
                     <p className="mt-3 break-words rounded-lg border border-brand-hover/30 bg-brand-hover/5 p-3 text-sm">

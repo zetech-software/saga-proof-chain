@@ -141,3 +141,49 @@ export function formatBytes(bytes?: number | null) {
   }
   return `${value.toFixed(value < 10 && i > 0 ? 1 : 0)} ${units[i]}`;
 }
+
+// ---- Prazo estimado (dias úteis seg–sex, fuso America/Sao_Paulo; feriados NÃO considerados) ----
+export const PRAZO_MIN_DIAS_UTEIS = 7;
+export const PRAZO_MAX_DIAS_UTEIS = 25;
+
+function spCalendarDate(iso: string): Date | null {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);
+  const [y = 0, m = 1, day = 1] = parts.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, day));
+}
+
+function addBusinessDays(start: Date, n: number): Date {
+  const d = new Date(start);
+  let added = 0;
+  while (added < n) {
+    d.setUTCDate(d.getUTCDate() + 1);
+    const wd = d.getUTCDay();
+    if (wd !== 0 && wd !== 6) added++;
+  }
+  return d;
+}
+
+/** Retorna null quando não há data confiável. */
+export function estimateBusinessWindow(startIso: string | null | undefined) {
+  if (!startIso) return null;
+  const start = spCalendarDate(startIso);
+  if (!start) return null;
+  const fmt = (x: Date) =>
+    x.toLocaleDateString("pt-BR", {
+      timeZone: "UTC",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  return {
+    min: fmt(addBusinessDays(start, PRAZO_MIN_DIAS_UTEIS)),
+    max: fmt(addBusinessDays(start, PRAZO_MAX_DIAS_UTEIS)),
+  };
+}
