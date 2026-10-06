@@ -1,3 +1,4 @@
+import type { ErrorComponentProps } from "@tanstack/react-router";
 import { Link, useRouter } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { AlertTriangle } from "lucide-react";
@@ -5,8 +6,8 @@ import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
-type RouteErrorStateProps = {
-  error: Error;
+type RouteErrorStateProps = ErrorComponentProps & {
+  _unused?: never;
   reset: () => void;
 };
 
