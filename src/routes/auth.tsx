@@ -45,10 +45,21 @@ function AuthPage() {
   const [sendingReset, setSendingReset] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/painel", replace: true });
-      else setChecking(false);
-    });
+    let active = true;
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (!active) return;
+        if (data.session) navigate({ to: "/painel", replace: true });
+        else setChecking(false);
+      })
+      .catch(() => {
+        // Falha na verificação não pode bloquear o login: mostra o formulário.
+        if (active) setChecking(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [navigate]);
 
   async function onSubmit(e: React.FormEvent) {
