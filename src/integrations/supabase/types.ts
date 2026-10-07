@@ -861,9 +861,36 @@ export type Database = {
           user_id: string
         }[]
       }
+      publish_certificate_atomic: {
+        Args: {
+          _conclude: boolean
+          _document: string
+          _file_name: string
+          _id: string
+          _network: string
+          _notes: string
+          _path: string
+          _title: string
+          _tx_hash: string
+          _verification_url: string
+        }
+        Returns: string
+      }
       record_ai_tokens: {
         Args: { _input: number; _output: number; _user: string }
         Returns: undefined
+      }
+      replace_document_file_atomic: {
+        Args: {
+          _actor: string
+          _document: string
+          _expected_path: string
+          _file_name: string
+          _file_size: number
+          _mime_type: string
+          _new_path: string
+        }
+        Returns: boolean
       }
       restore_candidate: {
         Args: { _actor: string; _candidate: string }
