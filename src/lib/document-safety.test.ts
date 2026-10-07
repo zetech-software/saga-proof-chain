@@ -106,7 +106,7 @@ describe("document replacement", () => {
   });
 });
 
-function setupPurge(options: { deleted?: boolean; sharedFile?: boolean; certificates?: number } = {}) {
+function setupPurge(options: { deleted?: boolean; sharedFile?: boolean; certificates?: number; deletedRowMissing?: boolean; deletionError?: boolean; restoredFile?: boolean } = {}) {
   const store = storage();
   let documents = 0;
   let certificates = 0;
@@ -115,8 +115,8 @@ function setupPurge(options: { deleted?: boolean; sharedFile?: boolean; certific
       const step = documents++;
       if (step === 0) return query({ data: { id: documentId, title: "Document", deleted_at: options.deleted === false ? null : "2026-10-01", storage_path: oldPath, status: "recebido" }, error: null });
       if (step === 1) return query({ count: 0, error: null });
-      if (step === 2) return query({ error: null });
-      return query({ data: options.sharedFile ? [{ id: "other-document" }] : [], error: null });
+      if (step === 2) return query({ data: options.deletedRowMissing ? null : { id: documentId }, error: options.deletionError ? { message: "database failure" } : null });
+      return query({ data: options.sharedFile ? [{ id: "other-document" }] : options.restoredFile ? [{ id: documentId }] : [], error: null });
     }
     if (table === "certificates") {
       return certificates++ === 0
@@ -137,6 +137,37 @@ describe("shared authoritative purge", () => {
     const result = await invoke(fn, data, context(true));
     expect(result.ok).toBe(true);
     expect(store.remove).not.toHaveBeenCalled();
+  });
+  it.each([["legacy", purgeDocument], ["resource", purgeResource]])("%s stops when a restore wins before deletion", async (_name, fn) => {
+    const store = setupPurge({ deletedRowMissing: true });
+    const data = fn === purgeDocument
+      ? { id: documentId, confirm: "EXCLUIR" }
+      : { type: "document", id: documentId, confirm: "EXCLUIR DEFINITIVAMENTE" };
+    await expect(invoke(fn, data, context(true))).rejects.toThrow("item mudou");
+    expect(store.list).not.toHaveBeenCalled();
+    expect(store.remove).not.toHaveBeenCalled();
+    expect(state.from.mock.calls.map(([table]) => table)).not.toContain("support_notifications");
+    expect(state.from.mock.calls.map(([table]) => table)).not.toContain("resource_views");
+    expect(state.from.mock.calls.map(([table]) => table)).not.toContain("resource_lifecycle_events");
+    const deletion = state.from.mock.results.filter((_, i) => state.from.mock.calls[i][0] === "documents")[2].value;
+    expect(deletion.eq).toHaveBeenCalledWith("deleted_at", "2026-10-01");
+  });
+  it("keeps the file if the same ID was restored before the reference check", async () => {
+    const store = setupPurge({ restoredFile: true });
+    const result = await invoke(purgeResource, { type: "document", id: documentId, confirm: "EXCLUIR DEFINITIVAMENTE" }, context(true));
+    expect(result.file).toMatchObject({ removed: false, reason: "arquivo usado por outro registro" });
+    expect(store.remove).not.toHaveBeenCalled();
+  });
+  it("does not touch Storage when the database deletion fails", async () => {
+    const store = setupPurge({ deletionError: true });
+    await expect(invoke(purgeDocument, { id: documentId, confirm: "EXCLUIR" }, context(true))).rejects.toThrow("Não foi possível excluir");
+    expect(store.remove).not.toHaveBeenCalled();
+    expect(state.from.mock.calls.map(([table]) => table)).not.toContain("support_notifications");
+  });
+  it("removes an unreferenced file after the deletion is confirmed", async () => {
+    const store = setupPurge();
+    await invoke(purgeDocument, { id: documentId, confirm: "EXCLUIR" }, context(true));
+    expect(store.remove).toHaveBeenCalledWith([oldPath]);
   });
   it("blocks clients before any privileged query", async () => {
     await expect(invoke(purgeDocument, { id: documentId, confirm: "EXCLUIR" }, context())).rejects.toThrow("Sem permissão");

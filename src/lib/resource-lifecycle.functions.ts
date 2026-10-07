@@ -96,7 +96,7 @@ const label = (type: ResType, row: Row) =>
  * Remove UM objeto do Storage por caminho exato. Nunca por prefixo.
  * Confere: caminho sem curingas, objeto existe, nenhum outro registro aponta para ele.
  */
-async function removeExactObject(sa: SA, bucket: "documentos" | "certificados", path: string, selfId: string) {
+async function removeExactObject(sa: SA, bucket: "documentos" | "certificados", path: string, selfId?: string) {
   if (!/^[0-9a-f-]{36}\/[A-Za-z0-9._-]{1,160}$/i.test(path) || path.includes("/pending/")) {
     return { removed: false, reason: "caminho fora do padrão" };
   }
@@ -106,10 +106,13 @@ async function removeExactObject(sa: SA, bucket: "documentos" | "certificados", 
   if (!(listed ?? []).some((o: { name: string }) => o.name === name)) {
     return { removed: false, reason: "arquivo não encontrado" };
   }
-  const [docs, certs] = await Promise.all([
-    sa.from("documents").select("id").eq("storage_path", path).neq("id", selfId),
-    sa.from("certificates").select("id").eq("storage_path", path).neq("id", selfId),
-  ]);
+  let docsQuery = sa.from("documents").select("id").eq("storage_path", path);
+  let certsQuery = sa.from("certificates").select("id").eq("storage_path", path);
+  if (selfId) {
+    docsQuery = docsQuery.neq("id", selfId);
+    certsQuery = certsQuery.neq("id", selfId);
+  }
+  const [docs, certs] = await Promise.all([docsQuery, certsQuery]);
   if (docs.error || certs.error) {
     return { removed: false, reason: "falha ao verificar referências do arquivo" };
   }
@@ -211,17 +214,28 @@ export async function purgeResourceForCaller(context: Ctx, type: ResType, id: st
   const reasons = await purgeBlockers(sa, type, row);
   if (reasons.length > 0) return { ok: false as const, blocked: true, reasons, file: null };
 
+  // Delete only the deletion version reviewed above. A restore/re-delete wins
+  // without letting this request touch notifications, history or Storage.
+  const { data: deleted, error } = await sa.from(TABLE[type])
+    .delete()
+    .eq("id", id)
+    .eq("deleted_at", row.deleted_at)
+    .select("id")
+    .maybeSingle();
+  if (error) throw new Error("Não foi possível excluir definitivamente.");
+  if (!deleted) {
+    throw new Error("O item mudou durante a operação. Atualize a lista e revise novamente; nenhum arquivo foi removido.");
+  }
+
   if (type !== "trademark") {
     const col = type === "document" ? "document_id" : "certificate_id";
     await sa.from("support_notifications").delete().eq(col, id);
     await sa.from("resource_views").delete().eq("resource_type", type).eq("resource_id", id);
   }
-  const { error } = await sa.from(TABLE[type]).delete().eq("id", id).not("deleted_at", "is", null);
-  if (error) throw new Error("Não foi possível excluir definitivamente.");
 
   let file: { removed: boolean; reason: string | null } | null = null;
   const bucket = BUCKET[type];
-  if (bucket && row.storage_path) file = await removeExactObject(sa, bucket, row.storage_path, id);
+  if (bucket && row.storage_path) file = await removeExactObject(sa, bucket, row.storage_path);
   await logLifecycle(sa, type, id, context.userId, "excluido_definitivamente", {
     titulo: label(type, row),
     arquivo: row.file_name ?? null,
