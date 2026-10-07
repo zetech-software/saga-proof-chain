@@ -75,7 +75,7 @@ describe("document replacement", () => {
     const store = setupReplacement(false);
     await expect(invoke(replaceDocumentFile, replacement, context())).rejects.toThrow("anterior foi mantido");
     expect(store.remove).toHaveBeenCalledTimes(1);
-    const removed = store.remove.mock.calls[0]?.[0] as unknown as string[];
+    const removed = (store.remove.mock.calls as unknown as string[][][])[0]?.[0] ?? [];
     expect(removed[0]).not.toBe(oldPath);
     expect(removed[0]).not.toBe(pendingPath);
   });
@@ -149,7 +149,7 @@ describe("shared authoritative purge", () => {
     expect(state.from.mock.calls.map(([table]) => table)).not.toContain("support_notifications");
     expect(state.from.mock.calls.map(([table]) => table)).not.toContain("resource_views");
     expect(state.from.mock.calls.map(([table]) => table)).not.toContain("resource_lifecycle_events");
-    const deletion = state.from.mock.results.filter((_, i) => state.from.mock.calls[i][0] === "documents")[2].value;
+    const deletion = state.from.mock.results.filter((_, i) => state.from.mock.calls[i]?.[0] === "documents")[2]?.value;
     expect(deletion.eq).toHaveBeenCalledWith("deleted_at", "2026-10-01");
   });
   it("keeps the file if the same ID was restored before the reference check", async () => {
