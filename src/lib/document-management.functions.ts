@@ -41,11 +41,14 @@ async function loadCaller(ctx: Ctx, documentId: string) {
 }
 
 async function countCerts(sa: Awaited<ReturnType<typeof loadCaller>>["supabaseAdmin"], id: string) {
-  const { count } = await sa
+  const { count, error } = await sa
     .from("certificates")
     .select("id", { count: "exact", head: true })
     .eq("document_id", id);
-  return count ?? 0;
+  if (error || count === null || count === undefined) {
+    throw new Error("Não foi possível verificar os certificados. A operação foi bloqueada.");
+  }
+  return count;
 }
 
 async function logEvent(
@@ -148,20 +151,25 @@ export const replaceDocumentFile = createServerFn({ method: "POST" })
       await discard();
       throw new Error("Não foi possível concluir o envio.");
     }
-    // Só troca o registro depois do arquivo novo validado; o antigo fica intacto até aqui.
-    const { data: updated, error } = await supabaseAdmin
-      .from("documents")
-      .update({
-        storage_path: finalPath,
-        file_name: data.fileName,
-        file_size: bytes.length,
-        mime_type: EXT_MIME[ext],
-      })
-      .eq("id", doc.id)
-      .eq("storage_path", doc.storage_path)
-      .select("id")
-      .maybeSingle();
-    if (error || !updated) {
+    // The database rechecks ownership, current status and certificates while
+    // holding the document lock. Upload time must not preserve stale permission.
+    // Keep this narrow interface until generated database types include migration 0014.
+    const atomicClient = supabaseAdmin as unknown as {
+      rpc: (name: "replace_document_file_atomic", args: {
+        _document: string; _actor: string; _expected_path: string;
+        _new_path: string; _file_name: string; _file_size: number; _mime_type: string;
+      }) => PromiseLike<{ data: boolean | null; error: unknown }>;
+    };
+    const { data: updated, error } = await atomicClient.rpc("replace_document_file_atomic", {
+      _document: doc.id,
+      _actor: context.userId,
+      _expected_path: doc.storage_path,
+      _new_path: finalPath,
+      _file_name: data.fileName,
+      _file_size: bytes.length,
+      _mime_type: EXT_MIME[ext],
+    });
+    if (error || updated !== true) {
       await store.remove([finalPath]);
       throw new Error("Não foi possível substituir o arquivo. O arquivo anterior foi mantido.");
     }
