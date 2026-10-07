@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { writeAuditEvent } from "./audit-events";
 
 /**
  * Ciclo de vida de marcas, documentos e certificados (somente Admin, decidido no servidor):
@@ -54,13 +55,13 @@ async function logLifecycle(
   action: string,
   details: Record<string, unknown> = {},
 ) {
-  await sa.from("resource_lifecycle_events").insert({
+  await writeAuditEvent(() => sa.from("resource_lifecycle_events").insert({
     resource_type: type,
     resource_id: id,
     action,
     actor_id: actor,
     details,
-  });
+  }));
 }
 
 async function loadRow(sa: SA, type: ResType, id: string) {
@@ -100,7 +101,8 @@ async function removeExactObject(sa: SA, bucket: "documentos" | "certificados", 
     return { removed: false, reason: "caminho fora do padrão" };
   }
   const [dir, name] = path.split("/");
-  const { data: listed } = await sa.storage.from(bucket).list(dir, { search: name, limit: 100 });
+  const { data: listed, error: listError } = await sa.storage.from(bucket).list(dir, { search: name, limit: 100 });
+  if (listError) return { removed: false, reason: "falha ao verificar arquivo" };
   if (!(listed ?? []).some((o: { name: string }) => o.name === name)) {
     return { removed: false, reason: "arquivo não encontrado" };
   }
@@ -108,6 +110,9 @@ async function removeExactObject(sa: SA, bucket: "documentos" | "certificados", 
     sa.from("documents").select("id").eq("storage_path", path).neq("id", selfId),
     sa.from("certificates").select("id").eq("storage_path", path).neq("id", selfId),
   ]);
+  if (docs.error || certs.error) {
+    return { removed: false, reason: "falha ao verificar referências do arquivo" };
+  }
   if ((docs.data ?? []).length + (certs.data ?? []).length > 0) {
     return { removed: false, reason: "arquivo usado por outro registro" };
   }
@@ -163,7 +168,11 @@ export const restoreResource = createServerFn({ method: "POST" })
 
 async function purgeBlockers(sa: SA, type: ResType, row: Row) {
   const reasons: string[] = [];
-  const count = async (q: PromiseLike<{ count: number | null }>) => (await q).count ?? 0;
+  const count = async (q: PromiseLike<{ count: number | null; error: unknown }>) => {
+    const result = await q;
+    if (result.error) throw new Error("Não foi possível verificar os vínculos. Nada foi excluído.");
+    return result.count ?? 0;
+  };
   const head = { count: "exact", head: true };
   const shares = await count(
     sa.from("resource_shares").select("id", head).eq("resource_type", type).eq("resource_id", row.id),
@@ -190,34 +199,38 @@ export const purgeResource = createServerFn({ method: "POST" })
   .inputValidator((d) =>
     z.object({ type: typeSchema, id: idSchema, confirm: z.literal(PURGE_CONFIRM) }).strict().parse(d),
   )
-  .handler(async ({ data, context }) => {
-    const sa = await requireAdmin(context);
-    const row = await loadRow(sa, data.type, data.id);
-    if (!row.deleted_at) {
-      throw new Error("Primeiro exclua o item (ele vai para Excluídos). Só depois é possível excluir definitivamente.");
-    }
-    const reasons = await purgeBlockers(sa, data.type, row);
-    if (reasons.length > 0) return { ok: false as const, blocked: true, reasons, file: null };
+  .handler(async ({ data, context }) => purgeResourceForCaller(context, data.type, data.id));
 
-    if (data.type !== "trademark") {
-      const col = data.type === "document" ? "document_id" : "certificate_id";
-      await sa.from("support_notifications").delete().eq(col, data.id);
-      await sa.from("resource_views").delete().eq("resource_type", data.type).eq("resource_id", data.id);
-    }
-    const { error } = await sa.from(TABLE[data.type]).delete().eq("id", data.id).not("deleted_at", "is", null);
-    if (error) throw new Error("Não foi possível excluir definitivamente.");
+/** One authoritative deletion path, including the legacy document endpoint. */
+export async function purgeResourceForCaller(context: Ctx, type: ResType, id: string) {
+  const sa = await requireAdmin(context);
+  const row = await loadRow(sa, type, id);
+  if (!row.deleted_at) {
+    throw new Error("Primeiro exclua o item (ele vai para Excluídos). Só depois é possível excluir definitivamente.");
+  }
+  const reasons = await purgeBlockers(sa, type, row);
+  if (reasons.length > 0) return { ok: false as const, blocked: true, reasons, file: null };
 
-    let file: { removed: boolean; reason: string | null } | null = null;
-    const bucket = BUCKET[data.type];
-    if (bucket && row.storage_path) file = await removeExactObject(sa, bucket, row.storage_path, data.id);
-    await logLifecycle(sa, data.type, data.id, context.userId, "excluido_definitivamente", {
-      titulo: label(data.type, row),
-      arquivo: row.file_name ?? null,
-      caminho: row.storage_path ?? null,
-      arquivo_removido: file ? (file.removed ? "sim" : `nao (${file.reason})`) : "sem arquivo",
-    });
-    return { ok: true as const, blocked: false, reasons: [] as string[], file };
+  if (type !== "trademark") {
+    const col = type === "document" ? "document_id" : "certificate_id";
+    await sa.from("support_notifications").delete().eq(col, id);
+    await sa.from("resource_views").delete().eq("resource_type", type).eq("resource_id", id);
+  }
+  const { error } = await sa.from(TABLE[type]).delete().eq("id", id).not("deleted_at", "is", null);
+  if (error) throw new Error("Não foi possível excluir definitivamente.");
+
+  let file: { removed: boolean; reason: string | null } | null = null;
+  const bucket = BUCKET[type];
+  if (bucket && row.storage_path) file = await removeExactObject(sa, bucket, row.storage_path, id);
+  await logLifecycle(sa, type, id, context.userId, "excluido_definitivamente", {
+    titulo: label(type, row),
+    arquivo: row.file_name ?? null,
+    caminho: row.storage_path ?? null,
+    arquivo_removido: file ? (file.removed ? "sim" : `nao (${file.reason})`) : "sem arquivo",
   });
+  return { ok: true as const, blocked: false, reasons: [] as string[], file };
+
+}
 
 export type DeletedItem = {
   type: ResType;

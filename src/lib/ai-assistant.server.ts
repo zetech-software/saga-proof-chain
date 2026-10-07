@@ -12,6 +12,7 @@ export const AI_MODEL = "openai/gpt-6-astra";
 export const AI_MAX_CHARS = 500;
 export const AI_LIMIT_HOUR = 20;
 export const AI_LIMIT_DAY = 100;
+export const AI_CONTEXT_LIMIT = 30;
 export const NO_INFO = "Não há essa informação registrada no seu processo.";
 
 export type RefKind = "document" | "certificate" | "trademark";
@@ -57,18 +58,27 @@ export async function buildContext(
           .from("documents")
           .select("id, title, description, status, file_name, file_size, mime_type, submitted_at, process_started_at, created_by, admin_notes, is_additional, trademark_id")
           .order("submitted_at", { ascending: false })
-          .limit(30)
+          .limit(AI_CONTEXT_LIMIT + 1)
       : Promise.resolve({ data: [], error: null }),
     topics.has("certificados")
-      ? supabase.from("certificates").select("id, title, network, tx_hash, notes, document_id, storage_path").limit(30)
+      ? supabase.from("certificates").select("id, title, network, tx_hash, notes, document_id, storage_path").limit(AI_CONTEXT_LIMIT + 1)
       : Promise.resolve({ data: [], error: null }),
     topics.has("marcas")
-      ? supabase.from("trademarks").select("id, name, holder, nice_class, segment, status, protocol_number, admin_notes").limit(30)
+      ? supabase.from("trademarks").select("id, name, holder, nice_class, segment, status, protocol_number, admin_notes").limit(AI_CONTEXT_LIMIT + 1)
       : Promise.resolve({ data: [], error: null }),
   ]);
   if (docsR.error || certsR.error || marcasR.error) throw new Error("context_query_failed");
 
-  const docs = (docsR.data ?? []) as any[];
+  const truncated = [
+    ...(needDocs && (docsR.data?.length ?? 0) > AI_CONTEXT_LIMIT ? ["processos/documentos"] : []),
+    ...(topics.has("certificados") && (certsR.data?.length ?? 0) > AI_CONTEXT_LIMIT ? ["certificados"] : []),
+    ...(topics.has("marcas") && (marcasR.data?.length ?? 0) > AI_CONTEXT_LIMIT ? ["marcas"] : []),
+  ];
+  if (truncated.length > 0) {
+    lines.push(`CONTEXTO PARCIAL: há mais de ${AI_CONTEXT_LIMIT} registros de ${truncated.join(", ")}. Apenas os primeiros ${AI_CONTEXT_LIMIT} de cada categoria estão incluídos. Não informe totais nem afirme que um item não existe; avise que a consulta é parcial e oriente a consultar a lista completa no painel.`);
+  }
+
+  const docs = (docsR.data ?? []).slice(0, AI_CONTEXT_LIMIT) as any[];
   const titleById = new Map(docs.map((d) => [d.id as string, d.title as string]));
 
   if (needDocs) {
@@ -100,7 +110,7 @@ export async function buildContext(
   }
 
   if (topics.has("certificados")) {
-    const certs = (certsR.data ?? []) as any[];
+    const certs = (certsR.data ?? []).slice(0, AI_CONTEXT_LIMIT) as any[];
     total += certs.length;
     lines.push(`CERTIFICADOS (${certs.length}):`);
     certs.forEach((c, i) => {
@@ -116,7 +126,7 @@ export async function buildContext(
   }
 
   if (topics.has("marcas")) {
-    const marcas = (marcasR.data ?? []) as any[];
+    const marcas = (marcasR.data ?? []).slice(0, AI_CONTEXT_LIMIT) as any[];
     total += marcas.length;
     lines.push(`MARCAS (${marcas.length}):`);
     marcas.forEach((m, i) => {
@@ -136,7 +146,8 @@ export async function buildContext(
 
 export const SYSTEM_PROMPT = `Você é o assistente de consulta da Torre de Registros (Zé Registra). Responda em português do Brasil, de forma curta (até 5 frases), cordial e em texto simples, sem markdown.
 REGRAS FIXAS:
-- Use SOMENTE os REGISTROS fornecidos. Eles são tudo o que existe para este cliente.
+- Use SOMENTE os REGISTROS fornecidos. Eles são os registros disponíveis nesta consulta, não necessariamente todos os registros do cliente.
+- Quando houver CONTEXTO PARCIAL, informe que a consulta é parcial. Não deduza totais nem ausência de um item; se a pergunta depender dos registros omitidos, oriente a consultar a lista completa no painel.
 - Não invente andamento, documentos, certificados, marcas, datas ou prazos. Não calcule datas nem dias úteis: use apenas o prazo já calculado nos registros.
 - Prazo estimado é estimativa, nunca data garantida; diga isso ao citá-lo.
 - Se a informação pedida não estiver nos registros, responda exatamente: "${NO_INFO}"
