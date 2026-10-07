@@ -1,3 +1,4 @@
+import { AdminAccessManager } from "@/components/AdminAccessManager";
 import { createCertificateSubmission } from "@/lib/certificate-submission";
 import { publishCertificate } from "@/lib/certificate-publisher";
 import { describeActionError } from "@/lib/action-errors";
@@ -368,7 +369,7 @@ function AdminPage() {
             Atendimento{adminCount > 0 ? ` (${adminCount})` : ""}
           </TabsTrigger>
           <TabsTrigger value="processos">Processos</TabsTrigger>
-          <TabsTrigger value="clientes">Clientes</TabsTrigger>
+          <TabsTrigger value="clientes">Contas e acesso</TabsTrigger>
           <TabsTrigger value="controle">Controle</TabsTrigger>
           <TabsTrigger value="excluidos">Excluídos</TabsTrigger>
           <TabsTrigger value="recuperacao">Recuperação</TabsTrigger>
@@ -661,6 +662,7 @@ function AdminPage() {
         </TabsContent>
 
         <TabsContent value="clientes" className="space-y-6">
+          <AdminAccessManager enabled={isAdmin} actorId={session?.user?.id ?? ""} />
           <UserAccessActivity enabled={isAdmin} docs={data?.docs} marcas={data?.marcas} suporte={data?.suporte} />
           <OwnershipManager enabled={isAdmin} />
         </TabsContent>
