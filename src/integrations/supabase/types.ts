@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_access_events: {
+        Row: {
+          action: string
+          actor_id: string
+          after_state: Json | null
+          before_state: Json | null
+          created_at: string
+          id: string
+          organization_id: string | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          after_state?: Json | null
+          before_state?: Json | null
+          created_at?: string
+          id?: string
+          organization_id?: string | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          after_state?: Json | null
+          before_state?: Json | null
+          created_at?: string
+          id?: string
+          organization_id?: string | null
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
       ai_question_usage: {
         Row: {
           created_at: string
@@ -786,6 +819,37 @@ export type Database = {
           table_name: string
           using_expression: string
         }[]
+      }
+      admin_save_organization: {
+        Args: {
+          _expected_updated_at: string
+          _id: string
+          _name: string
+          _notes: string
+          _slug: string
+        }
+        Returns: string
+      }
+      admin_set_account_role: {
+        Args: {
+          _expected_admin: boolean
+          _role: Database["public"]["Enums"]["app_role"]
+          _user: string
+        }
+        Returns: boolean
+      }
+      admin_set_organization_member: {
+        Args: {
+          _expected_member: boolean
+          _member: boolean
+          _organization: string
+          _user: string
+        }
+        Returns: boolean
+      }
+      admin_update_account_name: {
+        Args: { _expected_name: string; _name: string; _user: string }
+        Returns: boolean
       }
       ai_usage_status: {
         Args: { _user: string }
