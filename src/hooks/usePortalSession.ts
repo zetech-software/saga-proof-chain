@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 export function usePortalSession() {
   return useQuery({
     queryKey: ["portal-session"],
+    // Role changes in another admin session must refresh the navigation.
+    refetchInterval: 30_000,
     queryFn: async () => {
       const { data } = await supabase.auth.getUser();
       const user = data.user;

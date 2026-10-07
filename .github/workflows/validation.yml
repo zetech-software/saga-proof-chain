@@ -53,3 +53,5 @@ jobs:
           psql -X --set ON_ERROR_STOP=on --file tests/sql/atomic-document-replacement.sql
           python3 tests/sql/atomic-document-concurrency.py
           psql -X --set ON_ERROR_STOP=on --file tests/sql/atomic-certificate-publication.sql
+          psql -X --set ON_ERROR_STOP=on --file tests/sql/admin-access-management.sql
+          python3 tests/sql/admin-access-concurrency.py
