@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { writeAuditEvent } from "./audit-events";
 
 /**
  * Gerenciamento de documentos (editar, substituir, arquivar, restaurar, excluir).
@@ -17,7 +18,6 @@ const pendingSchema = z
 
 // Status em que o cliente ainda pode mexer no próprio envio.
 const CLIENT_EDITABLE = new Set(["recebido", "aguardando_documentacao"]);
-const FINAL_STATUS = new Set(["concluido", "certificado_emitido"]);
 
 type Ctx = { supabase: unknown; userId: string };
 
@@ -55,7 +55,9 @@ async function logEvent(
   action: "editado" | "arquivo_substituido" | "arquivado" | "restaurado" | "excluido",
   details: Record<string, string | null> = {},
 ) {
-  await sa.from("document_events").insert({ document_id: documentId, actor_id: actorId, action, details });
+  await writeAuditEvent(() =>
+    sa.from("document_events").insert({ document_id: documentId, actor_id: actorId, action, details }),
+  );
 }
 
 export const editDocument = createServerFn({ method: "POST" })
@@ -147,7 +149,7 @@ export const replaceDocumentFile = createServerFn({ method: "POST" })
       throw new Error("Não foi possível concluir o envio.");
     }
     // Só troca o registro depois do arquivo novo validado; o antigo fica intacto até aqui.
-    const { error } = await supabaseAdmin
+    const { data: updated, error } = await supabaseAdmin
       .from("documents")
       .update({
         storage_path: finalPath,
@@ -156,8 +158,10 @@ export const replaceDocumentFile = createServerFn({ method: "POST" })
         mime_type: EXT_MIME[ext],
       })
       .eq("id", doc.id)
-      .eq("storage_path", doc.storage_path);
-    if (error) {
+      .eq("storage_path", doc.storage_path)
+      .select("id")
+      .maybeSingle();
+    if (error || !updated) {
       await store.remove([finalPath]);
       throw new Error("Não foi possível substituir o arquivo. O arquivo anterior foi mantido.");
     }
@@ -204,45 +208,7 @@ export const purgeDocument = createServerFn({ method: "POST" })
     z.object({ id: idSchema, confirm: z.literal("EXCLUIR") }).strict().parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin, doc, isAdmin } = await loadCaller(context, data.id);
-    if (!isAdmin) throw new Error("Sem permissão.");
-    // Exclusão definitiva só a partir de "Excluídos" (ver resource-lifecycle.functions.ts).
-    if (!doc.deleted_at) throw new Error("Primeiro exclua o documento (ele vai para Excluídos).");
-    const [certs, children, shares] = await Promise.all([
-      countCerts(supabaseAdmin, doc.id),
-      supabaseAdmin
-        .from("documents")
-        .select("id", { count: "exact", head: true })
-        .eq("related_document_id", doc.id),
-      supabaseAdmin
-        .from("resource_shares")
-        .select("id", { count: "exact", head: true })
-        .eq("resource_type", "document")
-        .eq("resource_id", doc.id),
-    ]);
-    const reasons: string[] = [];
-    if (certs > 0) reasons.push("certificado vinculado");
-    if ((children.count ?? 0) > 0) reasons.push("envio adicional relacionado");
-    if ((shares.count ?? 0) > 0) reasons.push("compartilhamento ativo");
-    if (FINAL_STATUS.has(doc.status)) reasons.push("processo concluído");
-    if (reasons.length > 0) return { ok: false as const, blocked: true, reasons };
-
-    await supabaseAdmin.from("support_notifications").delete().eq("document_id", doc.id);
-    await supabaseAdmin
-      .from("resource_views")
-      .delete()
-      .eq("resource_type", "document")
-      .eq("resource_id", doc.id);
-    const { error } = await supabaseAdmin.from("documents").delete().eq("id", doc.id);
-    if (error) throw new Error("Não foi possível excluir o documento.");
-    // Registro já removido: agora o arquivo, para não sobrar nada órfão.
-    let fileRemoved = !(await supabaseAdmin.storage.from("documentos").remove([doc.storage_path])).error;
-    if (!fileRemoved) {
-      fileRemoved = !(await supabaseAdmin.storage.from("documentos").remove([doc.storage_path])).error;
-    }
-    await logEvent(supabaseAdmin, doc.id, context.userId, "excluido", {
-      previous_file_name: doc.file_name,
-      file_removed: fileRemoved ? "sim" : "nao",
-    });
-    return { ok: true as const, blocked: false, reasons: [] as string[] };
+    const { purgeResourceForCaller } = await import("./resource-lifecycle.functions");
+    const result = await purgeResourceForCaller(context, "document", data.id);
+    return { ok: result.ok, blocked: result.blocked, reasons: result.reasons };
   });
