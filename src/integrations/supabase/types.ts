@@ -861,6 +861,21 @@ export type Database = {
           user_id: string
         }[]
       }
+      publish_certificate_atomic: {
+        Args: {
+          _conclude: boolean
+          _document: string
+          _file_name: string
+          _id: string
+          _network: string
+          _notes: string
+          _path: string
+          _title: string
+          _tx_hash: string
+          _verification_url: string
+        }
+        Returns: string
+      }
       record_ai_tokens: {
         Args: { _input: number; _output: number; _user: string }
         Returns: undefined
