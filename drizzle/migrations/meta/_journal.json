@@ -113,6 +113,13 @@
       "when": 1791396728253,
       "tag": "0015_atomic_certificate_publication",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1791399537709,
+      "tag": "0016_apply_0016_admin_accounts_and_organizations",
+      "breakpoints": true
     }
   ]
 }
