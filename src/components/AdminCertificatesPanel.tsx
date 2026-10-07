@@ -1,3 +1,4 @@
+import { describeActionError } from "@/lib/action-errors";
 import { finalizeAdminUpload } from "@/lib/uploads.functions";
 import { attachCertificateFile, softDeleteResource } from "@/lib/resource-lifecycle.functions";
 import { stagePendingUpload } from "@/lib/secure-upload";
@@ -174,8 +175,9 @@ export function AdminCertificatesPanel({
       toast.success(c.storage_path ? "Arquivo substituído" : "Arquivo anexado");
       setFile(null);
       refresh();
-    } catch {
-      toast.error("Não foi possível enviar o arquivo do certificado.");
+    } catch (e) {
+      toast.error(describeActionError(e, "Não foi possível confirmar o envio do certificado. Atualize a lista antes de repetir."));
+      refresh();
     } finally {
       setBusyId(null);
     }
