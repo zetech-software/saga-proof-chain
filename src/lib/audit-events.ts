@@ -1,3 +1,5 @@
+import { AUDIT_FAILURE_MESSAGE } from "./action-errors";
+
 /** Surface a failed audit write without falsely reporting an unrecorded action as successful. */
 export async function writeAuditEvent(
   write: () => PromiseLike<{ error: unknown }>,
@@ -11,7 +13,7 @@ export async function writeAuditEvent(
   }
   if (failed) {
     throw Object.assign(
-      new Error("A operação foi concluída, mas houve falha ao registrar o histórico. Não repita a operação; peça à equipe para verificar o registro."),
+      new Error(AUDIT_FAILURE_MESSAGE),
       { code: "audit_write_failed" },
     );
   }

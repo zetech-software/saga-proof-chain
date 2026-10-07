@@ -21,7 +21,7 @@ vi.mock("@/integrations/supabase/client.server", () => ({
 }));
 
 import { replaceDocumentFile, purgeDocument, setDocumentArchived } from "./document-management.functions";
-import { purgeResource, restoreResource } from "./resource-lifecycle.functions";
+import { purgeResource, restoreResource, attachCertificateFile } from "./resource-lifecycle.functions";
 
 const owner = "11111111-1111-4111-8111-111111111111";
 const documentId = "22222222-2222-4222-8222-222222222222";
@@ -233,5 +233,35 @@ describe("restoration permissions", () => {
       .mockReturnValueOnce(query({ error: null }));
     await expect(invoke(restoreResource, { type: "document", id: documentId }, context(true))).resolves.toEqual({ ok: true });
     expect(update["update"]).toHaveBeenCalledWith({ deleted_at: null, deleted_by: null });
+  });
+});
+
+describe("certificate file replacement", () => {
+  function setup(saved: boolean) {
+    const store = storage();
+    store.list.mockResolvedValue({ data: [{ name: "old.pdf" }, { name: "new.pdf" }], error: null });
+    const update = query({ data: saved ? { id: documentId } : null, error: null });
+    let calls = 0;
+    state.from.mockImplementation((table: string) => {
+      if (table === "certificates") {
+        if (calls++ === 0) return query({ data: { id: documentId, storage_path: oldPath, deleted_at: null }, error: null });
+        if (calls === 2) return update;
+        return query({ data: saved ? [] : [{ id: documentId }], error: null });
+      }
+      return query({ data: [], error: null });
+    });
+    return { store, update };
+  }
+  it("links a new file only if the previous path is still current", async () => {
+    const { store, update } = setup(true);
+    await invoke(attachCertificateFile, { id: documentId, path: owner + "/new.pdf", fileName: "new.pdf" }, context(true));
+    expect(update.eq).toHaveBeenCalledWith("storage_path", oldPath);
+    expect(update.is).toHaveBeenCalledWith("deleted_at", null);
+    expect(store.remove).toHaveBeenCalledWith([oldPath]);
+  });
+  it("keeps the winning upload when the same certificate already references it", async () => {
+    const { store } = setup(false);
+    await expect(invoke(attachCertificateFile, { id: documentId, path: owner + "/new.pdf", fileName: "new.pdf" }, context(true))).rejects.toThrow("confirmar a troca");
+    expect(store.remove).not.toHaveBeenCalled();
   });
 });
