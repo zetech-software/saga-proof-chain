@@ -16,3 +16,29 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run test:run
       - run: bun run build
+  database-security:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: portal_security_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check client fields in disposable PostgreSQL
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: ci-only-password
+          PGDATABASE: portal_security_test
+        run: psql -X --set ON_ERROR_STOP=on --file tests/sql/client-administrative-fields.sql
