@@ -92,6 +92,13 @@
       "when": 1790622096342,
       "tag": "0012_recoverable_deletion_and_restore_review",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791389377484,
+      "tag": "0013_protect_client_administrative_fields",
+      "breakpoints": true
     }
   ]
 }
