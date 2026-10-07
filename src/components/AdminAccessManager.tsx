@@ -45,9 +45,9 @@ export function AdminAccessManager({ enabled, actorId }: { enabled: boolean; act
     setOrganization({ id: org.id, name: org.name, slug: org.slug, notes: org.notes ?? "", updated: org.updated_at });
   }
   function eventDescription(event: AccessEvent) {
-    if (event.action === "role_changed") return label(event.target_user_id) + ": " + (event.after_state?.admin ? "Administrador" : "Cliente");
-    if (event.action === "profile_updated") return String(event.before_state?.name ?? "Sem nome") + " → " + String(event.after_state?.name ?? "Sem nome");
-    if (event.action === "organization_created" || event.action === "organization_updated") return String(event.after_state?.name ?? orgLabel(event.organization_id));
+    if (event.action === "role_changed") return label(event.target_user_id) + ": " + (event.after_state?.["admin"] ? "Administrador" : "Cliente");
+    if (event.action === "profile_updated") return String(event.before_state?.["name"] ?? "Sem nome") + " → " + String(event.after_state?.["name"] ?? "Sem nome");
+    if (event.action === "organization_created" || event.action === "organization_updated") return String(event.after_state?.["name"] ?? orgLabel(event.organization_id));
     return label(event.target_user_id) + " em " + orgLabel(event.organization_id);
   }
   return <div className="space-y-6">
@@ -121,7 +121,7 @@ export function AdminAccessManager({ enabled, actorId }: { enabled: boolean; act
               </div>
               <Button disabled={change.isPending || !pendingMembers[org.id]} onClick={() => setConfirmation({
                 title: "Adicionar membro?",
-                description: label(pendingMembers[org.id]) + " terá acesso aos registros de " + org.name + ".",
+                description: label(pendingMembers[org.id] ?? null) + " terá acesso aos registros de " + org.name + ".",
                 name: "admin_set_organization_member",
                 args: { _organization: org.id, _user: pendingMembers[org.id], _member: true, _expected_member: false },
               })}>Adicionar</Button>
