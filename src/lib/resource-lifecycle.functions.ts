@@ -340,13 +340,19 @@ export const attachCertificateFile = createServerFn({ method: "POST" })
     const sa = await requireAdmin(context);
     if (!data.path.startsWith(`${context.userId}/`)) throw new Error("Arquivo inválido.");
     const row = await loadRow(sa, "certificate", data.id);
-    const { error } = await sa
-      .from("certificates")
+    let update = sa.from("certificates")
       .update({ storage_path: data.path, file_name: data.fileName })
-      .eq("id", data.id);
-    if (error) {
-      await removeExactObject(sa, "certificados", data.path, data.id);
-      throw new Error("Não foi possível salvar o arquivo do certificado.");
+      .eq("id", data.id)
+      .is("deleted_at", null);
+    update = row.storage_path
+      ? update.eq("storage_path", row.storage_path)
+      : update.is("storage_path", null);
+    const { data: saved, error } = await update.select("id").maybeSingle();
+    if (error || !saved) {
+      // Include this certificate in the reference check: another request
+      // may already have linked exactly the same uploaded file.
+      await removeExactObject(sa, "certificados", data.path);
+      throw new Error("Não foi possível confirmar a troca do certificado. Atualize a lista antes de repetir.");
     }
     if (row.storage_path && row.storage_path !== data.path) {
       await removeExactObject(sa, "certificados", row.storage_path, data.id);
