@@ -92,7 +92,7 @@ describe("document replacement", () => {
     expect(state.rpc).toHaveBeenCalledWith("replace_document_file_atomic", expect.objectContaining({
       _document: documentId, _actor: owner, _expected_path: oldPath, _file_name: "new.pdf",
     }));
-    expect(state.rpc.mock.calls[0][1]._new_path).toMatch(new RegExp("^" + owner + "/"));
+    expect((state.rpc.mock.calls[0]?.[1] as { _new_path?: string } | undefined)?._new_path).toMatch(new RegExp("^" + owner + "/"));
   });
   it("keeps the previous file if the final database authorization fails", async () => {
     const store = setupReplacement(true);
@@ -255,8 +255,8 @@ describe("certificate file replacement", () => {
   it("links a new file only if the previous path is still current", async () => {
     const { store, update } = setup(true);
     await invoke(attachCertificateFile, { id: documentId, path: owner + "/new.pdf", fileName: "new.pdf" }, context(true));
-    expect(update.eq).toHaveBeenCalledWith("storage_path", oldPath);
-    expect(update.is).toHaveBeenCalledWith("deleted_at", null);
+    expect(update["eq"]).toHaveBeenCalledWith("storage_path", oldPath);
+    expect(update["is"]).toHaveBeenCalledWith("deleted_at", null);
     expect(store.remove).toHaveBeenCalledWith([oldPath]);
   });
   it("keeps the winning upload when the same certificate already references it", async () => {

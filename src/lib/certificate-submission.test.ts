@@ -9,7 +9,7 @@ describe("certificate retries", () => {
     await expect(submit.submit(input, null, prepare)).rejects.toThrow("response lost");
     await expect(submit.submit(input, null, prepare)).resolves.toBe("ok");
     expect(prepare).toHaveBeenCalledTimes(1);
-    expect(publish.mock.calls[0][0]).toEqual(publish.mock.calls[1][0]);
+    expect(publish.mock.calls[0]?.[0]).toEqual(publish.mock.calls[1]?.[0]);
   });
   it("shares an in-flight submission instead of uploading twice", async () => {
     let resolve!: (value: unknown) => void;
