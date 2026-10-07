@@ -1,3 +1,4 @@
+import { describeActionError, isCompletedActionError } from "@/lib/action-errors";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -20,7 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { FileDropzone } from "@/components/FileDropzone";
 import { stagePendingUpload } from "@/lib/secure-upload";
-import { describeUploadError, validateUploadFileDeep } from "@/lib/uploads";
+import { validateUploadFileDeep } from "@/lib/uploads";
 import {
   editDocument,
   replaceDocumentFile,
@@ -66,8 +67,13 @@ export function ClientDocumentActions({ doc, hasCertificate }: { doc: Doc; hasCe
       setMode(null);
       refresh();
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "";
-      toast.error(msg && msg.length < 140 && !/unauthor|jwt|fetch/i.test(msg) ? msg : "Não foi possível concluir a ação.");
+      if (isCompletedActionError(e)) {
+        toast.warning(describeActionError(e, ""));
+        setMode(null);
+        refresh();
+      } else {
+        toast.error(describeActionError(e, "Não foi possível confirmar a ação. Atualize a lista antes de tentar novamente."));
+      }
     } finally {
       setBusy(null);
     }
@@ -82,13 +88,8 @@ export function ClientDocumentActions({ doc, hasCertificate }: { doc: Doc; hasCe
     await run(
       "replace",
       async () => {
-        try {
-          const pending = await stagePendingUpload("documentos", checked.file, checked.storageName, checked.contentType);
-          await replaceDocumentFile({ data: { id: doc.id, pendingPath: pending, fileName: checked.displayName } });
-        } catch (e) {
-          if (e instanceof Error && e.message.startsWith("O ")) throw e;
-          throw new Error(describeUploadError(e) + " O arquivo anterior foi mantido.");
-        }
+        const pending = await stagePendingUpload("documentos", checked.file, checked.storageName, checked.contentType);
+        await replaceDocumentFile({ data: { id: doc.id, pendingPath: pending, fileName: checked.displayName } });
       },
       "Arquivo substituído.",
     );

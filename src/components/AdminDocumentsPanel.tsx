@@ -1,3 +1,6 @@
+import { describeActionError, isCompletedActionError } from "@/lib/action-errors";
+import { createCertificateSubmission } from "@/lib/certificate-submission";
+import { publishCertificate } from "@/lib/certificate-publisher";
 import { finalizeAdminUpload } from "@/lib/uploads.functions";
 import {
   editDocument,
@@ -7,7 +10,7 @@ import {
 import { softDeleteResource } from "@/lib/resource-lifecycle.functions";
 import { DocumentHistory } from "@/components/DocumentHistory";
 import { stagePendingUpload } from "@/lib/secure-upload";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ProcessStartDateEditor } from "@/components/ProcessStartDateEditor";
 import { ProcessEstimatePreview } from "@/components/ProcessEstimatePreview";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -106,6 +109,7 @@ export function AdminDocumentsPanel({
   adminUserId: string | null;
 }) {
   const queryClient = useQueryClient();
+  const certificateSubmission = useRef(createCertificateSubmission(publishCertificate));
   const ownership = useOwnership(enabled);
   const users = useUserActivity(enabled);
   const [term, setTerm] = useState("");
@@ -149,6 +153,15 @@ export function AdminDocumentsPanel({
     queryClient.invalidateQueries({ queryKey: ["documents"] });
   }
 
+  function reportActionError(error: unknown, fallback: string) {
+    if (isCompletedActionError(error)) {
+      toast.warning(describeActionError(error, fallback));
+      refresh();
+    } else {
+      toast.error(describeActionError(error, fallback));
+    }
+  }
+
   const update = useMutation({
     mutationFn: async (input: { id: string; patch: EditState }) => {
       await editDocument({
@@ -164,7 +177,7 @@ export function AdminDocumentsPanel({
       toast.success("Documento atualizado");
       refresh();
     },
-    onError: () => toast.error("Não foi possível salvar as alterações do documento"),
+    onError: (e: unknown) => reportActionError(e, "Não foi possível salvar as alterações do documento"),
   });
 
   // Status é uma ação separada da edição, para nunca mudar sem querer.
@@ -191,7 +204,7 @@ export function AdminDocumentsPanel({
       setForm(null);
       refresh();
     },
-    onError: () => toast.error("Não foi possível atualizar o documento"),
+    onError: (e: unknown) => reportActionError(e, "Não foi possível atualizar o documento"),
   });
 
   async function handleDownload(doc: AdminDocument) {
@@ -229,8 +242,11 @@ export function AdminDocumentsPanel({
       setReplaceReason("");
       refresh();
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "";
-      toast.error(msg.startsWith("O ") || msg.startsWith("Não") ? msg : "Não foi possível substituir o arquivo. O arquivo anterior foi mantido.");
+      reportActionError(e, "Não foi possível confirmar a troca. Atualize a lista antes de tentar novamente.");
+      if (isCompletedActionError(e)) {
+        setReplaceFile(null);
+        setReplaceReason("");
+      }
     } finally {
       setBusyId(null);
     }
@@ -284,34 +300,16 @@ export function AdminDocumentsPanel({
     }
     setBusyId(doc.id);
     try {
-      const pending = await stagePendingUpload(
-        "certificados",
-        checked.file,
-        checked.storageName,
-        checked.contentType,
-      );
-      const { path } = await finalizeAdminUpload({
-        data: { bucket: "certificados", pendingPath: pending },
-      });
-      const { error } = await supabase.from("certificates").insert({
-        title: certTitle.trim(),
-        document_id: doc.id,
-        storage_path: path,
-        file_name: checked.displayName,
-        tx_hash: certHash.trim() || null,
+      await certificateSubmission.current.submit({
+        title: certTitle.trim(), document_id: doc.id,
         network: "Ethereum (ETH) via Authora — Homologação Zé Registra",
+        tx_hash: certHash.trim() || null, verification_url: null, notes: null,
+        conclude_document: certConclude,
+      }, checked.file, async () => {
+        const pending = await stagePendingUpload("certificados", checked.file, checked.storageName, checked.contentType);
+        const { path } = await finalizeAdminUpload({ data: { bucket: "certificados", pendingPath: pending } });
+        return { storage_path: path, file_name: checked.displayName };
       });
-      if (error) {
-        await supabase.storage.from("certificados").remove([path]);
-        throw error;
-      }
-      if (certConclude && doc.status !== "concluido") {
-        const { error: stErr } = await supabase
-          .from("documents")
-          .update({ status: "concluido" })
-          .eq("id", doc.id);
-        if (stErr) throw stErr;
-      }
       toast.success("Certificado enviado ao cliente");
       setCertForId(null);
       setCertTitle("");
@@ -319,8 +317,10 @@ export function AdminDocumentsPanel({
       setCertFile(null);
       refresh();
       queryClient.invalidateQueries({ queryKey: ["certificates"] });
-    } catch {
-      toast.error("Não foi possível enviar o certificado. Tente novamente.");
+    } catch (e) {
+      toast.error(describeActionError(e, "Não foi possível confirmar o certificado. Atualize a lista antes de repetir."));
+      refresh();
+      queryClient.invalidateQueries({ queryKey: ["certificates"] });
     } finally {
       setBusyId(null);
     }

@@ -1,3 +1,6 @@
+import { createCertificateSubmission } from "@/lib/certificate-submission";
+import { publishCertificate } from "@/lib/certificate-publisher";
+import { describeActionError } from "@/lib/action-errors";
 import { finalizeAdminUpload } from "@/lib/uploads.functions";
 import { stagePendingUpload } from "@/lib/secure-upload";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -76,6 +79,7 @@ function AdminPage() {
   const navigate = useNavigate();
   const { adminCount } = useSupportNotifications();
   const certFileRef = useRef<HTMLInputElement>(null);
+  const certificateSubmission = useRef(createCertificateSubmission(publishCertificate));
 
   const isAdmin = !!session?.isAdmin;
   const [tab, setTab] = useState("visao");
@@ -280,34 +284,20 @@ function AdminPage() {
   const createCert = useMutation({
     mutationFn: async () => {
       if (cert.title.trim().length < 2) throw new Error("Informe o título do certificado");
-      let storage_path: string | null = null;
-      let file_name: string | null = null;
-      if (certFile) {
-        const checked = await validateUploadFileDeep(certFile);
-        if (!checked.ok) throw new Error(checked.message);
-        const pending = await stagePendingUpload(
-          "certificados",
-          checked.file,
-          checked.storageName,
-          checked.contentType,
-        );
-        const { path } = await finalizeAdminUpload({
-          data: { bucket: "certificados", pendingPath: pending },
-        });
-        storage_path = path;
-        file_name = checked.displayName;
-      }
-      const { error } = await supabase.from("certificates").insert({
-        title: cert.title.trim(),
-        network: cert.network || null,
+      await certificateSubmission.current.submit({
+        title: cert.title.trim(), network: cert.network || null,
         tx_hash: cert.tx_hash.trim() || null,
         verification_url: cert.verification_url.trim() || null,
-        document_id: cert.document_id || null,
-        notes: cert.notes.trim() || null,
-        storage_path,
-        file_name,
+        document_id: cert.document_id || null, notes: cert.notes.trim() || null,
+        conclude_document: false,
+      }, certFile, async () => {
+        if (!certFile) return { storage_path: null, file_name: null };
+        const checked = await validateUploadFileDeep(certFile);
+        if (!checked.ok) throw new Error(checked.message);
+        const pending = await stagePendingUpload("certificados", checked.file, checked.storageName, checked.contentType);
+        const { path } = await finalizeAdminUpload({ data: { bucket: "certificados", pendingPath: pending } });
+        return { storage_path: path, file_name: checked.displayName };
       });
-      if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Certificado publicado no portal");
@@ -324,7 +314,11 @@ function AdminPage() {
       queryClient.invalidateQueries({ queryKey: ["certificates"] });
       queryClient.invalidateQueries({ queryKey: ["admin-data"] });
     },
-    onError: (e: unknown) => toast.error(describeUploadError(e)),
+    onError: (e: unknown) => {
+      toast.error(describeActionError(e, "Não foi possível confirmar o certificado. Atualize a lista antes de repetir."));
+      queryClient.invalidateQueries({ queryKey: ["certificates"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-data"] });
+    },
   });
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Carregando...</p>;

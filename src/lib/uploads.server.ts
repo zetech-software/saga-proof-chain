@@ -17,12 +17,14 @@ function startsWith(b: Uint8Array, sig: number[]) {
   return sig.every((v, i) => b[i] === v);
 }
 
+const MAX_DOCX_METADATA_BYTES = 2 * 1024 * 1024;
+
 const td = new TextDecoder("utf-8", { fatal: false });
 
 /** Parses the ZIP End Of Central Directory + central directory entries. */
 function zipEntries(
   b: Uint8Array,
-): { name: string; method: number; compSize: number; localOffset: number }[] | null {
+): { name: string; method: number; compSize: number; expandedSize: number; localOffset: number }[] | null {
   const dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
   const minEocd = 22;
   if (b.length < minEocd) return null;
@@ -39,12 +41,13 @@ function zipEntries(
   const cdSize = dv.getUint32(eocd + 12, true);
   const cdOffset = dv.getUint32(eocd + 16, true);
   if (total === 0 || total > 10000 || cdOffset + cdSize > eocd) return null;
-  const out: { name: string; method: number; compSize: number; localOffset: number }[] = [];
+  const out: { name: string; method: number; compSize: number; expandedSize: number; localOffset: number }[] = [];
   let p = cdOffset;
   for (let n = 0; n < total; n++) {
     if (p + 46 > b.length || dv.getUint32(p, true) !== 0x02014b50) return null;
     const method = dv.getUint16(p + 10, true);
     const compSize = dv.getUint32(p + 20, true);
+    const expandedSize = dv.getUint32(p + 24, true);
     const nameLen = dv.getUint16(p + 28, true);
     const extraLen = dv.getUint16(p + 30, true);
     const commentLen = dv.getUint16(p + 32, true);
@@ -54,6 +57,7 @@ function zipEntries(
       name: td.decode(b.subarray(p + 46, p + 46 + nameLen)),
       method,
       compSize,
+      expandedSize,
       localOffset,
     });
     p += 46 + nameLen + extraLen + commentLen;
@@ -63,20 +67,46 @@ function zipEntries(
 
 async function readZipEntry(
   b: Uint8Array,
-  e: { method: number; compSize: number; localOffset: number },
+  e: { method: number; compSize: number; expandedSize: number; localOffset: number },
 ): Promise<Uint8Array | null> {
   const dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
   const lo = e.localOffset;
   if (lo + 30 > b.length || dv.getUint32(lo, true) !== 0x04034b50) return null;
   const start = lo + 30 + dv.getUint16(lo + 26, true) + dv.getUint16(lo + 28, true);
-  if (e.compSize > 2 * 1024 * 1024 || start + e.compSize > b.length) return null;
+  if (e.compSize > MAX_DOCX_METADATA_BYTES || e.expandedSize > MAX_DOCX_METADATA_BYTES || start + e.compSize > b.length) return null;
   const raw = b.subarray(start, start + e.compSize);
-  if (e.method === 0) return raw;
+  if (e.method === 0) return raw.length === e.expandedSize ? raw : null;
   if (e.method !== 8) return null;
   const stream = new Blob([raw.slice() as Uint8Array<ArrayBuffer>])
     .stream()
     .pipeThrough(new DecompressionStream("deflate-raw"));
-  return new Uint8Array(await new Response(stream).arrayBuffer());
+  const reader = stream.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      // The advertised ZIP size is untrusted. Stop reading actual output
+      // before accumulating more than the metadata budget.
+      if (total > MAX_DOCX_METADATA_BYTES) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  if (total !== e.expandedSize) return null;
+  const output = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    output.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return output;
 }
 
 async function isRealDocx(b: Uint8Array): Promise<boolean> {
