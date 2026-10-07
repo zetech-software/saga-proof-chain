@@ -42,3 +42,13 @@ jobs:
           PGPASSWORD: ci-only-password
           PGDATABASE: portal_security_test
         run: psql -X --set ON_ERROR_STOP=on --file tests/sql/client-administrative-fields.sql
+      - name: Check atomic file replacement in disposable PostgreSQL
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: ci-only-password
+          PGDATABASE: portal_security_test
+        run: |
+          psql -X --set ON_ERROR_STOP=on --file tests/sql/atomic-document-replacement.sql
+          python3 tests/sql/atomic-document-concurrency.py

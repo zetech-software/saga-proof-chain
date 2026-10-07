@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const state = vi.hoisted(() => ({
   from: vi.fn(),
   bucket: vi.fn(),
+  rpc: vi.fn(),
 }));
 vi.mock("@tanstack/react-start", () => ({
   createServerFn: () => {
@@ -16,10 +17,10 @@ vi.mock("@tanstack/react-start", () => ({
 }));
 vi.mock("@/integrations/supabase/auth-middleware", () => ({ requireSupabaseAuth: {} }));
 vi.mock("@/integrations/supabase/client.server", () => ({
-  supabaseAdmin: { from: state.from, storage: { from: state.bucket } },
+  supabaseAdmin: { from: state.from, rpc: state.rpc, storage: { from: state.bucket } },
 }));
 
-import { replaceDocumentFile, purgeDocument } from "./document-management.functions";
+import { replaceDocumentFile, purgeDocument, setDocumentArchived } from "./document-management.functions";
 import { purgeResource, restoreResource } from "./resource-lifecycle.functions";
 
 const owner = "11111111-1111-4111-8111-111111111111";
@@ -56,6 +57,7 @@ function storage(bytes = "%PDF-1.7") {
 }
 function setupReplacement(updated: boolean, docOwner = owner) {
   const store = storage();
+  state.rpc.mockResolvedValue({ data: updated, error: null });
   const doc = { id: documentId, created_by: docOwner, status: "recebido", storage_path: oldPath, file_name: "old.pdf", archived_at: null, deleted_at: null };
   let documents = 0;
   state.from.mockImplementation((table: string) => {
@@ -68,7 +70,7 @@ function setupReplacement(updated: boolean, docOwner = owner) {
 }
 const replacement = { id: documentId, pendingPath, fileName: "new.pdf" };
 
-beforeEach(() => { state.from.mockReset(); state.bucket.mockReset(); });
+beforeEach(() => { state.from.mockReset(); state.bucket.mockReset(); state.rpc.mockReset(); });
 
 describe("document replacement", () => {
   it("does not delete the previous file when a concurrent update wins", async () => {
@@ -83,6 +85,39 @@ describe("document replacement", () => {
     const store = setupReplacement(true);
     await expect(invoke(replaceDocumentFile, replacement, context())).resolves.toEqual({ ok: true });
     expect(store.remove).toHaveBeenCalledWith([oldPath]);
+  });
+  it("passes only the session actor and expected file to final database authorization", async () => {
+    setupReplacement(true);
+    await invoke(replaceDocumentFile, replacement, context());
+    expect(state.rpc).toHaveBeenCalledWith("replace_document_file_atomic", expect.objectContaining({
+      _document: documentId, _actor: owner, _expected_path: oldPath, _file_name: "new.pdf",
+    }));
+    expect(state.rpc.mock.calls[0][1]._new_path).toMatch(new RegExp("^" + owner + "/"));
+  });
+  it("keeps the previous file if the final database authorization fails", async () => {
+    const store = setupReplacement(true);
+    state.rpc.mockResolvedValue({ data: null, error: { message: "database unavailable" } });
+    await expect(invoke(replaceDocumentFile, replacement, context())).rejects.toThrow("anterior foi mantido");
+    expect(store.remove).not.toHaveBeenCalledWith([oldPath]);
+    expect(state.from.mock.calls.map(([table]) => table)).not.toContain("document_events");
+  });
+  it.each([{ count: null, error: { message: "query failed" } }, { count: null, error: null }])("blocks replacement when certificate count is unavailable: %j", async (failure) => {
+    const store = setupReplacement(true);
+    const from = state.from.getMockImplementation()!;
+    state.from.mockImplementation((table: string) => table === "certificates" ? query(failure) : from(table));
+    await expect(invoke(replaceDocumentFile, replacement, context())).rejects.toThrow("verificar os certificados");
+    expect(store.download).not.toHaveBeenCalled();
+    expect(store.move).not.toHaveBeenCalled();
+    expect(store.remove).not.toHaveBeenCalledWith([oldPath]);
+    expect(state.rpc).not.toHaveBeenCalled();
+  });
+  it("blocks archiving when the certificate query fails", async () => {
+    setupReplacement(true);
+    const from = state.from.getMockImplementation()!;
+    state.from.mockImplementation((table: string) => table === "certificates" ? query({ count: null, error: { message: "failed" } }) : from(table));
+    await expect(invoke(setDocumentArchived, { id: documentId, archived: true }, context())).rejects.toThrow("verificar os certificados");
+    expect(state.from.mock.calls.filter(([table]) => table === "documents")).toHaveLength(1);
+    expect(state.from.mock.calls.map(([table]) => table)).not.toContain("document_events");
   });
   it("rejects another client's document before reading the upload", async () => {
     const store = setupReplacement(true, "another-client");
