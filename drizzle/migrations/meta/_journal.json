@@ -127,6 +127,13 @@
       "when": 1791468058366,
       "tag": "0017_target_roles_atomic_operations",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791469805384,
+      "tag": "0018_lock_admin_access_events_grants",
+      "breakpoints": true
     }
   ]
 }
