@@ -29,7 +29,8 @@ const activeChannels = new Map<
 >();
 
 /**
- * Notificações internas de suporte do usuário autenticado.
+ * Notificações de documentos e certificados do usuário autenticado.
+ * A tabela histórica é compartilhada com o suporte descontinuado.
  * A subscription Realtime é filtrada por recipient_id, então cada sessão
  * recebe apenas os próprios eventos.
  */
@@ -46,6 +47,7 @@ export function useSupportNotifications() {
         .from("support_notifications")
         .select("id, support_request_id, document_id, certificate_id, type, created_at, read_at")
         .is("read_at", null)
+        .in("type", ["new_document", "additional_document", "document_status", "documents_requested", "certificate_available"])
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as SupportNotification[];
@@ -76,7 +78,6 @@ export function useSupportNotifications() {
           () => {
             queryClient.invalidateQueries({ queryKey: ["support-notifications", key] });
             queryClient.invalidateQueries({ queryKey: ["admin-data"] });
-            queryClient.invalidateQueries({ queryKey: ["support-requests"] });
             queryClient.invalidateQueries({ queryKey: ["documents"] });
             queryClient.invalidateQueries({ queryKey: ["certificates"] });
           },
