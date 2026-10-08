@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { adminResetPassword, adminCreateAccount } from "@/lib/admin-accounts.functions";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { ACCESS_ACTION_LABEL, isAccountAdmin, mayDemote, type AccessAccount, type AccessOrganization, type AccessEvent } from "@/lib/admin-access";
 import { Button } from "@/components/ui/button";
@@ -20,6 +22,34 @@ export function AdminAccessManager({ enabled, actorId }: { enabled: boolean; act
   const [organization, setOrganization] = useState<OrgDraft | null>(null);
   const [account, setAccount] = useState<{ user: AccessAccount; name: string } | null>(null);
   const [pendingMembers, setPendingMembers] = useState<Record<string, string>>({});
+  const [resetTarget, setResetTarget] = useState<AccessAccount | null>(null);
+  const [creating, setCreating] = useState<{ email: string; name: string; admin: boolean; organizationId: string } | null>(null);
+  const [revealed, setRevealed] = useState<{ email: string; password: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const resetFn = useServerFn(adminResetPassword);
+  const createFn = useServerFn(adminCreateAccount);
+  async function doReset() {
+    if (!resetTarget) return;
+    setBusy(true);
+    try {
+      const r = await resetFn({ data: { userId: resetTarget.id } });
+      setRevealed({ email: resetTarget.email ?? "", password: r.password });
+      setResetTarget(null);
+      await refresh();
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Não foi possível gerar a senha."); }
+    finally { setBusy(false); }
+  }
+  async function doCreate() {
+    if (!creating) return;
+    setBusy(true);
+    try {
+      const r = await createFn({ data: { email: creating.email, name: creating.name, admin: creating.admin, organizationId: creating.organizationId || null } });
+      setRevealed(r);
+      setCreating(null);
+      await refresh();
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Não foi possível criar a conta."); }
+    finally { setBusy(false); }
+  }
   const data = query.data;
   const accounts = useMemo(() => (data?.accounts ?? []).filter(u =>
     ((u.name ?? "") + " " + (u.email ?? "")).toLocaleLowerCase("pt-BR").includes(search.toLocaleLowerCase("pt-BR"))
@@ -54,7 +84,10 @@ export function AdminAccessManager({ enabled, actorId }: { enabled: boolean; act
     <Card>
       <CardHeader className="flex-row flex-wrap items-center justify-between gap-3">
         <CardTitle>Contas e funções</CardTitle>
-        <Button variant="outline" onClick={() => void refresh()} disabled={change.isPending}>Atualizar</Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setCreating({ email: "", name: "", admin: false, organizationId: data.organizations[0]?.id ?? "" })} disabled={change.isPending || busy}>Nova conta</Button>
+          <Button variant="outline" onClick={() => void refresh()} disabled={change.isPending}>Atualizar</Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">Gerencie as contas já cadastradas. Administradores têm acesso à gestão de todos os registros. Os vínculos com organizações são definidos abaixo.</p>
@@ -69,6 +102,7 @@ export function AdminAccessManager({ enabled, actorId }: { enabled: boolean; act
           </div>
           <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="outline" disabled={change.isPending} onClick={() => setAccount({ user, name: user.name ?? "" })}>Editar nome</Button>
+            <Button size="sm" variant="outline" disabled={change.isPending || busy || user.id === actorId} onClick={() => setResetTarget(user)}>Nova senha provisória</Button>
             <Button size="sm" variant="outline" disabled={change.isPending || (isAccountAdmin(user) && !mayDemote(user, actorId, data.accounts))}
               onClick={() => setConfirmation({
                 title: isAccountAdmin(user) ? "Mudar para cliente?" : "Conceder acesso de administrador?",
@@ -174,6 +208,46 @@ export function AdminAccessManager({ enabled, actorId }: { enabled: boolean; act
           <Label htmlFor="account-name">Nome</Label><Input id="account-name" required minLength={2} maxLength={160} value={account.name} onChange={ev => setAccount({ ...account, name: ev.target.value })} />
           <DialogFooter><Button type="button" variant="outline" disabled={change.isPending} onClick={() => setAccount(null)}>Cancelar</Button><Button type="submit" disabled={change.isPending}>{change.isPending ? "Salvando..." : "Salvar"}</Button></DialogFooter>
         </form>}
+      </DialogContent>
+    </Dialog>
+    <AlertDialog open={!!resetTarget} onOpenChange={open => { if (!open && !busy) setResetTarget(null); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader><AlertDialogTitle>Gerar nova senha provisória?</AlertDialogTitle>
+          <AlertDialogDescription>A senha atual de {resetTarget ? label(resetTarget.id) : ""} deixará de funcionar. A pessoa terá que criar a própria senha no próximo acesso.</AlertDialogDescription></AlertDialogHeader>
+        <AlertDialogFooter><AlertDialogCancel disabled={busy}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction disabled={busy} onClick={ev => { ev.preventDefault(); void doReset(); }}>{busy ? "Gerando..." : "Gerar senha"}</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    <Dialog open={!!creating} onOpenChange={open => { if (!open && !busy) setCreating(null); }}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Nova conta</DialogTitle></DialogHeader>
+        {creating && <form className="space-y-4" onSubmit={ev => { ev.preventDefault(); void doCreate(); }}>
+          <div className="space-y-1"><Label htmlFor="new-name">Nome</Label><Input id="new-name" required minLength={2} maxLength={160} value={creating.name} onChange={ev => setCreating({ ...creating, name: ev.target.value })} /></div>
+          <div className="space-y-1"><Label htmlFor="new-email">E-mail de login</Label><Input id="new-email" type="email" required value={creating.email} onChange={ev => setCreating({ ...creating, email: ev.target.value })} /></div>
+          <div className="space-y-1"><Label htmlFor="new-org">Organização</Label>
+            <select id="new-org" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={creating.organizationId} onChange={ev => setCreating({ ...creating, organizationId: ev.target.value })}>
+              <option value="">Nenhuma</option>
+              {data.organizations.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+            </select></div>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={creating.admin} onChange={ev => setCreating({ ...creating, admin: ev.target.checked })} />Administrador</label>
+          <p className="text-xs text-muted-foreground">Uma senha provisória será gerada e mostrada uma única vez. A pessoa cria a própria senha no primeiro acesso.</p>
+          <DialogFooter><Button type="button" variant="outline" disabled={busy} onClick={() => setCreating(null)}>Cancelar</Button><Button type="submit" disabled={busy}>{busy ? "Criando..." : "Criar conta"}</Button></DialogFooter>
+        </form>}
+      </DialogContent>
+    </Dialog>
+    <Dialog open={!!revealed} onOpenChange={open => { if (!open) setRevealed(null); }}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Senha provisória</DialogTitle></DialogHeader>
+        {revealed && <div className="space-y-3">
+          <p className="break-all text-sm">Login: <strong>{revealed.email}</strong></p>
+          <p className="rounded-md border bg-muted p-3 font-mono text-lg select-all break-all">{revealed.password}</p>
+          <p className="text-sm text-muted-foreground">Copie e envie à pessoa por um canal privado. Esta senha não será mostrada de novo; ela terá que trocá-la ao entrar.</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { void navigator.clipboard?.writeText(revealed.password); toast.success("Senha copiada."); }}>Copiar</Button>
+            <Button onClick={() => setRevealed(null)}>Fechar</Button>
+          </DialogFooter>
+        </div>}
       </DialogContent>
     </Dialog>
   </div>;
