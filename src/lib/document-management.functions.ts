@@ -63,6 +63,27 @@ async function logEvent(
   );
 }
 
+type ManageArgs = {
+  _document: string; _actor: string; _action: "edit" | "archive" | "unarchive";
+  _title?: string; _description?: string | null; _admin_notes?: string | null; _set_admin_notes?: boolean;
+};
+const MANAGE_MESSAGES = new Set([
+  "Documento não encontrado.", "Sem permissão.", "Restaure o documento de Excluídos antes de alterá-lo.",
+  "Informe o título.", "Este documento não pode mais ser editado.",
+  "Este documento faz parte de um processo ativo e não pode ser arquivado.", "Operação inválida.",
+]);
+
+/** Owner, status, deletion, archive and certificates are rechecked under the row lock. */
+async function manageDocument(args: ManageArgs, fallback: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const client = supabaseAdmin as unknown as {
+    rpc: (n: "manage_document_atomic", a: ManageArgs) => PromiseLike<{ data: string | null; error: { message: string } | null }>;
+  };
+  const { data, error } = await client.rpc("manage_document_atomic", args);
+  if (error) throw new Error(MANAGE_MESSAGES.has(error.message) ? error.message : fallback);
+  return data;
+}
+
 export const editDocument = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
@@ -77,20 +98,11 @@ export const editDocument = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin, doc, isAdmin } = await loadCaller(context, data.id);
-    if (!isAdmin) {
-      if (doc.archived_at || !CLIENT_EDITABLE.has(doc.status)) {
-        throw new Error("Este documento não pode mais ser editado.");
-      }
-    }
-    const patch: { title: string; description: string | null; admin_notes?: string | null } = {
-      title: data.title,
-      description: data.description || null,
-    };
-    if (isAdmin && data.adminNotes !== undefined) patch.admin_notes = data.adminNotes || null;
-    const { error } = await supabaseAdmin.from("documents").update(patch).eq("id", data.id);
-    if (error) throw new Error("Não foi possível salvar.");
-    await logEvent(supabaseAdmin, data.id, context.userId, "editado");
+    await manageDocument({
+      _document: data.id, _actor: context.userId, _action: "edit",
+      _title: data.title, _description: data.description || null,
+      _admin_notes: data.adminNotes ?? null, _set_admin_notes: data.adminNotes !== undefined,
+    }, "Não foi possível salvar.");
     return { ok: true };
   });
 
@@ -186,24 +198,10 @@ export const setDocumentArchived = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ id: idSchema, archived: z.boolean() }).strict().parse(d))
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin, doc, isAdmin } = await loadCaller(context, data.id);
-    if (!isAdmin && data.archived) {
-      // Cliente só arquiva envio próprio que ainda não entrou em andamento.
-      if (doc.status !== "recebido" || (await countCerts(supabaseAdmin, doc.id)) > 0) {
-        throw new Error("Este documento faz parte de um processo ativo e não pode ser arquivado.");
-      }
-    }
-    if (!!doc.archived_at === data.archived) return { ok: true };
-    const { error } = await supabaseAdmin
-      .from("documents")
-      .update(
-        data.archived
-          ? { archived_at: new Date().toISOString(), archived_by: context.userId }
-          : { archived_at: null, archived_by: null },
-      )
-      .eq("id", doc.id);
-    if (error) throw new Error("Não foi possível atualizar o documento.");
-    await logEvent(supabaseAdmin, doc.id, context.userId, data.archived ? "arquivado" : "restaurado");
+    await manageDocument(
+      { _document: data.id, _actor: context.userId, _action: data.archived ? "archive" : "unarchive" },
+      "Não foi possível atualizar o documento.",
+    );
     return { ok: true };
   });
 
