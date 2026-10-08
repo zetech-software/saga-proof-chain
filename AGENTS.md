@@ -24,3 +24,5 @@
 - Papel de outra conta é lido direto em `user_roles`; `has_role` só responde pelo próprio usuário — usá-lo para terceiros dá resultado falso.
 - Certificado não fica acessível por documento ou marca excluídos; só por outro vínculo ativo ou compartilhamento direto.
 - Troca obrigatória de senha: pendência em `password_change_required` (só leitura própria), criada para toda conta nova por `handle_new_user`; liberada só por `completeRequiredPasswordChange` em `src/lib/password-change.functions.ts`, que grava a senha e remove a pendência no servidor — o navegador não consegue pular a troca.
+
+- Admin account creation and temporary-password resets go only through `src/lib/admin-accounts.functions.ts` (server checks admin role, generates the password, forces change on next login, logs to admin_access_events) — the browser never sets another user's password.
