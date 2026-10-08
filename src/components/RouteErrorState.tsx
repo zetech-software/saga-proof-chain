@@ -42,7 +42,7 @@ export function RouteErrorState({ error, reset }: RouteErrorStateProps) {
             voltar à visão geral.
           </p>
           <p className="text-xs text-muted-foreground">
-            Se o problema continuar, entre em contato com a equipe Zé Registra pelo canal habitual.
+            Se o problema continuar, abra um chamado na Área de suporte.
           </p>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-3">
@@ -56,6 +56,9 @@ export function RouteErrorState({ error, reset }: RouteErrorStateProps) {
           </Button>
           <Button variant="outline" asChild>
             <Link to="/painel">Voltar à Visão geral</Link>
+          </Button>
+          <Button variant="ghost" asChild>
+            <Link to="/painel/suporte">Área de suporte</Link>
           </Button>
         </div>
       </CardContent>
