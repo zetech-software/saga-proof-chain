@@ -41,3 +41,32 @@ describe("bounded DOCX metadata", () => {
     expect((await validateFileBytes(docx(mime, 8, 1), "docx")).ok).toBe(false);
   });
 });
+
+describe("structural checks beyond the signature", () => {
+  const pdf = "%PDF-1.7\n1 0 obj\n<< /Type /Catalog >>\nendobj\nxref\n0 1\nstartxref\n9\n%%EOF\n";
+  it("accepts a minimal well-formed PDF", async () => {
+    expect(await validateFileBytes(Buffer.from(pdf), "pdf")).toEqual({ ok: true });
+  });
+  it("rejects a PDF header followed by arbitrary content", async () => {
+    expect((await validateFileBytes(Buffer.from("%PDF-1.7 garbage"), "pdf")).ok).toBe(false);
+  });
+  it("rejects a truncated PDF without end marker", async () => {
+    expect((await validateFileBytes(Buffer.from(pdf.slice(0, 40)), "pdf")).ok).toBe(false);
+  });
+  it("rejects a PNG signature without image chunks", async () => {
+    const fake = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(64)]);
+    expect((await validateFileBytes(fake, "png")).ok).toBe(false);
+  });
+  it("accepts a real PNG", async () => {
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+    expect(await validateFileBytes(png, "png")).toEqual({ ok: true });
+  });
+  it("rejects a JPEG signature without frame or end marker", async () => {
+    const fake = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(200)]);
+    expect((await validateFileBytes(fake, "jpg")).ok).toBe(false);
+  });
+  it("rejects an OLE signature with a broken header", async () => {
+    const fake = Buffer.concat([Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]), Buffer.alloc(2048)]);
+    expect((await validateFileBytes(fake, "doc")).ok).toBe(false);
+  });
+});
