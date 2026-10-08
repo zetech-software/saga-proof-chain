@@ -903,6 +903,18 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
+      manage_document_atomic: {
+        Args: {
+          _action: string
+          _actor: string
+          _admin_notes?: string
+          _description?: string
+          _document: string
+          _set_admin_notes?: boolean
+          _title?: string
+        }
+        Returns: string
+      }
       mark_all_support_notifications_read: {
         Args: {
           _type: Database["public"]["Enums"]["support_notification_type"]
@@ -939,6 +951,15 @@ export type Database = {
           _verification_url: string
         }
         Returns: string
+      }
+      purge_resource_atomic: {
+        Args: {
+          _actor: string
+          _expected_deleted_at: string
+          _id: string
+          _type: string
+        }
+        Returns: Json
       }
       record_ai_tokens: {
         Args: { _input: number; _output: number; _user: string }

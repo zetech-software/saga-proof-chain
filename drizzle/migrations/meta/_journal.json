@@ -120,6 +120,13 @@
       "when": 1791399537709,
       "tag": "0016_apply_0016_admin_accounts_and_organizations",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1791468058366,
+      "tag": "0017_target_roles_atomic_operations",
+      "breakpoints": true
     }
   ]
 }
