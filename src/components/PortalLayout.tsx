@@ -6,7 +6,6 @@ import {
   FileText,
   ShieldCheck,
   Shield,
-  LifeBuoy,
   LogOut,
   Share2,
   UserCog,
@@ -26,7 +25,6 @@ const navItems = [
   { to: "/painel/marcas", label: "Registro de marcas", icon: Stamp },
   { to: "/painel/documentos", label: "Documentos", icon: FileText },
   { to: "/painel/certificados", label: "Certificados", icon: ShieldCheck },
-  { to: "/painel/suporte", label: "Suporte", icon: LifeBuoy },
   { to: "/painel/conta", label: "Minha conta", icon: UserCog },
 ];
 
@@ -42,7 +40,7 @@ export function PortalLayout({
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { adminCount, clientCount, adminDocumentCount, clientDocumentCount, certificateCount } =
+  const { adminDocumentCount, clientDocumentCount, certificateCount } =
     useSupportNotifications();
   usePageVisitTracker();
 
@@ -86,7 +84,7 @@ export function PortalLayout({
           className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-3 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] sm:px-5 [&::-webkit-scrollbar]:hidden"
         >
           {[
-            ...navItems.filter((item) => !(isAdmin && item.to === "/painel/suporte")),
+            ...navItems,
             ...(isAdmin
               ? [
                   { to: "/painel/compartilhados", label: "Compartilhados", icon: Share2 },
@@ -97,19 +95,13 @@ export function PortalLayout({
             const active =
               "exact" in item && item.exact ? pathname === item.to : pathname.startsWith(item.to);
             const count =
-              item.to === "/painel/admin"
+              item.to === "/painel/documentos"
                 ? isAdmin
-                  ? adminCount
-                  : 0
-                : item.to === "/painel/suporte"
-                  ? clientCount
-                  : item.to === "/painel/documentos"
-                    ? isAdmin
-                      ? adminDocumentCount
-                      : clientDocumentCount
-                    : item.to === "/painel/certificados" && !isAdmin
-                      ? certificateCount
-                      : 0;
+                  ? adminDocumentCount
+                  : clientDocumentCount
+                : item.to === "/painel/certificados" && !isAdmin
+                  ? certificateCount
+                  : 0;
             return (
               <Link
                 key={item.to}
@@ -133,11 +125,7 @@ export function PortalLayout({
                 )}
                 {count > 0 && (
                   <span className="sr-only">
-                    {item.to === "/painel/admin"
-                      ? `${count} ${count === 1 ? "chamado novo não visualizado" : "chamados novos não visualizados"}`
-                      : item.to === "/painel/suporte"
-                        ? `${count} ${count === 1 ? "resposta não lida" : "respostas não lidas"}`
-                        : `${count} ${count === 1 ? "novidade não lida" : "novidades não lidas"}`}
+                    {`${count} ${count === 1 ? "novidade não lida" : "novidades não lidas"}`}
                   </span>
                 )}
               </Link>

@@ -23,7 +23,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { usePortalSession } from "@/hooks/usePortalSession";
-import { useSupportNotifications } from "@/hooks/useSupportNotifications";
 import {
   DOCUMENT_STATUSES,
   DOCUMENT_STATUS_LABEL,
@@ -49,7 +48,6 @@ import { OwnershipManager } from "@/components/OwnershipManager";
 import { AdminDocumentsPanel } from "@/components/AdminDocumentsPanel";
 import { AdminTrademarksPanel } from "@/components/AdminTrademarksPanel";
 import { AdminCertificatesPanel } from "@/components/AdminCertificatesPanel";
-import { AdminSupportPanel } from "@/components/AdminSupportPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DeletedItemsPanel } from "@/components/DeletedItemsPanel";
 import { RestorationReviewPanel } from "@/components/RestorationReviewPanel";
@@ -78,31 +76,17 @@ function AdminPage() {
   const { data: session, isLoading } = usePortalSession();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { adminCount } = useSupportNotifications();
   const certFileRef = useRef<HTMLInputElement>(null);
   const certificateSubmission = useRef(createCertificateSubmission(publishCertificate));
 
   const isAdmin = !!session?.isAdmin;
   const [tab, setTab] = useState("visao");
 
-  // Sem cargo admin: mesmo comportamento da rota de Suporte (redireciona).
+  // Sem cargo admin: redireciona para o painel do cliente.
   useEffect(() => {
     if (isLoading || isAdmin) return;
     navigate({ to: "/painel", replace: true });
   }, [isAdmin, isLoading, navigate]);
-
-  useEffect(() => {
-    if (!isAdmin) return;
-    const channel = supabase
-      .channel("admin-support-queue")
-      .on("postgres_changes", { event: "*", schema: "public", table: "support_requests" }, () =>
-        queryClient.invalidateQueries({ queryKey: ["admin-data"] }),
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [isAdmin, queryClient]);
 
   const [cert, setCert] = useState({
     title: "",
@@ -162,19 +146,15 @@ function AdminPage() {
   const { data } = useQuery({
     queryKey: ["admin-data"],
     queryFn: async () => {
-      const [marcas, docs, suporte, certs, profiles] = await Promise.all([
+      const [marcas, docs, certs] = await Promise.all([
         supabase.from("trademarks").select("*").is("deleted_at", null).order("submitted_at", { ascending: false }),
         supabase.from("documents").select("*").is("deleted_at", null).order("submitted_at", { ascending: false }),
-        supabase.from("support_requests").select("*").order("created_at", { ascending: false }),
         supabase.from("certificates").select("*").is("deleted_at", null).order("issued_at", { ascending: false }),
-        supabase.from("profiles").select("id, full_name, email"),
       ]);
       return {
         marcas: marcas.data ?? [],
         docs: docs.data ?? [],
-        suporte: suporte.data ?? [],
         certs: certs.data ?? [],
-        profiles: profiles.data ?? [],
       };
     },
     enabled: !!session?.isAdmin,
@@ -335,7 +315,6 @@ function AdminPage() {
 
   // Contadores consideram só documentos ativos (arquivados não pedem ação).
   const docs = (data?.docs ?? []).filter((d) => !d.archived_at);
-  const suporte = data?.suporte ?? [];
   const pend = {
     recebidos: docs.filter((d) => d.status === "recebido" && !d.is_additional).length,
     adicionais: docs.filter((d) => d.status === "recebido" && d.is_additional).length,
@@ -343,14 +322,12 @@ function AdminPage() {
     semCert: docs.filter(
       (d) => d.status === "concluido" && !(data?.certs ?? []).some((c) => c.document_id === d.id),
     ).length,
-    chamados: suporte.filter((s) => s.status === "aberta").length,
   };
   const attention = [
     { label: "Documentos recebidos", value: pend.recebidos, tab: "processos" },
     { label: "Envios adicionais", value: pend.adicionais, tab: "processos" },
     { label: "Aguardando documentação do cliente", value: pend.aguardando, tab: "processos" },
     { label: "Concluídos sem certificado", value: pend.semCert, tab: "processos" },
-    { label: "Chamados aguardando resposta", value: pend.chamados, tab: "atendimento" },
   ];
 
   return (
@@ -358,16 +335,13 @@ function AdminPage() {
       <div>
         <h1 className="font-display text-3xl text-gold">Administração</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          O que precisa de atenção hoje, atendimento e gestão dos processos.
+          O que precisa de atenção hoje e gestão dos processos.
         </p>
       </div>
 
       <Tabs value={tab} onValueChange={setTab} className="space-y-6">
         <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
           <TabsTrigger value="visao">Visão geral</TabsTrigger>
-          <TabsTrigger value="atendimento">
-            Atendimento{adminCount > 0 ? ` (${adminCount})` : ""}
-          </TabsTrigger>
           <TabsTrigger value="processos">Processos</TabsTrigger>
           <TabsTrigger value="clientes">Contas e acesso</TabsTrigger>
           <TabsTrigger value="controle">Controle</TabsTrigger>
@@ -391,15 +365,6 @@ function AdminPage() {
               </button>
             ))}
           </div>
-          {pend.chamados > 0 && (
-            <Button variant="outline" onClick={() => setTab("atendimento")}>
-              Responder chamados pendentes
-            </Button>
-          )}
-        </TabsContent>
-
-        <TabsContent value="atendimento">
-          <AdminSupportPanel requests={suporte as never} profiles={data?.profiles ?? []} />
         </TabsContent>
 
         <TabsContent value="processos" className="space-y-6">
@@ -663,7 +628,7 @@ function AdminPage() {
 
         <TabsContent value="clientes" className="space-y-6">
           <AdminAccessManager enabled={isAdmin} actorId={session?.user?.id ?? ""} />
-          <UserAccessActivity enabled={isAdmin} docs={data?.docs} marcas={data?.marcas} suporte={data?.suporte} />
+          <UserAccessActivity enabled={isAdmin} docs={data?.docs} marcas={data?.marcas} />
           <OwnershipManager enabled={isAdmin} />
         </TabsContent>
 
