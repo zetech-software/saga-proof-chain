@@ -127,6 +127,51 @@ async function isRealDocx(b: Uint8Array): Promise<boolean> {
   }
 }
 
+function tailText(b: Uint8Array, n: number) {
+  return new TextDecoder("latin1").decode(b.subarray(Math.max(0, b.length - n)));
+}
+
+/** PDF: header, at least one object, and an end-of-file marker with a cross-reference pointer. */
+function isStructuredPdf(b: Uint8Array) {
+  if (!startsWith(b, [0x25, 0x50, 0x44, 0x46, 0x2d])) return false;
+  const tail = tailText(b, 2048);
+  if (!tail.includes("%%EOF") || !/startxref\s+\d+/.test(tail)) return false;
+  const head = new TextDecoder("latin1").decode(b.subarray(0, Math.min(b.length, 1024 * 1024)));
+  return /\d+\s+\d+\s+obj/.test(head);
+}
+
+/** PNG: signature, IHDR first (13 bytes, non-zero size) and IEND as the final chunk. */
+function isStructuredPng(b: Uint8Array) {
+  if (!startsWith(b, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]) || b.length < 8 + 25 + 12) return false;
+  const dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
+  const ihdr = String.fromCharCode(b[12]!, b[13]!, b[14]!, b[15]!);
+  if (dv.getUint32(8) !== 13 || ihdr !== "IHDR" || dv.getUint32(16) === 0 || dv.getUint32(20) === 0) return false;
+  const end = b.length - 12;
+  return dv.getUint32(end) === 0 && String.fromCharCode(b[end + 4]!, b[end + 5]!, b[end + 6]!, b[end + 7]!) === "IEND";
+}
+
+/** JPEG: SOI, a valid segment marker next, a frame header, and EOI near the end. */
+function isStructuredJpeg(b: Uint8Array) {
+  if (!startsWith(b, [0xff, 0xd8, 0xff]) || b.length < 128) return false;
+  let hasFrame = false;
+  for (let i = 2; i + 1 < Math.min(b.length, 512 * 1024); i++) {
+    if (b[i] === 0xff && b[i + 1]! >= 0xc0 && b[i + 1]! <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(b[i + 1]!)) { hasFrame = true; break; }
+  }
+  if (!hasFrame) return false;
+  for (let i = b.length - 2; i >= Math.max(0, b.length - 4096); i--) {
+    if (b[i] === 0xff && b[i + 1] === 0xd9) return true;
+  }
+  return false;
+}
+
+/** DOC (OLE2): signature, little-endian byte order mark and a valid sector size. */
+function isStructuredDoc(b: Uint8Array) {
+  if (!startsWith(b, [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]) || b.length < 1024) return false;
+  const dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
+  const shift = dv.getUint16(30, true);
+  return dv.getUint16(28, true) === 0xfffe && (shift === 9 || shift === 12) && (b.length - 512) % (1 << shift) === 0;
+}
+
 export async function validateFileBytes(
   bytes: Uint8Array,
   ext: AllowedExt,
@@ -136,17 +181,17 @@ export async function validateFileBytes(
   let ok = false;
   switch (ext) {
     case "pdf":
-      ok = startsWith(bytes, [0x25, 0x50, 0x44, 0x46, 0x2d]);
+      ok = isStructuredPdf(bytes);
       break;
     case "jpg":
     case "jpeg":
-      ok = startsWith(bytes, [0xff, 0xd8, 0xff]);
+      ok = isStructuredJpeg(bytes);
       break;
     case "png":
-      ok = startsWith(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+      ok = isStructuredPng(bytes);
       break;
     case "doc":
-      ok = startsWith(bytes, [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]);
+      ok = isStructuredDoc(bytes);
       break;
     case "docx":
       ok = await isRealDocx(bytes);

@@ -169,34 +169,6 @@ export const restoreResource = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-async function purgeBlockers(sa: SA, type: ResType, row: Row) {
-  const reasons: string[] = [];
-  const count = async (q: PromiseLike<{ count: number | null; error: unknown }>) => {
-    const result = await q;
-    if (result.error) throw new Error("Não foi possível verificar os vínculos. Nada foi excluído.");
-    return result.count ?? 0;
-  };
-  const head = { count: "exact", head: true };
-  const shares = await count(
-    sa.from("resource_shares").select("id", head).eq("resource_type", type).eq("resource_id", row.id),
-  );
-  if (shares > 0) reasons.push("compartilhamento ativo");
-  if (type === "trademark") {
-    if ((await count(sa.from("documents").select("id", head).eq("trademark_id", row.id))) > 0)
-      reasons.push("documentos vinculados à marca");
-    if ((await count(sa.from("certificates").select("id", head).eq("trademark_id", row.id))) > 0)
-      reasons.push("certificados vinculados à marca");
-  }
-  if (type === "document") {
-    if ((await count(sa.from("certificates").select("id", head).eq("document_id", row.id))) > 0)
-      reasons.push("certificado vinculado");
-    if ((await count(sa.from("documents").select("id", head).eq("related_document_id", row.id))) > 0)
-      reasons.push("envio adicional relacionado");
-    if (row.status === "concluido" || row.status === "certificado_emitido") reasons.push("processo concluído");
-  }
-  return reasons;
-}
-
 export const purgeResource = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
@@ -211,27 +183,19 @@ export async function purgeResourceForCaller(context: Ctx, type: ResType, id: st
   if (!row.deleted_at) {
     throw new Error("Primeiro exclua o item (ele vai para Excluídos). Só depois é possível excluir definitivamente.");
   }
-  const reasons = await purgeBlockers(sa, type, row);
-  if (reasons.length > 0) return { ok: false as const, blocked: true, reasons, file: null };
-
-  // Delete only the deletion version reviewed above. A restore/re-delete wins
-  // without letting this request touch notifications, history or Storage.
-  const { data: deleted, error } = await sa.from(TABLE[type])
-    .delete()
-    .eq("id", id)
-    .eq("deleted_at", row.deleted_at)
-    .select("id")
-    .maybeSingle();
-  if (error) throw new Error("Não foi possível excluir definitivamente.");
-  if (!deleted) {
-    throw new Error("O item mudou durante a operação. Atualize a lista e revise novamente; nenhum arquivo foi removido.");
+  // Blockers, related rows and the record itself are handled in one locked transaction.
+  const atomic = sa as unknown as {
+    rpc: (n: "purge_resource_atomic", a: { _type: ResType; _id: string; _actor: string; _expected_deleted_at: string }) =>
+      PromiseLike<{ data: { blocked: boolean; reasons: string[] } | null; error: { message: string } | null }>;
+  };
+  const { data: purged, error } = await atomic.rpc("purge_resource_atomic", {
+    _type: type, _id: id, _actor: context.userId, _expected_deleted_at: row.deleted_at,
+  });
+  if (error || !purged) {
+    const known = error?.message?.startsWith("O item mudou") || error?.message?.startsWith("Primeiro exclua");
+    throw new Error(known ? error!.message : "Não foi possível excluir definitivamente. Nada foi removido.");
   }
-
-  if (type !== "trademark") {
-    const col = type === "document" ? "document_id" : "certificate_id";
-    await sa.from("support_notifications").delete().eq(col, id);
-    await sa.from("resource_views").delete().eq("resource_type", type).eq("resource_id", id);
-  }
+  if (purged.blocked) return { ok: false as const, blocked: true, reasons: purged.reasons, file: null };
 
   let file: { removed: boolean; reason: string | null } | null = null;
   const bucket = BUCKET[type];

@@ -45,7 +45,7 @@ function context(admin = false, userId = owner) {
 function invoke(fn: unknown, data: unknown, ctx: ReturnType<typeof context>) {
   return (fn as (args: { data: unknown; context: unknown }) => Promise<any>)({ data, context: ctx });
 }
-function storage(bytes = "%PDF-1.7") {
+function storage(bytes = "%PDF-1.7\n1 0 obj\n<<>>\nendobj\nstartxref\n0\n%%EOF\n") {
   const store = {
     download: vi.fn(async () => ({ data: new Blob([bytes]), error: null })),
     move: vi.fn(async () => ({ error: null })),
@@ -111,12 +111,11 @@ describe("document replacement", () => {
     expect(store.remove).not.toHaveBeenCalledWith([oldPath]);
     expect(state.rpc).not.toHaveBeenCalled();
   });
-  it("blocks archiving when the certificate query fails", async () => {
+  it("archives only through the locked database operation", async () => {
     setupReplacement(true);
-    const from = state.from.getMockImplementation()!;
-    state.from.mockImplementation((table: string) => table === "certificates" ? query({ count: null, error: { message: "failed" } }) : from(table));
-    await expect(invoke(setDocumentArchived, { id: documentId, archived: true }, context())).rejects.toThrow("verificar os certificados");
-    expect(state.from.mock.calls.filter(([table]) => table === "documents")).toHaveLength(1);
+    state.rpc.mockResolvedValue({ data: null, error: { message: "Este documento faz parte de um processo ativo e não pode ser arquivado." } });
+    await expect(invoke(setDocumentArchived, { id: documentId, archived: true }, context())).rejects.toThrow("processo ativo");
+    expect(state.rpc.mock.calls.at(-1)?.[0]).toBe("manage_document_atomic");
     expect(state.from.mock.calls.map(([table]) => table)).not.toContain("document_events");
   });
   it("rejects another client's document before reading the upload", async () => {
@@ -144,19 +143,18 @@ describe("document replacement", () => {
 function setupPurge(options: { deleted?: boolean; sharedFile?: boolean; certificates?: number; deletedRowMissing?: boolean; deletionError?: boolean; restoredFile?: boolean } = {}) {
   const store = storage();
   let documents = 0;
-  let certificates = 0;
+  state.rpc.mockImplementation(async () => {
+    if (options.deleted === false) return { data: null, error: { message: "Primeiro exclua o item (ele vai para Excluídos). Só depois é possível excluir definitivamente." } };
+    if (options.deletedRowMissing) return { data: null, error: { message: "O item mudou durante a operação. Atualize a lista e revise novamente; nenhum arquivo foi removido." } };
+    if (options.deletionError) return { data: null, error: { message: "database failure" } };
+    if (options.certificates) return { data: { blocked: true, reasons: ["certificado vinculado"] }, error: null };
+    return { data: { blocked: false, reasons: [] }, error: null };
+  });
   state.from.mockImplementation((table: string) => {
     if (table === "documents") {
       const step = documents++;
       if (step === 0) return query({ data: { id: documentId, title: "Document", deleted_at: options.deleted === false ? null : "2026-10-01", storage_path: oldPath, status: "recebido" }, error: null });
-      if (step === 1) return query({ count: 0, error: null });
-      if (step === 2) return query({ data: options.deletedRowMissing ? null : { id: documentId }, error: options.deletionError ? { message: "database failure" } : null });
       return query({ data: options.sharedFile ? [{ id: "other-document" }] : options.restoredFile ? [{ id: documentId }] : [], error: null });
-    }
-    if (table === "certificates") {
-      return certificates++ === 0
-        ? query({ count: options.certificates ?? 0, error: null })
-        : query({ data: [], error: null });
     }
     return query({ count: 0, data: [], error: null });
   });
@@ -184,8 +182,7 @@ describe("shared authoritative purge", () => {
     expect(state.from.mock.calls.map(([table]) => table)).not.toContain("support_notifications");
     expect(state.from.mock.calls.map(([table]) => table)).not.toContain("resource_views");
     expect(state.from.mock.calls.map(([table]) => table)).not.toContain("resource_lifecycle_events");
-    const deletion = state.from.mock.results.filter((_, i) => state.from.mock.calls[i]?.[0] === "documents")[2]?.value;
-    expect(deletion.eq).toHaveBeenCalledWith("deleted_at", "2026-10-01");
+    expect(state.rpc.mock.calls.at(-1)?.[1]).toMatchObject({ _expected_deleted_at: "2026-10-01" });
   });
   it("keeps the file if the same ID was restored before the reference check", async () => {
     const store = setupPurge({ restoredFile: true });
