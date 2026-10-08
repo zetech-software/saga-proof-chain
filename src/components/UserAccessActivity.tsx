@@ -25,6 +25,7 @@ type Props = {
   /** Itens já carregados no painel Admin — usados apenas para contagem por usuário. */
   docs?: OwnedItem[] | undefined;
   marcas?: OwnedItem[] | undefined;
+  suporte?: OwnedItem[] | undefined;
 };
 
 type SortId = "recentes" | "nome" | "cadastro";
@@ -39,7 +40,7 @@ function countBy(items: OwnedItem[] | undefined, userId: string) {
   return (items ?? []).filter((i) => i.created_by === userId).length;
 }
 
-export function UserAccessActivity({ enabled, docs, marcas }: Props) {
+export function UserAccessActivity({ enabled, docs, marcas, suporte }: Props) {
   const { data, isLoading, isError, refetch, isFetching } = useUserActivity(enabled);
   const [filter, setFilter] = useState<AccessFilterId>("todos");
   const [search, setSearch] = useState("");
@@ -52,8 +53,9 @@ export function UserAccessActivity({ enabled, docs, marcas }: Props) {
       days: daysSinceAccess(u.last_sign_in_at, now),
       docCount: countBy(docs, u.user_id),
       marcaCount: countBy(marcas, u.user_id),
+      supportCount: countBy(suporte, u.user_id),
     }));
-  }, [data, docs, marcas]);
+  }, [data, docs, marcas, suporte]);
 
   const counts = useMemo(() => {
     const map = {} as Record<AccessFilterId, number>;
@@ -104,6 +106,7 @@ export function UserAccessActivity({ enabled, docs, marcas }: Props) {
       "Há quanto tempo",
       "Documentos",
       "Marcas",
+      "Chamados",
     ];
     const lines = visible.map((u) =>
       [
@@ -115,6 +118,7 @@ export function UserAccessActivity({ enabled, docs, marcas }: Props) {
         describeDaysSince(u.days),
         String(u.docCount),
         String(u.marcaCount),
+        String(u.supportCount),
       ]
         .map((v) => `"${v.replace(/"/g, '""')}"`)
         .join(";"),
@@ -234,7 +238,7 @@ export function UserAccessActivity({ enabled, docs, marcas }: Props) {
                     <div className="flex justify-between gap-3">
                       <dt className="text-muted-foreground">Envios</dt>
                       <dd>
-                        {u.docCount} doc. · {u.marcaCount} marcas
+                        {u.docCount} doc. · {u.marcaCount} marcas · {u.supportCount} chamados
                       </dd>
                     </div>
                   </dl>
@@ -272,14 +276,14 @@ export function UserAccessActivity({ enabled, docs, marcas }: Props) {
                       </td>
                       <td className="py-2.5 pr-4">{describeDaysSince(u.days)}</td>
                       <td className="py-2.5 text-muted-foreground">
-                        {u.docCount} / {u.marcaCount}
+                        {u.docCount} / {u.marcaCount} / {u.supportCount}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
               <p className="mt-2 text-[11px] text-muted-foreground">
-                Envios: documentos / marcas.
+                Envios: documentos / marcas / chamados de suporte.
               </p>
             </div>
           </>
