@@ -56,6 +56,7 @@ INSERT INTO public.documents(id, created_by, title, status, storage_path, file_n
  ('d0000000-0000-4000-8000-000000000002','11111111-1111-4111-8111-111111111111','Em andamento','em_andamento','11111111-1111-4111-8111-111111111111/b.pdf','b.pdf',NULL),
  ('d0000000-0000-4000-8000-000000000003','11111111-1111-4111-8111-111111111111','Com certificado','recebido','11111111-1111-4111-8111-111111111111/c.pdf','c.pdf','70000000-0000-4000-8000-000000000001');
 INSERT INTO public.certificates VALUES ('c0000000-0000-4000-8000-000000000001','Cert','d0000000-0000-4000-8000-000000000003','70000000-0000-4000-8000-000000000001',NULL,NULL,NULL);
+GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
 \ir ../../drizzle/migrations/0016_admin_accounts_and_organizations.sql
 \ir ../../drizzle/migrations/0017_target_roles_atomic_operations.sql
 COMMIT;
