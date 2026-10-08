@@ -27,7 +27,7 @@ function PainelLayout() {
     );
   }
   // Senha temporária: nada do portal abre antes da troca.
-  if (data.mustChangePassword) return <RequiredPasswordChange email={data.user.email} />;
+  if (data.mustChangePassword) return <RequiredPasswordChange email={data.user.email ?? null} />;
   return (
     <PortalLayout isAdmin={data?.isAdmin ?? false} email={data?.user?.email}>
       <Outlet />
