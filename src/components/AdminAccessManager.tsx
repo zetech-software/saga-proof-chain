@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { adminResetPassword, adminCreateAccount } from "@/lib/admin-accounts.functions";
+import { adminResetPassword, adminCreateAccount, adminDeleteAccount } from "@/lib/admin-accounts.functions";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { ACCESS_ACTION_LABEL, isAccountAdmin, mayDemote, type AccessAccount, type AccessOrganization, type AccessEvent } from "@/lib/admin-access";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,19 @@ export function AdminAccessManager({ enabled, actorId }: { enabled: boolean; act
   const [creating, setCreating] = useState<{ email: string; name: string; admin: boolean; organizationId: string } | null>(null);
   const [revealed, setRevealed] = useState<{ email: string; password: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [deleting, setDeleting] = useState<{ user: AccessAccount; typed: string } | null>(null);
+  const deleteFn = useServerFn(adminDeleteAccount);
+  async function doDelete() {
+    if (!deleting) return;
+    setBusy(true);
+    try {
+      await deleteFn({ data: { userId: deleting.user.id, confirmEmail: deleting.typed } });
+      toast.success("Conta excluída.");
+      setDeleting(null);
+      await refresh();
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Não foi possível excluir a conta."); }
+    finally { setBusy(false); }
+  }
   const resetFn = useServerFn(adminResetPassword);
   const createFn = useServerFn(adminCreateAccount);
   async function doReset() {
@@ -103,6 +116,7 @@ export function AdminAccessManager({ enabled, actorId }: { enabled: boolean; act
           <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="outline" disabled={change.isPending} onClick={() => setAccount({ user, name: user.name ?? "" })}>Editar nome</Button>
             <Button size="sm" variant="outline" disabled={change.isPending || busy || user.id === actorId} onClick={() => setResetTarget(user)}>Nova senha provisória</Button>
+            <Button size="sm" variant="destructive" disabled={change.isPending || busy || user.id === actorId} onClick={() => setDeleting({ user, typed: "" })}>Excluir conta</Button>
             <Button size="sm" variant="outline" disabled={change.isPending || (isAccountAdmin(user) && !mayDemote(user, actorId, data.accounts))}
               onClick={() => setConfirmation({
                 title: isAccountAdmin(user) ? "Mudar para cliente?" : "Conceder acesso de administrador?",
@@ -233,6 +247,18 @@ export function AdminAccessManager({ enabled, actorId }: { enabled: boolean; act
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={creating.admin} onChange={ev => setCreating({ ...creating, admin: ev.target.checked })} />Administrador</label>
           <p className="text-xs text-muted-foreground">Uma senha provisória será gerada e mostrada uma única vez. A pessoa cria a própria senha no primeiro acesso.</p>
           <DialogFooter><Button type="button" variant="outline" disabled={busy} onClick={() => setCreating(null)}>Cancelar</Button><Button type="submit" disabled={busy}>{busy ? "Criando..." : "Criar conta"}</Button></DialogFooter>
+        </form>}
+      </DialogContent>
+    </Dialog>
+    <Dialog open={!!deleting} onOpenChange={open => { if (!open && !busy) setDeleting(null); }}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Excluir conta?</DialogTitle></DialogHeader>
+        {deleting && <form className="space-y-4" onSubmit={ev => { ev.preventDefault(); void doDelete(); }}>
+          <p className="text-sm">A conta <strong className="break-all">{deleting.user.email}</strong> perderá o acesso definitivamente. Contas donas de marcas, documentos ou chamados não podem ser excluídas, para proteger esses dados.</p>
+          <Label htmlFor="del-confirm">Digite o e-mail da conta para confirmar</Label>
+          <Input id="del-confirm" value={deleting.typed} onChange={ev => setDeleting({ ...deleting, typed: ev.target.value })} />
+          <DialogFooter><Button type="button" variant="outline" disabled={busy} onClick={() => setDeleting(null)}>Cancelar</Button>
+            <Button type="submit" variant="destructive" disabled={busy || deleting.typed.trim().toLowerCase() !== (deleting.user.email ?? "").toLowerCase()}>{busy ? "Excluindo..." : "Excluir"}</Button></DialogFooter>
         </form>}
       </DialogContent>
     </Dialog>
