@@ -2,6 +2,7 @@ import { createFileRoute, Outlet } from "@tanstack/react-router";
 
 import { PortalLayout } from "@/components/PortalLayout";
 import { usePortalSession } from "@/hooks/usePortalSession";
+import { RequiredPasswordChange } from "@/components/RequiredPasswordChange";
 
 export const Route = createFileRoute("/_authenticated/painel")({
   component: PainelLayout,
@@ -25,6 +26,8 @@ function PainelLayout() {
       </div>
     );
   }
+  // Senha temporária: nada do portal abre antes da troca.
+  if (data.mustChangePassword) return <RequiredPasswordChange email={data.user.email} />;
   return (
     <PortalLayout isAdmin={data?.isAdmin ?? false} email={data?.user?.email}>
       <Outlet />
