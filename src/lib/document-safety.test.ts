@@ -111,12 +111,11 @@ describe("document replacement", () => {
     expect(store.remove).not.toHaveBeenCalledWith([oldPath]);
     expect(state.rpc).not.toHaveBeenCalled();
   });
-  it("blocks archiving when the certificate query fails", async () => {
+  it("archives only through the locked database operation", async () => {
     setupReplacement(true);
-    const from = state.from.getMockImplementation()!;
-    state.from.mockImplementation((table: string) => table === "certificates" ? query({ count: null, error: { message: "failed" } }) : from(table));
-    await expect(invoke(setDocumentArchived, { id: documentId, archived: true }, context())).rejects.toThrow("verificar os certificados");
-    expect(state.from.mock.calls.filter(([table]) => table === "documents")).toHaveLength(1);
+    state.rpc.mockResolvedValue({ data: null, error: { message: "Este documento faz parte de um processo ativo e não pode ser arquivado." } });
+    await expect(invoke(setDocumentArchived, { id: documentId, archived: true }, context())).rejects.toThrow("processo ativo");
+    expect(state.rpc.mock.calls.at(-1)?.[0]).toBe("manage_document_atomic");
     expect(state.from.mock.calls.map(([table]) => table)).not.toContain("document_events");
   });
   it("rejects another client's document before reading the upload", async () => {
