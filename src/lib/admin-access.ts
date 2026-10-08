@@ -10,5 +10,5 @@ export function mayDemote(account: AccessAccount, actorId: string, accounts: Acc
 export const ACCESS_ACTION_LABEL: Record<string, string> = {
   role_changed: "Função alterada", member_added: "Membro adicionado", member_removed: "Vínculo removido",
   organization_created: "Organização criada", organization_updated: "Organização atualizada", profile_updated: "Nome atualizado",
-  password_reset: "Senha provisória definida", account_created: "Conta criada",
+  password_reset: "Senha provisória definida", account_created: "Conta criada", account_deleted: "Conta excluída",
 };

@@ -76,3 +76,39 @@ export const adminCreateAccount = createServerFn({ method: "POST" })
     });
     return { password, email: data.email };
   });
+
+/**
+ * Exclui uma conta somente se ela não for dona de nenhum registro (marcas,
+ * documentos, chamados). Contas com dados reais não são apagadas — evita perda
+ * de dados da Saga. Nunca exclui a própria conta nem o último administrador.
+ */
+export const adminDeleteAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ userId: z.string().uuid(), confirmEmail: z.string().trim().toLowerCase() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    if (data.userId === context.userId) throw new Error("Você não pode excluir a própria conta.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: target } = await supabaseAdmin.auth.admin.getUserById(data.userId);
+    const email = target?.user?.email?.toLowerCase();
+    if (!email) throw new Error("Conta não encontrada.");
+    if (email !== data.confirmEmail) throw new Error("O e-mail digitado não confere.");
+    const { data: roles } = await supabaseAdmin.from("user_roles").select("user_id").eq("role", "admin");
+    const admins = (roles ?? []).map(r => r.user_id);
+    if (admins.includes(data.userId) && admins.length <= 1) throw new Error("O último administrador não pode ser excluído.");
+    const count = async (table: "trademarks" | "documents" | "support_requests") =>
+      (await supabaseAdmin.from(table).select("id", { count: "exact", head: true }).eq("created_by", data.userId)).count ?? 0;
+    const [tm, docs, sup] = await Promise.all([count("trademarks"), count("documents"), count("support_requests")]);
+    if (tm + docs + sup > 0) {
+      throw new Error(`Esta conta é dona de ${tm} marca(s), ${docs} documento(s) e ${sup} chamado(s). Para proteger esses dados, ela não pode ser excluída. Gere uma nova senha ou retire-a da organização.`);
+    }
+    await supabaseAdmin.from("admin_access_events").insert({
+      actor_id: context.userId, target_user_id: data.userId, action: "account_deleted",
+      before_state: { email, admin: admins.includes(data.userId) },
+    });
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+    if (error) throw new Error("Não foi possível excluir a conta.");
+    return { ok: true };
+  });
