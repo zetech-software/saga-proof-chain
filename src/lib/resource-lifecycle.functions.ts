@@ -169,34 +169,6 @@ export const restoreResource = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-async function purgeBlockers(sa: SA, type: ResType, row: Row) {
-  const reasons: string[] = [];
-  const count = async (q: PromiseLike<{ count: number | null; error: unknown }>) => {
-    const result = await q;
-    if (result.error) throw new Error("Não foi possível verificar os vínculos. Nada foi excluído.");
-    return result.count ?? 0;
-  };
-  const head = { count: "exact", head: true };
-  const shares = await count(
-    sa.from("resource_shares").select("id", head).eq("resource_type", type).eq("resource_id", row.id),
-  );
-  if (shares > 0) reasons.push("compartilhamento ativo");
-  if (type === "trademark") {
-    if ((await count(sa.from("documents").select("id", head).eq("trademark_id", row.id))) > 0)
-      reasons.push("documentos vinculados à marca");
-    if ((await count(sa.from("certificates").select("id", head).eq("trademark_id", row.id))) > 0)
-      reasons.push("certificados vinculados à marca");
-  }
-  if (type === "document") {
-    if ((await count(sa.from("certificates").select("id", head).eq("document_id", row.id))) > 0)
-      reasons.push("certificado vinculado");
-    if ((await count(sa.from("documents").select("id", head).eq("related_document_id", row.id))) > 0)
-      reasons.push("envio adicional relacionado");
-    if (row.status === "concluido" || row.status === "certificado_emitido") reasons.push("processo concluído");
-  }
-  return reasons;
-}
-
 export const purgeResource = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
