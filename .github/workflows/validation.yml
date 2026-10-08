@@ -55,3 +55,12 @@ jobs:
           psql -X --set ON_ERROR_STOP=on --file tests/sql/atomic-certificate-publication.sql
           psql -X --set ON_ERROR_STOP=on --file tests/sql/admin-access-management.sql
           python3 tests/sql/admin-access-concurrency.py
+      - name: Check real has_role and atomic operations in a separate disposable database
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: ci-only-password
+        run: |
+          createdb portal_real_roles_test
+          psql -X --set ON_ERROR_STOP=on -d portal_real_roles_test --file tests/sql/real-roles-and-atomic-operations.sql
