@@ -134,6 +134,13 @@
       "when": 1791469805384,
       "tag": "0018_lock_admin_access_events_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1791478362085,
+      "tag": "0019_password_change_required",
+      "breakpoints": true
     }
   ]
 }
