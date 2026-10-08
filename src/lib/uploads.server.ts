@@ -131,11 +131,11 @@ function tailText(b: Uint8Array, n: number) {
   return new TextDecoder("latin1").decode(b.subarray(Math.max(0, b.length - n)));
 }
 
-/** PDF: header, at least one object, and an end-of-file marker with a cross-reference pointer. */
+/** PDF: header, at least one object, and an end-of-file marker with a cross-reference pointer or trailer. */
 function isStructuredPdf(b: Uint8Array) {
   if (!startsWith(b, [0x25, 0x50, 0x44, 0x46, 0x2d])) return false;
   const tail = tailText(b, 2048);
-  if (!tail.includes("%%EOF") || !/startxref\s+\d+/.test(tail)) return false;
+  if (!tail.includes("%%EOF") || !(/startxref\s+\d+/.test(tail) || tail.includes("trailer"))) return false;
   const head = new TextDecoder("latin1").decode(b.subarray(0, Math.min(b.length, 1024 * 1024)));
   return /\d+\s+\d+\s+obj/.test(head);
 }
