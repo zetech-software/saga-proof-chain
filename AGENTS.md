@@ -23,3 +23,4 @@
 - Edição/arquivamento de documentos e exclusão definitiva passam por funções únicas no banco (`manage_document_atomic`, `purge_resource_atomic`, só servidor) que rechecam permissão e estado sob trava — nenhuma decisão depende de leitura anterior.
 - Papel de outra conta é lido direto em `user_roles`; `has_role` só responde pelo próprio usuário — usá-lo para terceiros dá resultado falso.
 - Certificado não fica acessível por documento ou marca excluídos; só por outro vínculo ativo ou compartilhamento direto.
+- Troca obrigatória de senha: pendência em `password_change_required` (só leitura própria), criada para toda conta nova por `handle_new_user`; liberada só por `completeRequiredPasswordChange` em `src/lib/password-change.functions.ts`, que grava a senha e remove a pendência no servidor — o navegador não consegue pular a troca.
