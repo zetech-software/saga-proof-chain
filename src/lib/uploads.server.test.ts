@@ -69,4 +69,13 @@ describe("structural checks beyond the signature", () => {
     const fake = Buffer.concat([Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]), Buffer.alloc(2048)]);
     expect((await validateFileBytes(fake, "doc")).ok).toBe(false);
   });
+  it("accepts a phone JPEG with several MB of trailing data (Motion Photo)", async () => {
+    const jpg = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(100), Buffer.from([0xff, 0xc0]), Buffer.alloc(100), Buffer.from([0xff, 0xd9])]);
+    const motion = Buffer.concat([jpg, Buffer.alloc(3 * 1024 * 1024, 7)]);
+    expect(await validateFileBytes(motion, "jpg")).toEqual({ ok: true });
+  });
+  it("accepts a PNG with trailing bytes after IEND", async () => {
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+    expect(await validateFileBytes(Buffer.concat([png, Buffer.alloc(5000, 1)]), "png")).toEqual({ ok: true });
+  });
 });
