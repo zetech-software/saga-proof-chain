@@ -140,25 +140,32 @@ function isStructuredPdf(b: Uint8Array) {
   return /\d+\s+\d+\s+obj/.test(head);
 }
 
-/** PNG: signature, IHDR first (13 bytes, non-zero size) and IEND as the final chunk. */
+/** PNG: signature, IHDR first (13 bytes, non-zero size) and a valid chunk chain up to IEND (trailing bytes allowed). */
 function isStructuredPng(b: Uint8Array) {
   if (!startsWith(b, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]) || b.length < 8 + 25 + 12) return false;
   const dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
   const ihdr = String.fromCharCode(b[12]!, b[13]!, b[14]!, b[15]!);
   if (dv.getUint32(8) !== 13 || ihdr !== "IHDR" || dv.getUint32(16) === 0 || dv.getUint32(20) === 0) return false;
-  const end = b.length - 12;
-  return dv.getUint32(end) === 0 && String.fromCharCode(b[end + 4]!, b[end + 5]!, b[end + 6]!, b[end + 7]!) === "IEND";
+  let p = 8;
+  while (p + 12 <= b.length) {
+    const len = dv.getUint32(p);
+    if (p + 12 + len > b.length) return false;
+    const type = String.fromCharCode(b[p + 4]!, b[p + 5]!, b[p + 6]!, b[p + 7]!);
+    if (type === "IEND") return len === 0;
+    p += 12 + len;
+  }
+  return false;
 }
 
-/** JPEG: SOI, a valid segment marker next, a frame header, and EOI near the end. */
+/** JPEG: SOI, a frame header, and an EOI after it (trailing data such as Motion Photos allowed). */
 function isStructuredJpeg(b: Uint8Array) {
   if (!startsWith(b, [0xff, 0xd8, 0xff]) || b.length < 128) return false;
-  let hasFrame = false;
+  let frame = -1;
   for (let i = 2; i + 1 < Math.min(b.length, 512 * 1024); i++) {
-    if (b[i] === 0xff && b[i + 1]! >= 0xc0 && b[i + 1]! <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(b[i + 1]!)) { hasFrame = true; break; }
+    if (b[i] === 0xff && b[i + 1]! >= 0xc0 && b[i + 1]! <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(b[i + 1]!)) { frame = i; break; }
   }
-  if (!hasFrame) return false;
-  for (let i = b.length - 2; i >= Math.max(0, b.length - 4096); i--) {
+  if (frame < 0) return false;
+  for (let i = frame + 2; i + 1 < b.length; i++) {
     if (b[i] === 0xff && b[i + 1] === 0xd9) return true;
   }
   return false;
