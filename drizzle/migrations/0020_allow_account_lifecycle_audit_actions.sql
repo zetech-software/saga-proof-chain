@@ -1,0 +1,2 @@
+ALTER TABLE public.admin_access_events DROP CONSTRAINT admin_access_events_action_check;
+ALTER TABLE public.admin_access_events ADD CONSTRAINT admin_access_events_action_check CHECK (action = ANY (ARRAY['role_changed'::text, 'member_added'::text, 'member_removed'::text, 'organization_created'::text, 'organization_updated'::text, 'profile_updated'::text, 'password_reset'::text, 'account_created'::text, 'account_deleted'::text]));
