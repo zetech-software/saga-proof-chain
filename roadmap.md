@@ -1,8 +1,8 @@
 
-## Em andamento — Correções dos dois avisos de segurança
-- Neutralizar fórmulas nos nomes exportados e testar caracteres especiais.
-- Reduzir validade dos links de download e testar documentos/certificados.
-- Confirmar testes e prévia sem publicar nem alterar dados.
+## Feito — Correções dos dois avisos de segurança
+- Fórmulas neutralizadas em todas as células exportadas, sem alterar nomes salvos.
+- Links de documentos/certificados reduzidos de 60 para 10 segundos.
+- 107 testes passaram; prévia sem erros; verificação básica sem problemas. Sem publicação ou alteração de dados.
 
 ## Feito — Assistente IA somente leitura (v1). Pendente: limpeza periódica de ai_question_usage antiga (não implementar sem aprovação)
 - Deve funcionar para todos os clientes autorizados, não só Mariana e Léo.
