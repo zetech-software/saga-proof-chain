@@ -26,3 +26,4 @@
 - Troca obrigatória de senha: pendência em `password_change_required` (só leitura própria), criada para toda conta nova por `handle_new_user`; liberada só por `completeRequiredPasswordChange` em `src/lib/password-change.functions.ts`, que grava a senha e remove a pendência no servidor — o navegador não consegue pular a troca.
 
 - Admin account creation and temporary-password resets go only through `src/lib/admin-accounts.functions.ts` (server checks admin role, generates the password, forces change on next login, logs to admin_access_events) — the browser never sets another user's password.
+- CSV exports use `escapeCsvCell` for every data cell to prevent spreadsheet formula execution; private downloads share the TTL in `downloads.ts` to keep revocation exposure consistent.
