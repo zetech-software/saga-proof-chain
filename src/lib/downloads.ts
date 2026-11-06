@@ -2,6 +2,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 import { sanitizeFileName } from "@/lib/uploads";
 
+export const DOWNLOAD_LINK_TTL_SECONDS = 10;
+
 /**
  * Baixa um arquivo de um bucket privado via signed URL de curta duração.
  * O parâmetro `download` faz o Storage responder com Content-Disposition: attachment,
@@ -16,7 +18,7 @@ export async function downloadFromBucket(
 
   const { data, error } = await supabase.storage
     .from(bucket)
-    .createSignedUrl(path, 60, { download: safeName });
+    .createSignedUrl(path, DOWNLOAD_LINK_TTL_SECONDS, { download: safeName });
 
   if (error || !data?.signedUrl) {
     return {

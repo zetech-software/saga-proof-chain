@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/EmptyState";
 import { ListSkeleton } from "@/components/ListSkeleton";
 import { useUserActivity } from "@/hooks/useUserActivity";
+import { escapeCsvCell } from "@/lib/csv";
 import {
   ACCESS_FILTERS,
   daysSinceAccess,
@@ -120,7 +121,7 @@ export function UserAccessActivity({ enabled, docs, marcas, suporte }: Props) {
         String(u.marcaCount),
         String(u.supportCount),
       ]
-        .map((v) => `"${v.replace(/"/g, '""')}"`)
+        .map(escapeCsvCell)
         .join(";"),
     );
     const csv = `\uFEFF${[header.join(";"), ...lines].join("\n")}`;
